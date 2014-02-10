@@ -1,5 +1,6 @@
 express = require "express"
 http = require "http"
+core = require "./core"
 
 web = express()
 web.configure ->
@@ -11,13 +12,9 @@ web.configure ->
 	web.use web.router
 
 web.get "/", (req, res) ->
-	res.render "index"
-
-web.get "/roms", (req, res) ->
-	res.render "roms", availableRegions: core.getAvailableRegions()
-
-web.get "/latestROMS.json", (req, res) ->
-	res.jsonp core.getLatestROMS()
+	core.getLatestROMS (err, topics) ->
+		return res.send 500, error: err if err?
+		res.render "index", topics: topics
 
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->
