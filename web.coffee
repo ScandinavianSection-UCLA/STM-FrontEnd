@@ -21,8 +21,8 @@ web.get /\/([a-z]+)/, (req, res, next) ->
 		next() if err
 		res.send html
 
-web.get "*", (req, res) ->
-	res.render "404"
+#web.get "*", (req, res) ->
+#	res.render "404"
 
 server = http.createServer web
 
