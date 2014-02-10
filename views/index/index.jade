@@ -13,26 +13,30 @@ block content
 				.panel-body
 					.row
 						.col-sm-6
-							table.table.table-hover
+							table.table.table-hover.lead
 								caption Top-ranking Words
-								th
-									td Word
-									td Count
-									td Weight
-								each word in topic.words
+								thead
 									tr
-										td=word.word
-										td=word.count
-										td=word.weight
+										th Word
+										th Count
+										th Weight
+								tbody
+									each word in topic.words
+										tr
+											td=word.word
+											td=word.count
+											td=word.weight
 						.col-sm-6
-							table.table.table-hover
+							table.table.table-hover.lead
 								caption Top-ranking Phrases
-								th
-									td Phrase
-									td Count
-									td Weight
-								each phrase in topic.phrases
+								thead
 									tr
-										td=phrase.phrase
-										td=phrase.count
-										td=phrase.weight
+										th Phrase
+										th Count
+										th Weight
+								tbody
+									each phrase in topic.phrases
+										tr
+											td=phrase.phrase
+											td=phrase.count
+											td=phrase.weight
