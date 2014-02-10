@@ -21,7 +21,7 @@ exports.getTopics = (callback) ->
 	fs.readFile "/home/gotemb/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
 		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 			Topic.find {}, (err, topics) ->
-				async.each topics, (topic, callback) ->
+				async.map topics, (topic, callback) ->
 					Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 						callback err,
 							topic: topic.toJSON()
