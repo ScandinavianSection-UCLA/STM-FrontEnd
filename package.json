@@ -1,0 +1,21 @@
+{
+  "name": "STM-FrontEnd",
+  "version": "0.0.0",
+  "description": "STM-FrontEnd ============",
+  "dependencies": {
+    "async": "~0.2.10",
+    "express": "~3.4.8",
+    "jade": "~1.1.5",
+    "mongoose": "~3.8.6",
+    "xml2js": "~0.4.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ScandinavianSection-UCLA/STM-FrontEnd.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ScandinavianSection-UCLA/STM-FrontEnd/issues"
+  },
+  "homepage": "https://github.com/ScandinavianSection-UCLA/STM-FrontEnd"
+}
