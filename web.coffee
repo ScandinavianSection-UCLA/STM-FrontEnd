@@ -12,7 +12,7 @@ web.configure ->
 	web.use web.router
 
 web.get "/", (req, res) ->
-	core.getLatestROMS (err, topics) ->
+	core.getTopics (err, topics) ->
 		return res.send 500, error: err if err?
 		res.render "index", topics: topics
 
