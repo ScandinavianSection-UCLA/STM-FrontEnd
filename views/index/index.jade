@@ -9,6 +9,30 @@ block content
 		each topic in topics
 			.panel.panel-default
 				.panel-heading
-					h3.panel-title #{topic.topic.name}
+					h3.panel-title=topic.topic.name
 				.panel-body
-					p ...
+					.row
+						.col-sm-6
+							table.table.table-hover
+								caption Top-ranking Words
+								th
+									td Word
+									td Count
+									td Weight
+								each word in topic.words
+									tr
+										td=word.word
+										td=word.count
+										td=word.weight
+						.col-sm-6
+							table.table.table-hover
+								caption Top-ranking Phrases
+								th
+									td Phrase
+									td Count
+									td Weight
+								each phrase in topic.phrases
+									tr
+										td=phrase.phrase
+										td=phrase.count
+										td=phrase.weight
