@@ -3,6 +3,9 @@ async = require "async"
 xml2js = require "xml2js"
 fs = require "fs"
 
+corpus = "english"
+subCorpus = "1888"
+
 mongoose.connect "/tmp/mongodb-27017.sock/stm_#{corpus}"
 
 Topic = mongoose.model "Topic", new mongoose.Schema
