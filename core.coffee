@@ -18,8 +18,8 @@ Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 	proportion: Number
 
 exports.getTopics = (callback) ->
-	fs.readFile "~/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
-		xml2js.parseString doc, (err, {topics: {topic: topics}}) ->
+	fs.readFile "/home/gotemb/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
+		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 			Topic.find {}, (err, topics) ->
 				async.each topics, (topic, callback) ->
 					Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
@@ -27,12 +27,12 @@ exports.getTopics = (callback) ->
 							topic: topic.toJSON()
 							records: records.map (x) -> x.toJSON()
 							words:
-								topics.filter((x) -> topic.id is Number x.$.id)[0].word.map (x) ->
+								doc.filter((x) -> topic.id is Number x.$.id)[0].word.map (x) ->
 									word: x._
 									weight: Number x.$.weight
 									count: Number x.$.count
 							phrases:
-								topics.filter((x) -> topic.id is Number x.$.id)[0].phrase.map (x) ->
+								doc.filter((x) -> topic.id is Number x.$.id)[0].phrase.map (x) ->
 									phrase: x._
 									weight: Number x.$.weight
 									count: Number x.$.count
