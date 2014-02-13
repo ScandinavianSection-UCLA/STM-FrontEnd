@@ -7,6 +7,7 @@ block vars
 block content
 	.container
 		each topic in topics
+			.data(data-words = topic.words, data-phrases = topic.phrases)
 			.panel.panel-default
 				.panel-heading
 					h3.panel-title=topic.topic.name
