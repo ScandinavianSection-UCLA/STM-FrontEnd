@@ -17,6 +17,31 @@ Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 	topic: type: mongoose.Schema.ObjectId, ref: "Topic"
 	proportion: Number
 
+exports.getTopicsList = (callback) ->
+	Topic.find {}, (err, topics) ->
+		callback topics.map (topic) ->
+			name: topic.name
+			id: topic.id
+
+exports.getTopicDetails = (id, callback) ->
+	Topic.findOne id: id, (err, topic) ->
+		return callback err if err?
+		fs.readFile "/home/gotemb/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
+			return callback err if err?
+			xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
+				return callback err if err?
+				topicXML = doc.filter((x) -> x.$.id is "#{id}")[0]
+				Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
+					return callback err if err?
+					callback
+						id: topic.id
+						name: topic.name
+						words: topicXML.word.map (x) -> word: x._, weight: Number x.$.weight, count: Number x.$.count
+						phrases: topicXML.phrase.map (x) -> phrase: x._, weight: Number x.$.weight, count: Number x.$.count
+						records: records.map (x) -> article_id: x.article_id, proportion: x.proportion
+
+
+###
 exports.getTopics = (callback) ->
 	fs.readFile "/home/gotemb/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
 		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
@@ -37,3 +62,4 @@ exports.getTopics = (callback) ->
 									weight: Number x.$.weight
 									count: Number x.$.count
 				, callback
+###

@@ -16,6 +16,14 @@ web.get "/", (req, res) ->
 		return res.send 500, error: err if err?
 		res.render "index", topics: topics
 
+web.get "/data/topicsList", (req, res, next) ->
+	core.getTopicsList (topics) ->
+		res.jsonp topics
+
+web.get "/data/topicDetails", (req, res, next) ->
+	core.getTopicDetails req.param("id"), (topic) ->
+		res.jsonp topic
+
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->
 		next() if err

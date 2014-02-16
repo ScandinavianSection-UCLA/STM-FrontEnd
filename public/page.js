@@ -145,20 +145,23 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
 
       TopicsContext.prototype.topicSearch_keydown = function(node, e) {
         var fl, _ref;
-        if ((_ref = e.which) === 38 || _ref === 40) {
+        if ((_ref = e.which) === 13 || _ref === 27 || _ref === 38 || _ref === 40) {
           e.preventDefault();
         }
-        if (e.which === 38) {
-          this.set("topicsList_activeIndex", ((fl = this.get("filteredTopics").length) + this.get("topicsList_activeIndex") - 1) % fl);
-          if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
-            $("#topicsList a.list-group-item.active")[0].scrollIntoView(true);
-          }
-        }
-        if (e.which === 40) {
-          this.set("topicsList_activeIndex", (this.get("topicsList_activeIndex") + 1) % this.get("filteredTopics").length);
-          if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
-            return $("#topicsList a.list-group-item.active")[0].scrollIntoView(false);
-          }
+        switch (e.which) {
+          case 27:
+            return $("#topicSearch").blur();
+          case 38:
+            this.set("topicsList_activeIndex", ((fl = this.get("filteredTopics").length) + this.get("topicsList_activeIndex") - 1) % fl);
+            if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
+              return $("#topicsList a.list-group-item.active")[0].scrollIntoView(true);
+            }
+            break;
+          case 40:
+            this.set("topicsList_activeIndex", (this.get("topicsList_activeIndex") + 1) % this.get("filteredTopics").length);
+            if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
+              return $("#topicsList a.list-group-item.active")[0].scrollIntoView(false);
+            }
         }
       };
 

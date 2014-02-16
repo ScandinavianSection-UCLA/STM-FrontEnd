@@ -47,29 +47,31 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 						html: (for c, i in topic.topic.get("name")
 							if i in topic.indices then "<strong>#{c}</strong>" else c
 						).join ""
-
 			constructor: ->
 				super
 				@set "topicSearch_text", ""
 				@set "topicsList_activeIndex", 0
 				@set "topics", (for i in [0...10] then new @Topic i, "Topic #{i}")
-				$("#topicSearch").popover
-					html: true
-					animation: false
-					placement: "bottom"
-					trigger: "focus"
-					content: -> $("#topicsList")
-				.on "hide.bs.popover", -> $("#hidden-content").append $("#topicsList")
+				$("#topicSearch")
+					.popover
+						html: true, animation: false, placement: "bottom", trigger: "focus", content: -> $("#topicsList")
+					.on "hide.bs.popover", -> $("#hidden-content").append $("#topicsList")
 			topicSearch_keydown: (node, e) ->
-				e.preventDefault() if e.which in [38, 40]
-				if e.which is 38
-					@set "topicsList_activeIndex", ((fl = @get("filteredTopics").length) + @get("topicsList_activeIndex") - 1) % fl
-					$("#topicsList a.list-group-item.active")[0].scrollIntoView true unless isScrolledIntoView "#topicsList a.list-group-item.active"
-				if e.which is 40
-					@set "topicsList_activeIndex", (@get("topicsList_activeIndex") + 1) % @get("filteredTopics").length
-					$("#topicsList a.list-group-item.active")[0].scrollIntoView false unless isScrolledIntoView "#topicsList a.list-group-item.active"
+				e.preventDefault() if e.which in [13, 27, 38, 40]
+				switch e.which
+					when 13
+						# ...
+					when 27
+						$("#topicSearch").blur()
+					when 38
+						@set "topicsList_activeIndex", ((fl = @get("filteredTopics").length) + @get("topicsList_activeIndex") - 1) % fl
+						$("#topicsList a.list-group-item.active")[0].scrollIntoView true unless isScrolledIntoView "#topicsList a.list-group-item.active"
+					when 40
+						@set "topicsList_activeIndex", (@get("topicsList_activeIndex") + 1) % @get("filteredTopics").length
+						$("#topicsList a.list-group-item.active")[0].scrollIntoView false unless isScrolledIntoView "#topicsList a.list-group-item.active"
 			topicSearch_input: ->
 				@set "topicsList_activeIndex", 0
+
 			class @::Topic extends Batman.Model
 				constructor: (id, name) ->
 					super
