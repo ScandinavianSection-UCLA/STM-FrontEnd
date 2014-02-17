@@ -245,7 +245,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
       TopicsContext.prototype.gotoTopic = function(node) {
         var _ref, _ref1, _ref2;
         if ((_ref = this.get("topics").filter(function(x) {
-          return x.id === Number($(node).data("id"));
+          return x.get("id") === Number($(node).data("id"));
         })[0]) != null) {
           _ref.onReady((function(_this) {
             return function(err, topic) {

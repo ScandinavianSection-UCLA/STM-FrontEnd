@@ -111,7 +111,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					wait: 0
 					abort: -> console.error arguments
 			gotoTopic: (node) ->
-				@get("topics").filter((x) -> x.id is Number $(node).data "id")[0]?.onReady (err, topic) =>
+				@get("topics").filter((x) -> x.get("id") is Number $(node).data "id")[0]?.onReady (err, topic) =>
 					@set "currentTopic", topic
 					@drawWordCloud()
 					@drawPhraseCloud()
