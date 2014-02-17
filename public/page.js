@@ -32,7 +32,7 @@ define("Batman", ["batman"], function(Batman) {
   return Batman.DOM.readers.batmantarget = Batman.DOM.readers.target && delete Batman.DOM.readers.target && Batman;
 });
 
-require(["jquery", "Batman", "bootstrap", "wordcloud"], function($, Batman, WordCloud) {
+require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, WordCloud) {
   var AppContext, STM, isScrolledIntoView;
   isScrolledIntoView = function(elem) {
     var elemTop;

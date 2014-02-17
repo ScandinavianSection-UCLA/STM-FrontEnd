@@ -14,7 +14,7 @@ appContext = undefined
 
 define "Batman", ["batman"], (Batman) -> Batman.DOM.readers.batmantarget = Batman.DOM.readers.target and delete Batman.DOM.readers.target and Batman
 
-require ["jquery", "Batman", "bootstrap", "wordcloud"], ($, Batman, WordCloud) ->
+require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) ->
 
 	isScrolledIntoView = (elem) ->
 		(elemTop = $(elem).position().top) >= 0 && (elemTop + $(elem).height()) <= $(elem).parent().height()
