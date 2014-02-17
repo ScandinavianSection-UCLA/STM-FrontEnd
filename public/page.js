@@ -190,7 +190,9 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
       TopicsContext.prototype.Topic = (function(_super2) {
         __extends(Topic, _super2);
 
-        function Topic(id, name) {
+        function Topic(_arg) {
+          var id, name;
+          id = _arg.id, name = _arg.name;
           Topic.__super__.constructor.apply(this, arguments);
           this.set("id", id);
           this.set("name", name);

@@ -83,7 +83,7 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 				@set "topicsList_activeIndex", 0
 
 			class @::Topic extends Batman.Model
-				constructor: (id, name) ->
+				constructor: ({id, name}) ->
 					super
 					@set "id", id
 					@set "name", name
