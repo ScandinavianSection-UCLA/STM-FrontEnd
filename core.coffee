@@ -62,7 +62,7 @@ exports.getTopics = (callback) ->
 		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 			Topic.find {}, (err, topics) ->
 				async.map topics, (topic, callback) ->
-					Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
+					Record.find(topic: topic._id).sort(proportion: -1).distinct("article_id").limit(30).exec (err, records) ->
 						callback err,
 							topic: topic.toJSON()
 							records: records.map (x) -> x.toJSON()
