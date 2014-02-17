@@ -3,7 +3,7 @@ require.config
 		jquery: "/components/jquery/jquery.min"
 		bootstrap: "/components/bootstrap/dist/js/bootstrap.min"
 		batman: "/batmanjs/batman"
-		wordcloud: "/wordcloudjs/wordcloud.min"
+		wordcloud: "/wordcloudjs/wordcloud"
 	shim:
 		bootstrap: deps: ["jquery"]
 		batman: deps: ["jquery"], exports: "Batman"
