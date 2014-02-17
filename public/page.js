@@ -169,7 +169,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                   list: topic.get("words").map(function(x) {
                     return [x.word, x.count];
                   }),
-                  scale: 100 / Math.max.apply(Math, topic.get("words").map(function(x) {
+                  weightFactor: 100 / Math.max.apply(Math, topic.get("words").map(function(x) {
                     return x.count;
                   }))
                 });
@@ -177,7 +177,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                   list: topic.get("phrases").map(function(x) {
                     return [x.phrase, x.count];
                   }),
-                  scale: 100 / Math.max.apply(Math, topic.get("phrases").map(function(x) {
+                  weightFactor: 100 / Math.max.apply(Math, topic.get("phrases").map(function(x) {
                     return x.count;
                   }))
                 });
