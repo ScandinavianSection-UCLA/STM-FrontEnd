@@ -129,7 +129,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					@set "name", name
 					@set "isLoaded", false
 				onReady: (callback) ->
-					callback null, @ if @get "isLoaded"
+					return callback null, @ if @get "isLoaded"
 					$.ajax
 						url: "/data/topicDetails", dataType: "jsonp", data: id: @get "id"
 						success: (response) =>
@@ -154,7 +154,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						@set "proportion", proportion
 						@set "isLoaded", false
 					onReady: (callback) ->
-						callback null, @ if @get "isLoaded"
+						return callback null, @ if @get "isLoaded"
 						$.ajax
 							url: "/data/article", dataType: "jsonp", data: article_id: @get "article_id"
 							success: (response) =>

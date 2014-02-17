@@ -287,7 +287,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
 
         Topic.prototype.onReady = function(callback) {
           if (this.get("isLoaded")) {
-            callback(null, this);
+            return callback(null, this);
           }
           return $.ajax({
             url: "/data/topicDetails",
@@ -340,7 +340,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
 
           Record.prototype.onReady = function(callback) {
             if (this.get("isLoaded")) {
-              callback(null, this);
+              return callback(null, this);
             }
             return $.ajax({
               url: "/data/article",
