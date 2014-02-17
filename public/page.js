@@ -302,7 +302,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                 _this.set("words", response.words);
                 _this.set("phrases", response.phrases);
                 _this.set("records", response.records.map(function(x) {
-                  return new Record(x);
+                  return new this.Record(x);
                 }));
                 _this.set("isLoaded", true);
                 return callback(null, _this);

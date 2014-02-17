@@ -137,7 +137,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 							@set "name", response.name
 							@set "words", response.words
 							@set "phrases", response.phrases
-							@set "records", response.records.map (x) -> new Record x
+							@set "records", response.records.map (x) -> new @Record x
 							@set "isLoaded", true
 							callback null, @
 						error: (request) ->
