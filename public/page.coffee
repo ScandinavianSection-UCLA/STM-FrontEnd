@@ -77,21 +77,21 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 							@set "currentTopic", topic
 							WordCloud $("#wordcloud")[0],
 								list: topic.get("words").map (x) ->
-									[x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 28 + 12]
+									[x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12]
 								gridSize: 10
 								minRotation: -0.5
 								maxRotation: 0.5
 								rotateRatio: 0.2
-								ellipticity: 2
+								ellipticity: 0.5
 								abort: -> console.error arguments
 							WordCloud $("#phrasecloud")[0],
 								list: topic.get("phrases").map (x) ->
-									[x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 28 + 12]
+									[x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12]
 								gridSize: 10
 								minRotation: -0.5
 								maxRotation: 0.5
 								rotateRatio: 0.2
-								ellipticity: 2
+								ellipticity: 0.5
 								abort: -> console.error arguments
 					when 27
 						$("#topicSearch").blur()
