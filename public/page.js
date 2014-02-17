@@ -32,7 +32,7 @@ define("Batman", ["batman"], function(Batman) {
   return Batman.DOM.readers.batmantarget = Batman.DOM.readers.target && delete Batman.DOM.readers.target && Batman;
 });
 
-require(["jquery", "Batman", "bootstrap"], function($, Batman) {
+require(["jquery", "Batman", "bootstrap", "wordcloud"], function($, Batman, WordCloud) {
   var AppContext, STM, isScrolledIntoView;
   isScrolledIntoView = function(elem) {
     var elemTop;
@@ -164,7 +164,17 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
             $("#topicSearch").blur();
             return (_ref3 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref3.onReady((function(_this) {
               return function(err, topic) {
-                return _this.set("currentTopic", topic);
+                _this.set("currentTopic", topic);
+                WordCloud($("#wordcloud")[0], {
+                  list: topic.get("words").map(function(x) {
+                    return [x.word, x.count];
+                  })
+                });
+                return WordCloud($("#phrasecloud")[0], {
+                  list: topic.get("phrases").map(function(x) {
+                    return [x.phrase, x.count];
+                  })
+                });
               };
             })(this)) : void 0;
           case 27:
@@ -210,7 +220,11 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
             },
             success: (function(_this) {
               return function(response) {
-                console.log(response);
+                _this.set("id", response.id);
+                _this.set("name", response.name);
+                _this.set("words", response.words);
+                _this.set("phrases", response.phrases);
+                _this.set("records", response.records);
                 return callback(null, _this);
               };
             })(this),

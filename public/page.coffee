@@ -14,7 +14,7 @@ appContext = undefined
 
 define "Batman", ["batman"], (Batman) -> Batman.DOM.readers.batmantarget = Batman.DOM.readers.target and delete Batman.DOM.readers.target and Batman
 
-require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
+require ["jquery", "Batman", "bootstrap", "wordcloud"], ($, Batman, WordCloud) ->
 
 	isScrolledIntoView = (elem) ->
 		(elemTop = $(elem).position().top) >= 0 && (elemTop + $(elem).height()) <= $(elem).parent().height()
@@ -71,6 +71,8 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 						$("#topicSearch").blur()
 						@get("topics")[@get "topicsList_activeIndex"]?.onReady (err, topic) =>
 							@set "currentTopic", topic
+							WordCloud $("#wordcloud")[0], list: topic.get("words").map (x) -> [x.word, x.count]
+							WordCloud $("#phrasecloud")[0], list: topic.get("phrases").map (x) -> [x.phrase, x.count]
 					when 27
 						$("#topicSearch").blur()
 					when 38
@@ -92,7 +94,11 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 					$.ajax
 						url: "/data/topicDetails", dataType: "jsonp", data: id: @get "id"
 						success: (response) =>
-							console.log response
+							@set "id", response.id
+							@set "name", response.name
+							@set "words", response.words
+							@set "phrases", response.phrases
+							@set "records", response.records
 							callback null, @
 						error: (request) ->
 							console.error request
