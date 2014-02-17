@@ -164,22 +164,29 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             $("#topicSearch").blur();
             return (_ref3 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref3.onReady((function(_this) {
               return function(err, topic) {
+                var phrasesMax, phrasesMin, wordsMax, wordsMin;
+                wordsMax = Math.max.apply(Math, topic.get("words").map(function(x) {
+                  return x.count;
+                }));
+                wordsMin = Math.min.apply(Math, topic.get("words").map(function(x) {
+                  return x.count;
+                }));
+                phrasesMax = Math.max.apply(Math, topic.get("phrases").map(function(x) {
+                  return x.count;
+                }));
+                phrasesMin = Math.min.apply(Math, topic.get("phrases").map(function(x) {
+                  return x.count;
+                }));
                 _this.set("currentTopic", topic);
                 WordCloud($("#wordcloud")[0], {
                   list: topic.get("words").map(function(x) {
-                    return [x.word, x.count];
-                  }),
-                  weightFactor: 100 / Math.max.apply(Math, topic.get("words").map(function(x) {
-                    return x.count;
-                  }))
+                    return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 40 + 10];
+                  })
                 });
                 return WordCloud($("#phrasecloud")[0], {
                   list: topic.get("phrases").map(function(x) {
-                    return [x.phrase, x.count];
-                  }),
-                  weightFactor: 100 / Math.max.apply(Math, topic.get("phrases").map(function(x) {
-                    return x.count;
-                  }))
+                    return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 40 + 10];
+                  })
                 });
               };
             })(this)) : void 0;
