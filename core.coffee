@@ -37,9 +37,17 @@ exports.getTopicDetails = (id, callback) ->
 					callback null,
 						id: topic.id
 						name: topic.name
-						words: topicXML.word.map (x) -> word: x._, weight: Number x.$.weight, count: Number x.$.count
-						phrases: topicXML.phrase.map (x) -> phrase: x._, weight: Number x.$.weight, count: Number x.$.count
-						records: records.map (x) -> article_id: x.article_id, proportion: x.proportion
+						words: topicXML.word.map (x) ->
+							word: x._
+							weight: Number x.$.weight
+							count: Number x.$.count
+						phrases: topicXML.phrase.map (x) ->
+							phrase: x._
+							weight: Number x.$.weight
+							count: Number x.$.count
+						records: records.map (x) ->
+							article_id: x.article_id
+							proportion: x.proportion
 
 
 ###
