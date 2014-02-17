@@ -71,8 +71,12 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						$("#topicSearch").blur()
 						@get("topics")[@get "topicsList_activeIndex"]?.onReady (err, topic) =>
 							@set "currentTopic", topic
-							WordCloud $("#wordcloud")[0], list: topic.get("words").map (x) -> [x.word, x.count]
-							WordCloud $("#phrasecloud")[0], list: topic.get("phrases").map (x) -> [x.phrase, x.count]
+							WordCloud $("#wordcloud")[0],
+								list: topic.get("words").map (x) -> [x.word, x.count]
+								scale: 100 / Math.max topic.get("words").map((x) -> x.count)...
+							WordCloud $("#phrasecloud")[0],
+								list: topic.get("phrases").map (x) -> [x.phrase, x.count]
+								scale: 100 / Math.max topic.get("phrases").map((x) -> x.count)...
 					when 27
 						$("#topicSearch").blur()
 					when 38
