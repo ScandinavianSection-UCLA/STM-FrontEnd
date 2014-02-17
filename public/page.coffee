@@ -110,6 +110,9 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					ellipticity: 0.5
 					wait: 0
 					abort: -> console.error arguments
+			gotoTopic: (node) ->
+				console.log arguments
+
 			class @::Topic extends Batman.Model
 				constructor: ({id, name}) ->
 					super

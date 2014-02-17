@@ -242,6 +242,10 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
         });
       };
 
+      TopicsContext.prototype.gotoTopic = function(node) {
+        return console.log(arguments);
+      };
+
       TopicsContext.prototype.Topic = (function(_super2) {
         __extends(Topic, _super2);
 
