@@ -67,12 +67,13 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 				e.preventDefault() if e.which in [13, 27, 38, 40]
 				switch e.which
 					when 13
-						@set "topicSearch_text", @get("topics")[@get "topicsList_activeIndex"]?.get("name") ? ""
 						$("#topicSearch").blur()
 						@get("filteredTopics")[@get "topicsList_activeIndex"]?.topic.onReady (err, topic) =>
 							@set "currentTopic", topic
 							@drawWordCloud()
 							@drawPhraseCloud()
+						@set "topicSearch_text", @get("topics")[@get "topicsList_activeIndex"]?.get("name") ? ""
+						@set "topicsList_activeIndex", 0
 					when 27
 						$("#topicSearch").blur()
 					when 38

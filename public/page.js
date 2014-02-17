@@ -160,15 +160,18 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
         }
         switch (e.which) {
           case 13:
-            this.set("topicSearch_text", (_ref1 = (_ref2 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
             $("#topicSearch").blur();
-            return (_ref3 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null ? _ref3.topic.onReady((function(_this) {
-              return function(err, topic) {
-                _this.set("currentTopic", topic);
-                _this.drawWordCloud();
-                return _this.drawPhraseCloud();
-              };
-            })(this)) : void 0;
+            if ((_ref1 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null) {
+              _ref1.topic.onReady((function(_this) {
+                return function(err, topic) {
+                  _this.set("currentTopic", topic);
+                  _this.drawWordCloud();
+                  return _this.drawPhraseCloud();
+                };
+              })(this));
+            }
+            this.set("topicSearch_text", (_ref2 = (_ref3 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref3.get("name") : void 0) != null ? _ref2 : "");
+            return this.set("topicsList_activeIndex", 0);
           case 27:
             return $("#topicSearch").blur();
           case 38:
