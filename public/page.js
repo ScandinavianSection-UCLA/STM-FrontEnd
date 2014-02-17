@@ -264,12 +264,25 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
       TopicsContext.prototype.Topic = (function(_super2) {
         __extends(Topic, _super2);
 
+        Topic.accessor("filteredRecords", function() {
+          var _ref;
+          return (_ref = this.get("records")) != null ? _ref.map((function(_this) {
+            return function(record, idx) {
+              return {
+                record: record,
+                active: record === _this.get("activeRecord")
+              };
+            };
+          })(this)) : void 0;
+        });
+
         function Topic(_arg) {
           var id, name;
           id = _arg.id, name = _arg.name;
           Topic.__super__.constructor.apply(this, arguments);
           this.set("id", id);
           this.set("name", name);
+          this.set("isLoaded", false);
         }
 
         Topic.prototype.onReady = function(callback) {
@@ -288,7 +301,10 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                 _this.set("name", response.name);
                 _this.set("words", response.words);
                 _this.set("phrases", response.phrases);
-                _this.set("records", response.records);
+                _this.set("records", response.records.map(function(x) {
+                  return new Record(x);
+                }));
+                _this.set("isLoaded", true);
                 return callback(null, _this);
               };
             })(this),
@@ -298,6 +314,58 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             }
           });
         };
+
+        Topic.prototype.gotoArticle = function(node) {
+          var _ref;
+          return (_ref = this.get("records").filter(function(x) {
+            return x.get("article_id") === $(node).children("span").text();
+          })[0]) != null ? _ref.onReady((function(_this) {
+            return function(err, record) {
+              return _this.set("activeRecord", record);
+            };
+          })(this)) : void 0;
+        };
+
+        Topic.prototype.Record = (function(_super3) {
+          __extends(Record, _super3);
+
+          function Record(_arg) {
+            var article_id, proportion;
+            article_id = _arg.article_id, proportion = _arg.proportion;
+            Record.__super__.constructor.apply(this, arguments);
+            this.set("article_id", article_id);
+            this.set("proportion", proportion);
+            this.set("isLoaded", false);
+          }
+
+          Record.prototype.onReady = function(callback) {
+            if (this.get("isLoaded")) {
+              callback(null, this);
+            }
+            return $.ajax({
+              url: "/data/article",
+              dataType: "jsonp",
+              data: {
+                article_id: this.get("article_id")
+              },
+              success: (function(_this) {
+                return function(response) {
+                  _this.set("article_id", response.article_id);
+                  _this.set("article", response.article);
+                  _this.set("isLoaded", true);
+                  return callback(null, _this);
+                };
+              })(this),
+              error: function(request) {
+                console.error(request);
+                return callback(request);
+              }
+            });
+          };
+
+          return Record;
+
+        })(Batman.Model);
 
         return Topic;
 

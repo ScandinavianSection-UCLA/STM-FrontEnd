@@ -49,8 +49,14 @@ exports.getTopicDetails = (id, callback) ->
 							article_id: x.article_id
 							proportion: x.proportion
 
+exports.getArticle = (article_id, callback) ->
+	fs.readFile "/home/gotemb/topic1/1888/#{article_id}.txt", encoding: "utf8", (err, doc) ->
+		return callback err if err?
+		callback
+			article_id: article_id
+			article: doc
 
-###
+# Deprecated
 exports.getTopics = (callback) ->
 	fs.readFile "/home/gotemb/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
 		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
@@ -71,4 +77,3 @@ exports.getTopics = (callback) ->
 									weight: Number x.$.weight
 									count: Number x.$.count
 				, callback
-###

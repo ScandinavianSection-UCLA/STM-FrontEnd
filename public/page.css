@@ -20,3 +20,12 @@ body {
   max-width: 100%;
   width: 100%;
 }
+#relatedArticles .list-group {
+  border-bottom: solid 1px #ddd;
+  overflow: scroll;
+  height: 246px;
+}
+#relatedArticles .panel-body {
+  overflow: scroll;
+  height: 314px;
+}

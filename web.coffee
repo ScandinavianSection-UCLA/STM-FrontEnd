@@ -26,6 +26,11 @@ web.get "/data/topicDetails", (req, res, next) ->
 		return res.jsonp 500, err if err?
 		res.jsonp topic
 
+web.get "/data/article", (req, res, next) ->
+	core.getArticle req.param("article_id"), (err, article) ->
+		return res.jsonp 500, err if err?
+		res.jsonp article
+
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->
 		next() if err

@@ -117,11 +117,17 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					@drawPhraseCloud()
 				@set "topicSearch_text", @get("topics").filter((x) -> x.get("id") is Number $(node).data "id")[0]?.get("name") ? ""
 				@set "topicsList_activeIndex", 0
+
 			class @::Topic extends Batman.Model
+				@accessor "filteredRecords", ->
+					@get("records")?.map (record, idx) =>
+						record: record
+						active: record is @get "activeRecord"
 				constructor: ({id, name}) ->
 					super
 					@set "id", id
 					@set "name", name
+					@set "isLoaded", false
 				onReady: (callback) ->
 					callback null, @ if @get "isLoaded"
 					$.ajax
@@ -131,11 +137,34 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 							@set "name", response.name
 							@set "words", response.words
 							@set "phrases", response.phrases
-							@set "records", response.records
+							@set "records", response.records.map (x) -> new Record x
+							@set "isLoaded", true
 							callback null, @
 						error: (request) ->
 							console.error request
 							callback request
+				gotoArticle: (node) ->
+					@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text())[0]?.onReady (err, record) =>
+						@set "activeRecord", record
+
+				class @::Record extends Batman.Model
+					constructor: ({article_id, proportion}) ->
+						super
+						@set "article_id", article_id
+						@set "proportion", proportion
+						@set "isLoaded", false
+					onReady: (callback) ->
+						callback null, @ if @get "isLoaded"
+						$.ajax
+							url: "/data/article", dataType: "jsonp", data: article_id: @get "article_id"
+							success: (response) =>
+								@set "article_id", response.article_id
+								@set "article", response.article
+								@set "isLoaded", true
+								callback null, @
+							error: (request) ->
+								console.error request
+								callback request
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

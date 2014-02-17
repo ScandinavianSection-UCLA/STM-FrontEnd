@@ -21,18 +21,18 @@ block content
 					.panel-heading
 						h3.panel-title Top-ranked Words
 					.panel-body
-						#wordcloud(style = "height: 250px; position: relative")
+						#wordcloud(style = "height: 220px; position: relative")
 				.panel.panel-default
 					.panel-heading
 						h3.panel-title Top-ranked Phrases
 					.panel-body
-						#phrasecloud(style = "height: 250px; position: relative")
+						#phrasecloud(style = "height: 220px; position: relative")
 			.col-md-6(data-context = "currentTopic")
-				.panel.panel-default
+				#relatedArticles.panel.panel-default
 					.panel-heading
 						h3.panel-title Related Articles
 					.list-group
-						a.list-group-item(href = "#", data-foreach-record = "records", data-addclass-active = "record.active")
+						a.list-group-item(href = "#", data-foreach-record = "records", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
 							span(data-bind = "record.article_id")
 					.panel-body
-						| ...
+						p(data-bind = "activeRecord.article")
