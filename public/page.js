@@ -243,7 +243,22 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
       };
 
       TopicsContext.prototype.gotoTopic = function(node) {
-        return console.log(arguments);
+        var _ref, _ref1, _ref2;
+        if ((_ref = this.get("topics").filter(function(x) {
+          return x.id === Number($(node).data("id"));
+        })[0]) != null) {
+          _ref.onReady((function(_this) {
+            return function(err, topic) {
+              _this.set("currentTopic", topic);
+              _this.drawWordCloud();
+              return _this.drawPhraseCloud();
+            };
+          })(this));
+        }
+        this.set("topicSearch_text", (_ref1 = (_ref2 = this.get("topics").filter(function(x) {
+          return x.id === Number($(node).data("id"));
+        })[0]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
+        return this.set("topicsList_activeIndex", 0);
       };
 
       TopicsContext.prototype.Topic = (function(_super2) {

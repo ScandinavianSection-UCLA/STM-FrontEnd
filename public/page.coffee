@@ -111,8 +111,12 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					wait: 0
 					abort: -> console.error arguments
 			gotoTopic: (node) ->
-				console.log arguments
-
+				@get("topics").filter((x) -> x.id is Number $(node).data "id")[0]?.onReady (err, topic) =>
+					@set "currentTopic", topic
+					@drawWordCloud()
+					@drawPhraseCloud()
+				@set "topicSearch_text", @get("topics").filter((x) -> x.id is Number $(node).data "id")[0]?.get("name") ? ""
+				@set "topicsList_activeIndex", 0
 			class @::Topic extends Batman.Model
 				constructor: ({id, name}) ->
 					super
