@@ -82,6 +82,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 								minRotation: -0.5
 								maxRotation: 0.5
 								rotateRatio: 0.2
+								ellipticity: 2
 								abort: -> console.error arguments
 							WordCloud $("#phrasecloud")[0],
 								list: topic.get("phrases").map (x) ->
@@ -90,6 +91,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 								minRotation: -0.5
 								maxRotation: 0.5
 								rotateRatio: 0.2
+								ellipticity: 2
 								abort: -> console.error arguments
 					when 27
 						$("#topicSearch").blur()

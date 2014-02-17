@@ -186,6 +186,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                   minRotation: -0.5,
                   maxRotation: 0.5,
                   rotateRatio: 0.2,
+                  ellipticity: 2,
                   abort: function() {
                     return console.error(arguments);
                   }
@@ -198,6 +199,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                   minRotation: -0.5,
                   maxRotation: 0.5,
                   rotateRatio: 0.2,
+                  ellipticity: 2,
                   abort: function() {
                     return console.error(arguments);
                   }
