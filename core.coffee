@@ -52,7 +52,7 @@ exports.getTopicDetails = (id, callback) ->
 exports.getArticle = (article_id, callback) ->
 	fs.readFile "/home/gotemb/topic1/1888/#{article_id}.txt", encoding: "utf8", (err, doc) ->
 		return callback err if err?
-		callback
+		callback null,
 			article_id: article_id
 			article: doc
 
