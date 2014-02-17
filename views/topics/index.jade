@@ -35,7 +35,7 @@ block content
 						a.list-group-item(href = "#", data-foreach-record = "filteredRecords", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
 							span(data-bind = "record.record.article_id")
 							svg(height = 36, width = 36)
-								path(data-bind-d = "record.proportionPie")
+								path(data-bind-d = "record.record.proportionPie")
 								circle(cx = 18, cy = 18, r = 15)
 					.panel-body
 						p(data-bind = "activeRecord.article")
