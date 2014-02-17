@@ -315,7 +315,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           });
         };
 
-        Topic.prototype.gotoArticle = function(node) {
+        Topic.prototype.gotoRecord = function(node) {
           var _ref;
           return (_ref = this.get("records").filter(function(x) {
             return x.get("article_id") === $(node).children("span").text();

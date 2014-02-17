@@ -143,7 +143,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						error: (request) ->
 							console.error request
 							callback request
-				gotoArticle: (node) ->
+				gotoRecord: (node) ->
 					@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text())[0]?.onReady (err, record) =>
 						@set "activeRecord", record
 
