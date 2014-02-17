@@ -180,13 +180,21 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
                 _this.set("currentTopic", topic);
                 WordCloud($("#wordcloud")[0], {
                   list: topic.get("words").map(function(x) {
-                    return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 40 + 10];
-                  })
+                    return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 20];
+                  }),
+                  gridSize: 16,
+                  minRotation: 0,
+                  maxRotation: 1,
+                  rotateRatio: 0.5
                 });
                 return WordCloud($("#phrasecloud")[0], {
                   list: topic.get("phrases").map(function(x) {
-                    return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 40 + 10];
-                  })
+                    return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 20];
+                  }),
+                  gridSize: 16,
+                  minRotation: 0,
+                  maxRotation: 1,
+                  rotateRatio: 0.5
                 });
               };
             })(this)) : void 0;
