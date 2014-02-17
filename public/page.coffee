@@ -148,6 +148,15 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						@set "activeRecord", record
 
 				class @::Record extends Batman.Model
+					@accessor "proportionPie", ->
+						p = 100 * @get "proportion"
+						p = 99.99 if p > 99.99
+						"""
+							M 18 18
+							L 18 3
+							A 15 15 0 #{if p < 50 then 0 else 1} 1 #{18 + 15 * Math.sin p * Math.PI / 50} #{18 - 15 * Math.cos p * Math.PI / 50}
+							Z
+						"""
 					constructor: ({article_id, proportion}) ->
 						super
 						@set "article_id", article_id

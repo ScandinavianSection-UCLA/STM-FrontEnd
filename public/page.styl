@@ -8,14 +8,14 @@ html, body
 		overflow scroll
 		max-height 250px
 
-	a.list-group-item
-		border-width 0
-		border-top-width 1px
-		padding 7px 13px
-		width 100%
+		a.list-group-item
+			border-width 0
+			border-top-width 1px
+			padding 7px 13px
+			width 100%
 
-		&:first-of-type
-			border-top-width 0
+			&:first-of-type
+				border-top-width 0
 
 .popover
 	max-width 100%
@@ -27,6 +27,20 @@ html, body
 		border-bottom solid 1px rgb(221, 221, 221)
 		overflow scroll
 		height 246px
+
+		a.list-group-item
+			position relative
+
+			svg
+				position absolute
+				left 3px
+				top 3px
+
+				circle
+					fill rgba(225, 225, 225, 0.4)
+
+				path
+					fill rgba(100, 100, 100, 1)
 
 	.panel-body
 		overflow scroll

@@ -7,13 +7,13 @@ body {
   overflow: scroll;
   max-height: 250px;
 }
-#topicsList a.list-group-item {
+#topicsList .list-group a.list-group-item {
   border-width: 0;
   border-top-width: 1px;
   padding: 7px 13px;
   width: 100%;
 }
-#topicsList a.list-group-item:first-of-type {
+#topicsList .list-group a.list-group-item:first-of-type {
   border-top-width: 0;
 }
 .popover {
@@ -24,6 +24,20 @@ body {
   border-bottom: solid 1px #ddd;
   overflow: scroll;
   height: 246px;
+}
+#relatedArticles .list-group a.list-group-item {
+  position: relative;
+}
+#relatedArticles .list-group a.list-group-item svg {
+  position: absolute;
+  left: 3px;
+  top: 3px;
+}
+#relatedArticles .list-group a.list-group-item svg circle {
+  fill: rgba(225,225,225,0.4);
+}
+#relatedArticles .list-group a.list-group-item svg path {
+  fill: #646464;
 }
 #relatedArticles .panel-body {
   overflow: scroll;
