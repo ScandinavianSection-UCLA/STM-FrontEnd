@@ -164,46 +164,9 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             $("#topicSearch").blur();
             return (_ref3 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref3.onReady((function(_this) {
               return function(err, topic) {
-                var phrasesMax, phrasesMin, wordsMax, wordsMin;
-                wordsMax = Math.max.apply(Math, topic.get("words").map(function(x) {
-                  return x.count;
-                }));
-                wordsMin = Math.min.apply(Math, topic.get("words").map(function(x) {
-                  return x.count;
-                }));
-                phrasesMax = Math.max.apply(Math, topic.get("phrases").map(function(x) {
-                  return x.count;
-                }));
-                phrasesMin = Math.min.apply(Math, topic.get("phrases").map(function(x) {
-                  return x.count;
-                }));
                 _this.set("currentTopic", topic);
-                WordCloud($("#wordcloud")[0], {
-                  list: topic.get("words").map(function(x) {
-                    return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12];
-                  }),
-                  gridSize: 10,
-                  minRotation: -0.5,
-                  maxRotation: 0.5,
-                  rotateRatio: 0.2,
-                  ellipticity: 0.5,
-                  abort: function() {
-                    return console.error(arguments);
-                  }
-                });
-                return WordCloud($("#phrasecloud")[0], {
-                  list: topic.get("phrases").map(function(x) {
-                    return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12];
-                  }),
-                  gridSize: 10,
-                  minRotation: -0.5,
-                  maxRotation: 0.5,
-                  rotateRatio: 0.2,
-                  ellipticity: 0.5,
-                  abort: function() {
-                    return console.error(arguments);
-                  }
-                });
+                _this.drawWordCloud();
+                return _this.drawPhraseCloud();
               };
             })(this)) : void 0;
           case 27:
@@ -224,6 +187,54 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
 
       TopicsContext.prototype.topicSearch_input = function() {
         return this.set("topicsList_activeIndex", 0);
+      };
+
+      TopicsContext.prototype.drawWordCloud = function() {
+        var wordsMax, wordsMin;
+        wordsMax = Math.max.apply(Math, this.get("currentTopic").get("words").map(function(x) {
+          return x.count;
+        }));
+        wordsMin = Math.min.apply(Math, this.get("currentTopic").get("words").map(function(x) {
+          return x.count;
+        }));
+        return WordCloud($("#wordcloud")[0], {
+          list: this.get("currentTopic").get("words").map(function(x) {
+            return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12];
+          }),
+          gridSize: 10,
+          minRotation: -0.5,
+          maxRotation: 0.5,
+          rotateRatio: 0.2,
+          ellipticity: 0.5,
+          wait: 0,
+          abort: function() {
+            return console.error(arguments);
+          }
+        });
+      };
+
+      TopicsContext.prototype.drawPhraseCloud = function() {
+        var phrasesMax, phrasesMin;
+        phrasesMax = Math.max.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
+          return x.count;
+        }));
+        phrasesMin = Math.min.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
+          return x.count;
+        }));
+        return WordCloud($("#phrasecloud")[0], {
+          list: this.get("currentTopic").get("phrases").map(function(x) {
+            return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12];
+          }),
+          gridSize: 10,
+          minRotation: -0.5,
+          maxRotation: 0.5,
+          rotateRatio: 0.2,
+          ellipticity: 0.5,
+          wait: 0,
+          abort: function() {
+            return console.error(arguments);
+          }
+        });
       };
 
       TopicsContext.prototype.Topic = (function(_super2) {

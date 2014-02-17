@@ -70,29 +70,9 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						@set "topicSearch_text", @get("topics")[@get "topicsList_activeIndex"]?.get("name") ? ""
 						$("#topicSearch").blur()
 						@get("topics")[@get "topicsList_activeIndex"]?.onReady (err, topic) =>
-							wordsMax = Math.max topic.get("words").map((x) -> x.count)...
-							wordsMin = Math.min topic.get("words").map((x) -> x.count)...
-							phrasesMax = Math.max topic.get("phrases").map((x) -> x.count)...
-							phrasesMin = Math.min topic.get("phrases").map((x) -> x.count)...
 							@set "currentTopic", topic
-							WordCloud $("#wordcloud")[0],
-								list: topic.get("words").map (x) ->
-									[x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12]
-								gridSize: 10
-								minRotation: -0.5
-								maxRotation: 0.5
-								rotateRatio: 0.2
-								ellipticity: 0.5
-								abort: -> console.error arguments
-							WordCloud $("#phrasecloud")[0],
-								list: topic.get("phrases").map (x) ->
-									[x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12]
-								gridSize: 10
-								minRotation: -0.5
-								maxRotation: 0.5
-								rotateRatio: 0.2
-								ellipticity: 0.5
-								abort: -> console.error arguments
+							@drawWordCloud()
+							@drawPhraseCloud()
 					when 27
 						$("#topicSearch").blur()
 					when 38
@@ -103,7 +83,32 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						$("#topicsList a.list-group-item.active")[0].scrollIntoView false unless isScrolledIntoView "#topicsList a.list-group-item.active"
 			topicSearch_input: ->
 				@set "topicsList_activeIndex", 0
-
+			drawWordCloud: ->
+				wordsMax = Math.max @get("currentTopic").get("words").map((x) -> x.count)...
+				wordsMin = Math.min @get("currentTopic").get("words").map((x) -> x.count)...
+				WordCloud $("#wordcloud")[0],
+					list: @get("currentTopic").get("words").map (x) ->
+						[x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12]
+					gridSize: 10
+					minRotation: -0.5
+					maxRotation: 0.5
+					rotateRatio: 0.2
+					ellipticity: 0.5
+					wait: 0
+					abort: -> console.error arguments
+			drawPhraseCloud: ->
+				phrasesMax = Math.max @get("currentTopic").get("phrases").map((x) -> x.count)...
+				phrasesMin = Math.min @get("currentTopic").get("phrases").map((x) -> x.count)...
+				WordCloud $("#phrasecloud")[0],
+					list: @get("currentTopic").get("phrases").map (x) ->
+						[x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12]
+					gridSize: 10
+					minRotation: -0.5
+					maxRotation: 0.5
+					rotateRatio: 0.2
+					ellipticity: 0.5
+					wait: 0
+					abort: -> console.error arguments
 			class @::Topic extends Batman.Model
 				constructor: ({id, name}) ->
 					super
