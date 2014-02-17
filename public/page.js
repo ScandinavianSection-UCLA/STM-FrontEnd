@@ -154,7 +154,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
       }
 
       TopicsContext.prototype.topicSearch_keydown = function(node, e) {
-        var fl, _ref, _ref1, _ref2, _ref3;
+        var fl, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
         if ((_ref = e.which) === 13 || _ref === 27 || _ref === 38 || _ref === 40) {
           e.preventDefault();
         }
@@ -162,15 +162,17 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           case 13:
             $("#topicSearch").blur();
             if ((_ref1 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null) {
-              _ref1.topic.onReady((function(_this) {
-                return function(err, topic) {
-                  _this.set("currentTopic", topic);
-                  _this.drawWordCloud();
-                  return _this.drawPhraseCloud();
-                };
-              })(this));
+              if ((_ref2 = _ref1.topic) != null) {
+                _ref2.onReady((function(_this) {
+                  return function(err, topic) {
+                    _this.set("currentTopic", topic);
+                    _this.drawWordCloud();
+                    return _this.drawPhraseCloud();
+                  };
+                })(this));
+              }
             }
-            this.set("topicSearch_text", (_ref2 = (_ref3 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref3.get("name") : void 0) != null ? _ref2 : "");
+            this.set("topicSearch_text", (_ref3 = (_ref4 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null ? (_ref5 = _ref4.topic) != null ? _ref5.get("name") : void 0 : void 0) != null ? _ref3 : "");
             return this.set("topicsList_activeIndex", 0);
           case 27:
             return $("#topicSearch").blur();

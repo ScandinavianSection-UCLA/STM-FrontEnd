@@ -68,11 +68,11 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 				switch e.which
 					when 13
 						$("#topicSearch").blur()
-						@get("filteredTopics")[@get "topicsList_activeIndex"]?.topic.onReady (err, topic) =>
+						@get("filteredTopics")[@get "topicsList_activeIndex"]?.topic?.onReady (err, topic) =>
 							@set "currentTopic", topic
 							@drawWordCloud()
 							@drawPhraseCloud()
-						@set "topicSearch_text", @get("topics")[@get "topicsList_activeIndex"]?.get("name") ? ""
+						@set "topicSearch_text", @get("filteredTopics")[@get "topicsList_activeIndex"]?.topic?.get("name") ? ""
 						@set "topicsList_activeIndex", 0
 					when 27
 						$("#topicSearch").blur()
