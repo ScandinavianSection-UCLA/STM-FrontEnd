@@ -256,7 +256,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           })(this));
         }
         this.set("topicSearch_text", (_ref1 = (_ref2 = this.get("topics").filter(function(x) {
-          return x.id === Number($(node).data("id"));
+          return x.get("id") === Number($(node).data("id"));
         })[0]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
         return this.set("topicsList_activeIndex", 0);
       };

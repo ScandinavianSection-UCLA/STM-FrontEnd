@@ -115,7 +115,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					@set "currentTopic", topic
 					@drawWordCloud()
 					@drawPhraseCloud()
-				@set "topicSearch_text", @get("topics").filter((x) -> x.id is Number $(node).data "id")[0]?.get("name") ? ""
+				@set "topicSearch_text", @get("topics").filter((x) -> x.get("id") is Number $(node).data "id")[0]?.get("name") ? ""
 				@set "topicsList_activeIndex", 0
 			class @::Topic extends Batman.Model
 				constructor: ({id, name}) ->
