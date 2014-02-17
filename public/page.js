@@ -329,6 +329,15 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
         Topic.prototype.Record = (function(_super3) {
           __extends(Record, _super3);
 
+          Record.accessor("proportionPie", function() {
+            var p;
+            p = 100 * this.get("proportion");
+            if (p > 99.99) {
+              p = 99.99;
+            }
+            return "M 18 18\nL 18 3\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 1 " + (18 + 15 * Math.sin(p * Math.PI / 50)) + " " + (18 - 15 * Math.cos(p * Math.PI / 50)) + "\nZ";
+          });
+
           function Record(_arg) {
             var article_id, proportion;
             article_id = _arg.article_id, proportion = _arg.proportion;

@@ -30,8 +30,8 @@ body {
 }
 #relatedArticles .list-group a.list-group-item svg {
   position: absolute;
-  left: 3px;
-  top: 3px;
+  right: 2px;
+  top: 2px;
 }
 #relatedArticles .list-group a.list-group-item svg circle {
   fill: rgba(225,225,225,0.4);
