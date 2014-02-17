@@ -65,6 +65,10 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
     AppContext.prototype.TopicsContext = (function(_super1) {
       __extends(TopicsContext, _super1);
 
+      TopicsContext.accessor("isCurrentTopicSelected", function() {
+        return this.get("currentTopic") != null;
+      });
+
       TopicsContext.accessor("filteredTopics", function() {
         var findInStr;
         findInStr = function(chars, str, j) {
@@ -118,18 +122,23 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
       });
 
       function TopicsContext() {
-        var i;
         TopicsContext.__super__.constructor.apply(this, arguments);
         this.set("topicSearch_text", "");
         this.set("topicsList_activeIndex", 0);
-        this.set("topics", (function() {
-          var _i, _results;
-          _results = [];
-          for (i = _i = 0; _i < 10; i = ++_i) {
-            _results.push(new this.Topic(i, "Topic " + i));
+        $.ajax({
+          url: "/data/topicsList",
+          dataType: "jsonp",
+          success: (function(_this) {
+            return function(response) {
+              return _this.set("topics", response.map(function(x) {
+                return new _this.Topic(x);
+              }));
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
           }
-          return _results;
-        }).call(this));
+        });
         $("#topicSearch").popover({
           html: true,
           animation: false,
@@ -144,11 +153,19 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
       }
 
       TopicsContext.prototype.topicSearch_keydown = function(node, e) {
-        var fl, _ref;
+        var fl, _ref, _ref1, _ref2, _ref3;
         if ((_ref = e.which) === 13 || _ref === 27 || _ref === 38 || _ref === 40) {
           e.preventDefault();
         }
         switch (e.which) {
+          case 13:
+            this.set("topicSearch_text", (_ref1 = (_ref2 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
+            $("#topicSearch").blur();
+            return (_ref3 = this.get("topics")[this.get("topicsList_activeIndex")]) != null ? _ref3.onReady((function(_this) {
+              return function(err, topic) {
+                return _this.set("currentTopic", topic);
+              };
+            })(this)) : void 0;
           case 27:
             return $("#topicSearch").blur();
           case 38:
@@ -177,6 +194,29 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
           this.set("id", id);
           this.set("name", name);
         }
+
+        Topic.prototype.onReady = function(callback) {
+          if (this.get("isLoaded")) {
+            callback(null, this);
+          }
+          return $.ajax({
+            url: "/data/topicDetails",
+            dataType: "jsonp",
+            data: {
+              id: this.get("id")
+            },
+            success: (function(_this) {
+              return function(response) {
+                console.log(response);
+                return callback(null, _this);
+              };
+            })(this),
+            error: function(request) {
+              console.error(request);
+              return callback(request);
+            }
+          });
+        };
 
         return Topic;
 

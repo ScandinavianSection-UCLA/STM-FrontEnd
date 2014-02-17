@@ -15,7 +15,7 @@ block content
 				nav.navbar.navbar-default
 					form.navbar-form
 						input#topicSearch.form-control(type = "text", placeholder = "Topic…", style = "width: 100%", data-bind = "topicSearch_text", data-event-keydown = "appContext.topicsContext.topicSearch_keydown", data-event-input = "appContext.topicsContext.topicSearch_input", autocomplete = "off")
-		.row
+		.row(data-showif = "isCurrentTopicSelected", style = "display: none")
 			.col-md-6
 				.panel.panel-default
 					.panel-heading

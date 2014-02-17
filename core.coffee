@@ -19,7 +19,8 @@ Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 
 exports.getTopicsList = (callback) ->
 	Topic.find {}, (err, topics) ->
-		callback topics.map (topic) ->
+		return callback err if err?
+		callback null, topics.map (topic) ->
 			name: topic.name
 			id: topic.id
 
@@ -33,7 +34,7 @@ exports.getTopicDetails = (id, callback) ->
 				topicXML = doc.filter((x) -> x.$.id is "#{id}")[0]
 				Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 					return callback err if err?
-					callback
+					callback null,
 						id: topic.id
 						name: topic.name
 						words: topicXML.word.map (x) -> word: x._, weight: Number x.$.weight, count: Number x.$.count

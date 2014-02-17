@@ -30,6 +30,7 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 				super
 
 		class @::TopicsContext extends Batman.Model
+			@accessor "isCurrentTopicSelected", -> @get("currentTopic")?
 			@accessor "filteredTopics", ->
 				findInStr = (chars, str, j = 0) ->
 					return [] if chars is ""
@@ -51,7 +52,12 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 				super
 				@set "topicSearch_text", ""
 				@set "topicsList_activeIndex", 0
-				@set "topics", (for i in [0...10] then new @Topic i, "Topic #{i}")
+				$.ajax
+					url: "/data/topicsList", dataType: "jsonp"
+					success: (response) =>
+						@set "topics", response.map (x) => new @Topic x
+					error: (request) ->
+						console.error request
 				$("#topicSearch")
 					.popover
 						html: true, animation: false, placement: "bottom", trigger: "focus", content: -> $("#topicsList")
@@ -60,7 +66,10 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 				e.preventDefault() if e.which in [13, 27, 38, 40]
 				switch e.which
 					when 13
-						# ...
+						@set "topicSearch_text", @get("topics")[@get "topicsList_activeIndex"]?.get("name") ? ""
+						$("#topicSearch").blur()
+						@get("topics")[@get "topicsList_activeIndex"]?.onReady (err, topic) =>
+							@set "currentTopic", topic
 					when 27
 						$("#topicSearch").blur()
 					when 38
@@ -77,6 +86,16 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 					super
 					@set "id", id
 					@set "name", name
+				onReady: (callback) ->
+					callback null, @ if @get "isLoaded"
+					$.ajax
+						url: "/data/topicDetails", dataType: "jsonp", data: id: @get "id"
+						success: (response) =>
+							console.log response
+							callback null, @
+						error: (request) ->
+							console.error request
+							callback request
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

@@ -17,11 +17,13 @@ web.get "/", (req, res) ->
 		res.render "index", topics: topics
 
 web.get "/data/topicsList", (req, res, next) ->
-	core.getTopicsList (topics) ->
+	core.getTopicsList (err, topics) ->
+		return res.jsonp 500, err if err?
 		res.jsonp topics
 
 web.get "/data/topicDetails", (req, res, next) ->
-	core.getTopicDetails req.param("id"), (topic) ->
+	core.getTopicDetails req.param("id"), (err, topic) ->
+		return res.jsonp 500, err if err?
 		res.jsonp topic
 
 web.get /\/([a-z]+)/, (req, res, next) ->
