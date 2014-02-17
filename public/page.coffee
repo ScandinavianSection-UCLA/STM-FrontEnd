@@ -52,6 +52,7 @@ require ["jquery", "Batman", "bootstrap"], ($, Batman) ->
 				super
 				@set "topicSearch_text", ""
 				@set "topicsList_activeIndex", 0
+				@set "topics", []
 				$.ajax
 					url: "/data/topicsList", dataType: "jsonp"
 					success: (response) =>

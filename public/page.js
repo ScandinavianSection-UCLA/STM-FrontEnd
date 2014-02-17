@@ -125,6 +125,7 @@ require(["jquery", "Batman", "bootstrap"], function($, Batman) {
         TopicsContext.__super__.constructor.apply(this, arguments);
         this.set("topicSearch_text", "");
         this.set("topicsList_activeIndex", 0);
+        this.set("topics", []);
         $.ajax({
           url: "/data/topicsList",
           dataType: "jsonp",
