@@ -37,7 +37,10 @@ body {
   fill: rgba(225,225,225,0.4);
 }
 #relatedArticles .list-group a.list-group-item svg path {
-  fill: #646464;
+  fill: rgba(0,0,0,0.8);
+}
+#relatedArticles .list-group a.list-group-item.active svg path {
+  fill: rgba(255,255,255,0.8);
 }
 #relatedArticles .panel-body {
   overflow: scroll;

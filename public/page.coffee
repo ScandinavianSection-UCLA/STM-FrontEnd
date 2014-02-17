@@ -153,8 +153,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						p = 99.99 if p > 99.99
 						"""
 							M 18 18
-							L 18 3
-							A 15 15 0 #{if p < 50 then 0 else 1} 1 #{18 + 15 * Math.sin p * Math.PI / 50} #{18 - 15 * Math.cos p * Math.PI / 50}
+							L 33 18
+							A 15 15 0 #{if p < 50 then 0 else 1} 0 #{18 + 15 * Math.cos p * Math.PI / 50} #{18 - 15 * Math.sin p * Math.PI / 50}
 							Z
 						"""
 					constructor: ({article_id, proportion}) ->
