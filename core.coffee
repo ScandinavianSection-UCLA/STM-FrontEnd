@@ -32,7 +32,7 @@ exports.getTopicDetails = (id, callback) ->
 			xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 				return callback err if err?
 				topicXML = doc.filter((x) -> x.$.id is "#{id}")[0]
-				Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
+				Record.distinct("article_id", topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 					return callback err if err?
 					callback null,
 						id: topic.id
@@ -62,7 +62,7 @@ exports.getTopics = (callback) ->
 		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 			Topic.find {}, (err, topics) ->
 				async.map topics, (topic, callback) ->
-					Record.distinct("article_id", topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
+					Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 						callback err,
 							topic: topic.toJSON()
 							records: records.map (x) -> x.toJSON()
