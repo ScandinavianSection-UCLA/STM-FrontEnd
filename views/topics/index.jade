@@ -32,7 +32,7 @@ block content
 					.panel-heading
 						h3.panel-title Related Articles
 					.list-group
-						a.list-group-item(href = "#", data-foreach-record = "records", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
-							span(data-bind = "record.article_id")
+						a.list-group-item(href = "#", data-foreach-record = "filteredRecords", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
+							span(data-bind = "record.record.article_id")
 					.panel-body
 						p(data-bind = "activeRecord.article")
