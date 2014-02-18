@@ -50,7 +50,7 @@ exports.getTopicDetails = (id, callback) ->
 							proportion: x.proportion
 
 exports.getArticle = (article_id, callback) ->
-	fs.readFile "/home/gotemb/topic1/1888/#{article_id}.txt", encoding: "utf8", (err, doc) ->
+	fs.readFile "/home/gotemb/topic1/1888_chunks/#{article_id}", encoding: "utf8", (err, doc) ->
 		return callback err if err?
 		callback null,
 			article_id: article_id
