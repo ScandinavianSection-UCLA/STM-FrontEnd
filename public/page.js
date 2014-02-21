@@ -401,6 +401,14 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
 
     STM.appContext = appContext = new AppContext;
 
+    STM.ready = function() {
+      return console.log("Ready!");
+    };
+
+    STM.prototype.ready = function() {
+      return console.log("Ready!!");
+    };
+
     return STM;
 
   })(Batman.App);

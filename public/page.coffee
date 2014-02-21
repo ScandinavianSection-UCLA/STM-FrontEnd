@@ -179,6 +179,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext
+		@ready: -> console.log "Ready!"
+		ready: -> console.log "Ready!!"
 
 	STM.run()
 	$ ->
