@@ -18,7 +18,7 @@ Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 	proportion: Number
 
 exports.getTopicsList = (callback) ->
-	Topic.find {}, (err, topics) ->
+	Topic.find({}).sort(name: 1).exec (err, topics) ->
 		return callback err if err?
 		callback null, topics.map (topic) ->
 			name: topic.name
