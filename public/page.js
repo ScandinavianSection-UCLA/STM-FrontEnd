@@ -338,6 +338,10 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
           });
 
+          Record.accessor("proportionTooltip", function() {
+            return "Proportion: " + ((this.get("proportion") * 100).toFixed(2)) + "%";
+          });
+
           function Record(_arg) {
             var article_id, proportion;
             article_id = _arg.article_id, proportion = _arg.proportion;
