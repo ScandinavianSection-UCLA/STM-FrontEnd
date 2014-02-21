@@ -17,7 +17,7 @@ block content
 						.input-group
 							input#topicSearch.form-control(type = "text", style = "width: 100%", placeholder = "Topic…", data-bind = "topicSearch_text", data-event-keydown = "appContext.topicsContext.topicSearch_keydown", data-event-input = "appContext.topicsContext.topicSearch_input", autocomplete = "off")
 							.input-group-btn
-								button.btn.btn-default.dropdown-toggle(data-toggle = "dropdown", style = "padding-left: 6px; padding-right: 6px", data-bind-disabled = "isCurrentTopicSelected | not")
+								button.btn.btn-default.dropdown-toggle(data-toggle = "dropdown", style = "padding-left: 6px; padding-right: 6px", data-bind-disabled = "isCurrentTopicSelected | not", disabled = "disabled")
 									i.fa.fa-fw.fa-ellipsis-v
 								ul.dropdown-menu
 									li
