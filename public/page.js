@@ -335,6 +335,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             if (p > 99.99) {
               p = 99.99;
             }
+            $("#relatedArticles svg").tooltip();
             return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
           });
 

@@ -151,6 +151,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					@accessor "proportionPie", ->
 						p = 100 * @get "proportion"
 						p = 99.99 if p > 99.99
+						$("#relatedArticles svg").tooltip()
 						"""
 							M 18 18
 							L 33 18
