@@ -14,18 +14,19 @@ block content
 			.col-md-4.col-md-offset-4
 				nav.navbar.navbar-default
 					form.navbar-form
-						input#topicSearch.form-control(type = "text", placeholder = "Topic…", style = "width: 100%", data-bind = "topicSearch_text", data-event-keydown = "appContext.topicsContext.topicSearch_keydown", data-event-input = "appContext.topicsContext.topicSearch_input", autocomplete = "off")
+						.form-group
+							input#topicSearch.form-control(type = "text", placeholder = "Topic…", style = "width: 100%", data-bind = "topicSearch_text", data-event-keydown = "appContext.topicsContext.topicSearch_keydown", data-event-input = "appContext.topicsContext.topicSearch_input", autocomplete = "off")
 						button.btn.btn-default.dropdown-toggle(data-toggle = "dropdown")
 							i.fa.fa-ellipsis-v
 						ul.dropdown-menu
 							li
 								a(href = "#")
 									i.fa.fa-pencil
-									| Rename
+									|  Rename
 							li
 								a(href = "#")
 									i.fa.fa-square-o
-									| Hide Topic
+									|  Hide Topic
 		.row(data-showif = "isCurrentTopicSelected", style = "display: none")
 			.col-md-6
 				.panel.panel-default
