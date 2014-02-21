@@ -34,7 +34,7 @@ block content
 					.list-group
 						a.list-group-item(href = "#", data-foreach-record = "filteredRecords", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
 							span(data-bind = "record.record.article_id")
-							svg(height = 36, width = 36)
+							svg(height = 36, width = 36, data-toggle = "tooltip", data-bind-title = "record.record.proportionTooltip")
 								path(data-bind-d = "record.record.proportionPie")
 								circle(cx = 18, cy = 18, r = 15)
 					.panel-body

@@ -157,6 +157,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 							A 15 15 0 #{if p < 50 then 0 else 1} 0 #{18 + 15 * Math.cos p * Math.PI / 50} #{18 - 15 * Math.sin p * Math.PI / 50}
 							Z
 						"""
+					@accessor "proportionTooltip", -> "Proportion: #{(@get("proportion") * 100).toFixed 2}%"
 					constructor: ({article_id, proportion}) ->
 						super
 						@set "article_id", article_id
