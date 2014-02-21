@@ -151,7 +151,6 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					@accessor "proportionPie", ->
 						p = 100 * @get "proportion"
 						p = 99.99 if p > 99.99
-						$("#relatedArticles svg").tooltip()
 						"""
 							M 18 18
 							L 33 18
@@ -179,9 +178,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext
-		@ready: -> console.log "Ready!"
-		ready: -> console.log "Ready!!"
 
 	STM.run()
 	$ ->
 		appContext.set "pageLoaded", true
+		setInterval (-> $("#relatedArticles svg:not([data-ttd='true'])").tooltip().attr "data-ttd", true), 1000

@@ -335,7 +335,6 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             if (p > 99.99) {
               p = 99.99;
             }
-            $("#relatedArticles svg").tooltip();
             return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
           });
 
@@ -401,19 +400,14 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
 
     STM.appContext = appContext = new AppContext;
 
-    STM.ready = function() {
-      return console.log("Ready!");
-    };
-
-    STM.prototype.ready = function() {
-      return console.log("Ready!!");
-    };
-
     return STM;
 
   })(Batman.App);
   STM.run();
   return $(function() {
-    return appContext.set("pageLoaded", true);
+    appContext.set("pageLoaded", true);
+    return setInterval((function() {
+      return $("#relatedArticles svg:not([data-ttd='true'])").tooltip().attr("data-ttd", true);
+    }), 1000);
   });
 });
