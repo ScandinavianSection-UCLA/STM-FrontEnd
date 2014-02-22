@@ -31,6 +31,16 @@ web.get "/data/article", (req, res, next) ->
 		return res.jsonp 500, err if err?
 		res.jsonp article
 
+web.post "/data/renameTopic", (req, res, next) ->
+	core.renameTopic req.param("id"), req.param("name"), (err, success) ->
+		return res.jsonp 500, err if err?
+		res.jsonp success
+
+web.post "/data/setTopicHidden", (req, res, next) ->
+	core.setTopicHidden req.param("id"), req.param("hidden"), (err, success) ->
+		return res.jsonp 500, err if err?
+		res.jsonp success
+
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->
 		next() if err

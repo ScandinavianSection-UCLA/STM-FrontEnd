@@ -10,6 +10,20 @@ block content
 			#topicsList
 				.list-group(style = "margin: -10px -15px")
 					a.list-group-item(href = "#", data-foreach-topic = "filteredTopics", data-bind = "topic.html | raw", data-addclass-active = "topic.active", data-bind-data-id = "topic.topic.id", data-event-mousedown = "appContext.topicsContext.gotoTopic")
+		#renameTopicModal.modal.fade(tab-index = "-1", role = "dialog", aria-labelledby = "renameTopicModalLabel", aria-hidden = "true")
+			.modal-dialog
+				.modal.content
+					.modal-header
+						h4.modal-title Rename Topic
+					.modal-body
+						form.form-horizontal
+							.form-group
+								label.col-sm-4.control-label Topic Name
+								.col-sm-8
+									input.form-control(type = "text", data-bind = "currentTopic.renameTopic_text")
+					.modal-footer
+						button.btn.btn-default(data-dismiss = "modal") Cancel
+						button.btn.btn-primary(data-event-click = "appContext.topicsContext.currentTopic.renameTopic") Save Changes
 		.row
 			.col-md-4.col-md-offset-4
 				nav.navbar.navbar-default
@@ -21,9 +35,9 @@ block content
 									i.fa.fa-fw.fa-ellipsis-v
 								ul.dropdown-menu
 									li
-										a(href = "#") Rename
+										a(href = "#", data-event-click = "appContext.topicsContext.currentTopic.showRenameDialog") Rename
 									li
-										a(href = "#") Hide Topic
+										a(href = "#", data-bind = "currentTopic.toggleHidden_text", data-event-click = "appContext.topicsContext.currentTopic.toggleHidden") Hide Topic
 		.row(data-showif = "isCurrentTopicSelected", style = "display: none")
 			.col-md-6
 				.panel.panel-default

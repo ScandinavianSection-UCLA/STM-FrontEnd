@@ -123,10 +123,12 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					@get("records")?.map (record, idx) =>
 						record: record
 						active: record is @get "activeRecord"
-				constructor: ({id, name}) ->
+				@accessor "toggleHidden_text", -> "#{if @get("hidden") then "Unhide" else "Hide"} Topic"
+				constructor: ({id, name, hidden}) ->
 					super
 					@set "id", id
 					@set "name", name
+					@set "hidden", hidden
 					@set "isLoaded", false
 				onReady: (callback) ->
 					return callback null, @ if @get "isLoaded"
@@ -146,6 +148,24 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 				gotoRecord: (node) ->
 					@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text())[0]?.onReady (err, record) =>
 						@set "activeRecord", record
+				showRenameDialog: ->
+					@set "renameTopic_text", @get "name"
+					$("#renameTopicModal").modal "show"
+				renameTopic: ->
+					$.ajax
+						url: "/data/renameTopic", dataType: "jsonp", type: "POST", data: id: @get("id"), name: @get("renameTopic_text")
+						success: (response) =>
+							@set "name", @get "renameTopic_text"
+							appContext.set "topicsContext.topicSearch_text", @get "name" if appContext.get("topicsContext.currentTopic") is @
+						error: (request) ->
+							console.error request
+				toggleHidden: ->
+					$.ajax
+						url: "/data/setTopicHidden", dataType: "jsonp", type: "POST", data: id: @get("id"), hidden: !@get("hidden")
+						success: (response) =>
+							@set "hidden", !@get "hidden"
+						error: (request) ->
+							console.error request
 
 				class @::Record extends Batman.Model
 					@accessor "proportionPie", ->

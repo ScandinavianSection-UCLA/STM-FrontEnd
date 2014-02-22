@@ -11,6 +11,7 @@ mongoose.connect "/tmp/mongodb-27017.sock/stm_#{corpus}"
 Topic = mongoose.model "Topic", new mongoose.Schema
 	id: type: Number
 	name: String
+	hidden: Boolean
 
 Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 	article_id: String
@@ -23,6 +24,7 @@ exports.getTopicsList = (callback) ->
 		callback null, topics.map (topic) ->
 			name: topic.name
 			id: topic.id
+			hidden: topic.hidden ? false
 
 exports.getTopicDetails = (id, callback) ->
 	Topic.findOne id: id, (err, topic) ->
@@ -37,6 +39,7 @@ exports.getTopicDetails = (id, callback) ->
 					callback null,
 						id: topic.id
 						name: topic.name
+						hidden: topic.hidden ? false
 						words: topicXML.word.map (x) ->
 							word: x._
 							weight: Number x.$.weight
@@ -55,6 +58,16 @@ exports.getArticle = (article_id, callback) ->
 		callback null,
 			article_id: article_id
 			article: doc
+
+exports.renameTopic = (id, newName, callback) ->
+	Topic.findOneAndUpdate {id: id}, name: newName, (err, doc) ->
+		return callback err if err?
+		callback null, success: true
+
+exports.setTopicHidden = (id, flag, callback) ->
+	Topic.findOneAndUpdate {id: id}, hidden: flag, (err, doc) ->
+		return callback err if err?
+		callback null, success: true
 
 # Deprecated
 exports.getTopics = (callback) ->

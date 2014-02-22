@@ -276,12 +276,17 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           })(this)) : void 0;
         });
 
+        Topic.accessor("toggleHidden_text", function() {
+          return "" + (this.get("hidden") ? "Unhide" : "Hide") + " Topic";
+        });
+
         function Topic(_arg) {
-          var id, name;
-          id = _arg.id, name = _arg.name;
+          var hidden, id, name;
+          id = _arg.id, name = _arg.name, hidden = _arg.hidden;
           Topic.__super__.constructor.apply(this, arguments);
           this.set("id", id);
           this.set("name", name);
+          this.set("hidden", hidden);
           this.set("isLoaded", false);
         }
 
@@ -324,6 +329,54 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
               return _this.set("activeRecord", record);
             };
           })(this)) : void 0;
+        };
+
+        Topic.prototype.showRenameDialog = function() {
+          this.set("renameTopic_text", this.get("name"));
+          return $("#renameTopicModal").modal("show");
+        };
+
+        Topic.prototype.renameTopic = function() {
+          return $.ajax({
+            url: "/data/renameTopic",
+            dataType: "jsonp",
+            type: "POST",
+            data: {
+              id: this.get("id"),
+              name: this.get("renameTopic_text")
+            },
+            success: (function(_this) {
+              return function(response) {
+                _this.set("name", _this.get("renameTopic_text"));
+                if (appContext.get("topicsContext.currentTopic") === _this) {
+                  return appContext.set("topicsContext.topicSearch_text", _this.get("name"));
+                }
+              };
+            })(this),
+            error: function(request) {
+              return console.error(request);
+            }
+          });
+        };
+
+        Topic.prototype.toggleHidden = function() {
+          return $.ajax({
+            url: "/data/setTopicHidden",
+            dataType: "jsonp",
+            type: "POST",
+            data: {
+              id: this.get("id"),
+              hidden: !this.get("hidden")
+            },
+            success: (function(_this) {
+              return function(response) {
+                return _this.set("hidden", !_this.get("hidden"));
+              };
+            })(this),
+            error: function(request) {
+              return console.error(request);
+            }
+          });
         };
 
         Topic.prototype.Record = (function(_super3) {
