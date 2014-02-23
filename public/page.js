@@ -120,6 +120,20 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           };
         })(this)).sort(function(a, b) {
           return a.topic.get("name").localeCompare(b.topic.get("name"));
+        }).sort(function(a, b) {
+          return (a.topic.get("hidden") ? 0 : 1) - (b.topic.get("hidden") ? 0 : 1);
+        });
+      });
+
+      TopicsContext.accessor("filteredTopics_unhidden", function() {
+        return this.get("filteredTopics").filter(function(x) {
+          return !x.topic.get("hidden");
+        });
+      });
+
+      TopicsContext.accessor("filteredTopics_hidden", function() {
+        return this.get("filteredTopics").filter(function(x) {
+          return x.topic.get("hidden");
         });
       });
 
