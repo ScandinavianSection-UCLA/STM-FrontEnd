@@ -86,7 +86,11 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             return [idx + j].concat(ret);
           }
         };
-        return this.get("topics").map((function(_this) {
+        return this.get("topics").sort(function(a, b) {
+          return a.get("name").localeCompare(b.get("name"));
+        }).sort(function(a, b) {
+          return (a.get("hidden") ? 1 : 0) - (b.get("hidden") ? 1 : 0);
+        }).map((function(_this) {
           return function(topic) {
             return {
               topic: topic,
@@ -95,10 +99,6 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           };
         })(this)).filter(function(x) {
           return x.indices != null;
-        }).sort(function(a, b) {
-          return a.get("name").localeCompare(b.get("name"));
-        }).sort(function(a, b) {
-          return (a.get("hidden") ? 1 : 0) - (b.get("hidden") ? 1 : 0);
         }).map((function(_this) {
           return function(topic, idx) {
             var c, i;
