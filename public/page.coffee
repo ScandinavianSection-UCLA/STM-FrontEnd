@@ -52,6 +52,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						).join ""
 			@accessor "filteredTopics_unhidden", -> @get("filteredTopics").filter (x) -> !x.topic.get("hidden")
 			@accessor "filteredTopics_hidden", -> @get("filteredTopics").filter (x) -> x.topic.get("hidden")
+			@accessor "anyFilteredTopics_hidden", -> @get("filteredTopics_hidden").length > 0
 			constructor: ->
 				super
 				@set "topicSearch_text", ""

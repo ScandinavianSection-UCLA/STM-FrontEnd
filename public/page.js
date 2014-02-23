@@ -137,6 +137,10 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
         });
       });
 
+      TopicsContext.accessor("anyFilteredTopics_hidden", function() {
+        return this.get("filteredTopics_hidden").length > 0;
+      });
+
       function TopicsContext() {
         TopicsContext.__super__.constructor.apply(this, arguments);
         this.set("topicSearch_text", "");
