@@ -7,14 +7,18 @@ body {
   overflow: scroll;
   max-height: 250px;
 }
-#topicsList .list-group a.list-group-item {
+#topicsList .list-group .list-group-item {
   border-width: 0;
   border-top-width: 1px;
   padding: 7px 13px;
   width: 100%;
 }
-#topicsList .list-group a.list-group-item:first-of-type {
+#topicsList .list-group .list-group-item:first-of-type {
   border-top-width: 0;
+}
+#topicsList .list-group div.list-group-item {
+  padding: 2px 13px;
+  background-color: #f1f1f1;
 }
 .popover {
   max-width: 100%;
