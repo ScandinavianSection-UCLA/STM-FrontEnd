@@ -10,7 +10,7 @@ block content
 			#topicsList
 				.list-group(style = "margin: -10px -15px")
 					a.list-group-item(href = "#", data-foreach-topic = "filteredTopics_unhidden", data-bind = "topic.html | raw", data-addclass-active = "topic.active", data-bind-data-id = "topic.topic.id", data-event-mousedown = "appContext.topicsContext.gotoTopic")
-					div.list-group-item Hidden Topics
+					div.list-group-item(data-showif = "anyFilteredTopics_hidden") Hidden Topics
 					a.list-group-item(href = "#", data-foreach-topic = "filteredTopics_hidden", data-bind = "topic.html | raw", data-addclass-active = "topic.active", data-bind-data-id = "topic.topic.id", data-event-mousedown = "appContext.topicsContext.gotoTopic")
 		#renameTopicModal.modal.fade(tabindex = "-1", role = "dialog", aria-labelledby = "renameTopicModalLabel", aria-hidden = "true")
 			.modal-dialog
