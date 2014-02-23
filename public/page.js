@@ -95,6 +95,10 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
           };
         })(this)).filter(function(x) {
           return x.indices != null;
+        }).sort(function(a, b) {
+          return a.get("name").localeCompare(b.get("name"));
+        }).sort(function(a, b) {
+          return (a.get("hidden") ? 1 : 0) - (b.get("hidden") ? 1 : 0);
         }).map((function(_this) {
           return function(topic, idx) {
             var c, i;
@@ -118,11 +122,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
               })()).join("")
             };
           };
-        })(this)).sort(function(a, b) {
-          return a.topic.get("name").localeCompare(b.topic.get("name"));
-        }).sort(function(a, b) {
-          return (a.topic.get("hidden") ? 1 : 0) - (b.topic.get("hidden") ? 1 : 0);
-        });
+        })(this));
       });
 
       TopicsContext.accessor("filteredTopics_unhidden", function() {
