@@ -37,12 +37,12 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 					return if (idx = str.indexOf chars[0]) is -1
 					if (ret = findInStr chars[1..], str[(idx + 1)..], idx + j + 1)? then [idx + j].concat ret
 				@get("topics")
+					.sort (a, b) -> a.get("name").localeCompare b.get("name")
+					.sort (a, b) -> (if a.get("hidden") then 1 else 0) - (if b.get("hidden") then 1 else 0)
 					.map (topic) =>
 						topic: topic
 						indices: findInStr @get("topicSearch_text").toLowerCase(), topic.get("name").toLowerCase()
 					.filter (x) -> x.indices?
-					.sort (a, b) -> a.get("name").localeCompare b.get("name")
-					.sort (a, b) -> (if a.get("hidden") then 1 else 0) - (if b.get("hidden") then 1 else 0)
 					.map (topic, idx) =>
 						topic: topic.topic
 						indices: topic.indices
