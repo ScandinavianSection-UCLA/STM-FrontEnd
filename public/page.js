@@ -119,7 +119,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
             };
           };
         })(this)).sort(function(a, b) {
-          return a.topic.name.localeCompare(b.topic.name);
+          return a.topic.get("name").localeCompare(b.topic.get("name"));
         });
       });
 

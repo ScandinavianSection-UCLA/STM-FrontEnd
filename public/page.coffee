@@ -49,7 +49,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 							if i in topic.indices then "<strong>#{c}</strong>" else c
 						).join ""
 					.sort (a, b) ->
-						a.topic.name.localeCompare b.topic.name
+						a.topic.get("name").localeCompare b.topic.get("name")
 			constructor: ->
 				super
 				@set "topicSearch_text", ""
