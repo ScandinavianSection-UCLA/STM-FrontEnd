@@ -118,7 +118,9 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
               })()).join("")
             };
           };
-        })(this));
+        })(this)).sort(function(a, b) {
+          return a.topic.name.localeCompare(b.topic.name);
+        });
       });
 
       function TopicsContext() {
@@ -349,8 +351,9 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
               return function(response) {
                 _this.set("name", _this.get("renameTopic_text"));
                 if (appContext.get("topicsContext.currentTopic") === _this) {
-                  return appContext.set("topicsContext.topicSearch_text", _this.get("name"));
+                  appContext.set("topicsContext.topicSearch_text", _this.get("name"));
                 }
+                return $("#renameTopicModal").modal("hide");
               };
             })(this),
             error: function(request) {

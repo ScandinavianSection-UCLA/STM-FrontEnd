@@ -48,6 +48,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						html: (for c, i in topic.topic.get("name")
 							if i in topic.indices then "<strong>#{c}</strong>" else c
 						).join ""
+					.sort (a, b) ->
+						a.topic.name.localeCompare b.topic.name
 			constructor: ->
 				super
 				@set "topicSearch_text", ""
@@ -157,6 +159,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 						success: (response) =>
 							@set "name", @get "renameTopic_text"
 							appContext.set "topicsContext.topicSearch_text", @get "name" if appContext.get("topicsContext.currentTopic") is @
+							$("#renameTopicModal").modal "hide"
 						error: (request) ->
 							console.error request
 				toggleHidden: ->
