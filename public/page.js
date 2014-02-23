@@ -121,7 +121,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap"], function($, Batman, Word
         })(this)).sort(function(a, b) {
           return a.topic.get("name").localeCompare(b.topic.get("name"));
         }).sort(function(a, b) {
-          return (a.topic.get("hidden") ? 0 : 1) - (b.topic.get("hidden") ? 0 : 1);
+          return (a.topic.get("hidden") ? 1 : 0) - (b.topic.get("hidden") ? 1 : 0);
         });
       });
 

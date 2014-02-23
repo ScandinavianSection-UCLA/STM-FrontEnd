@@ -49,7 +49,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap"], ($, Batman, WordCloud) -
 							if i in topic.indices then "<strong>#{c}</strong>" else c
 						).join ""
 					.sort (a, b) -> a.topic.get("name").localeCompare b.topic.get("name")
-					.sort (a, b) -> (if a.topic.get("hidden") then 0 else 1) - (if b.topic.get("hidden") then 0 else 1)
+					.sort (a, b) -> (if a.topic.get("hidden") then 1 else 0) - (if b.topic.get("hidden") then 1 else 0)
 			@accessor "filteredTopics_unhidden", -> @get("filteredTopics").filter (x) -> !x.topic.get("hidden")
 			@accessor "filteredTopics_hidden", -> @get("filteredTopics").filter (x) -> x.topic.get("hidden")
 			constructor: ->
