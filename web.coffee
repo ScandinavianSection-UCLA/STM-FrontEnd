@@ -41,6 +41,26 @@ web.post "/data/setTopicHidden", (req, res, next) ->
 		return res.jsonp 500, err if err?
 		res.jsonp success
 
+web.get "/data/corporaList", (req, res, next) ->
+	core.getCorporaList (err, corpora) ->
+		return res.jsonp 500, err if err?
+		res.jsonp corpora
+
+web.get "/data/subcorporaList", (req, res, next) ->
+	core.getSubcorporaList req.param("corpus"), (err, subcorpora) ->
+		return res.jsonp 500, err if err?
+		res.jsonp subcorpora
+
+web.put "/data/corpus", (req, res, next) ->
+	core.insertCorpus req.param("corpus"), (err, success) ->
+		return res.jsonp 500, err if err?
+		res.jsonp success
+
+web.put "/data/subcorpus", (req, res, next) ->
+	core.insertSubcorpus req.param("corpus"), req.param("subcorpus"), (err, success) ->
+		return res.jsonp 500, err if err?
+		res.jsonp success
+
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->
 		next() if err

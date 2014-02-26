@@ -3,6 +3,7 @@
   "dependencies": {
     "font-awesome": "~4.0.3",
     "requirejs": "~2.1.10",
-    "bootstrap": "~3.1.0"
+    "bootstrap": "~3.1.0",
+    "typeahead.js": "~0.10.1"
   }
 }

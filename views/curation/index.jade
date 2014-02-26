@@ -1,0 +1,39 @@
+extends ../layout
+
+block vars
+	- var pageTitle = "Curation · STM"
+	- var thisPage = "curation"
+
+block content
+	.container(data-context = "curationContext")
+		ol.breadcrumb
+			li Metadata
+			li Data
+		.row
+			.col-sm-6.col-sm-offset-3
+				.panel.panel-default
+					.panel-heading
+						h3.panel-title Step 1: Metadata
+					.panel-body
+						.form-horizontal
+							.form-group(data-addclass-has-success = "corpusIsSelected", data-addclass-has-feedback = "corpusIsSelected")
+								label.col-sm-3.control-label Corpus
+								.col-sm-8
+									div(data-addclass-input-group = "corpusIsNew")
+										input#corpusInput.form-control(data-bind = "corpus_text")
+										i.form-control-feedback.fa.fa-check(data-showif = "corpusIsSelected", style = "display: none")
+										span.input-group-btn(data-showif = "corpusIsNew", style = "display: none")
+											button.btn.btn-default(data-event-click = "appContext.curationContext.addCorpus")
+												i.fa.fa-plus
+							.form-group(data-addclass-has-success = "subcorpusIsSelected", data-addclass-has-feedback = "subcorpusIsSelected")
+								label.col-sm-3.control-label Sub Corpus
+								.col-sm-8
+									div(data-addclass-input-group = "subcorpusIsNew")
+										input#subcorpusInput.form-control(data-bind = "subcorpus_text")
+										i.form-control-feedback.fa.fa-check(data-showif = "subcorpusIsSelected", style = "display: none")
+										span.input-group-btn(data-showif = "subcorpusIsNew", style = "display: none")
+											button.btn.btn-default(data-event-click = "appContext.curationContext.addSubcorpus")
+												i.fa.fa-plus
+						hr
+						.row
+							button.btn.btn-default.col-sm-4.col-sm-offset-4(disabled = "disabled", data-bind-disabled = "subcorpusIsSelected | not", data-addclass-btn-success = "subcorpusIsSelected", data-removeclass-btn-default = "subcorpusIsSelected") Continue

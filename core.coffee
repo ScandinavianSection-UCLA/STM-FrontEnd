@@ -18,6 +18,10 @@ Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 	topic: type: mongoose.Schema.ObjectId, ref: "Topic"
 	proportion: Number
 
+Corpus = mongoose.model "Corpora", new mongoose.Schema
+	name: String
+	subcorpora: [String]
+
 exports.getTopicsList = (callback) ->
 	Topic.find({}).sort(name: 1).exec (err, topics) ->
 		return callback err if err?
@@ -68,6 +72,28 @@ exports.setTopicHidden = (id, flag, callback) ->
 	Topic.findOneAndUpdate {id: id}, hidden: flag, (err, doc) ->
 		return callback err if err?
 		callback null, success: true
+
+exports.getCorporaList = (callback) ->
+	#return callback null, ["English", "French", "Spanish", "German"]
+	Corpus.find({}).sort(name: 1).exec (err, corpora) ->
+		return callback err if err?
+		callback null, corpora.map (x) -> x.name
+
+exports.getSubcorporaList = (corpus, callback) ->
+	#return callback null, corpus: corpus, subcorpora: [1..5].map (x) -> "#{corpus} #{x}"
+	Corpus.findOne name: corpus, (err, corpus) ->
+		return callback err if err?
+		callback null, if corpus? then success: true, corpus: corpus, subcorpora: corpus.subcorpora else success: false
+
+exports.insertCorpus = (corpus, callback) ->
+	Corpus.update {name: corpus}, {$setOnInsert: name: corpus, subcorpora: []}, upsert: true, (err, n, res) ->
+		return callback err if err?
+		callback null, success: !res.updatedExisting
+
+exports.insertSubcorpus = (corpus, subcorpus, callback) ->
+	Corpus.findOneAndUpdate {name: corpus, subcorpora: $ne: subcorpus}, {$push: subcorpora: subcorpus}, (err, corpus) ->
+		return callback err if err?
+		callback null, success: corpus?
 
 # Deprecated
 exports.getTopics = (callback) ->
