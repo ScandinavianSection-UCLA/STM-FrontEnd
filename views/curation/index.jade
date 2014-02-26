@@ -11,7 +11,7 @@ block content
 			li Data
 		.row
 			.col-sm-6.col-sm-offset-3
-				.panel.panel-default
+				.panel.panel-default(data-context = "metadataView")
 					.panel-heading
 						h3.panel-title Step 1: Metadata
 					.panel-body
@@ -23,7 +23,7 @@ block content
 										input#corpusInput.form-control(data-bind = "corpus_text")
 										i.form-control-feedback.fa.fa-check(data-showif = "corpusIsSelected", style = "display: none")
 										span.input-group-btn(data-showif = "corpusIsNew", style = "display: none")
-											button.btn.btn-default(data-event-click = "appContext.curationContext.addCorpus")
+											button.btn.btn-default(data-event-click = "appContext.curationContext.metadataView.addCorpus")
 												i.fa.fa-plus
 							.form-group(data-addclass-has-success = "subcorpusIsSelected", data-addclass-has-feedback = "subcorpusIsSelected")
 								label.col-sm-3.control-label Sub Corpus
@@ -32,7 +32,7 @@ block content
 										input#subcorpusInput.form-control(data-bind = "subcorpus_text")
 										i.form-control-feedback.fa.fa-check(data-showif = "subcorpusIsSelected", style = "display: none")
 										span.input-group-btn(data-showif = "subcorpusIsNew", style = "display: none")
-											button.btn.btn-default(data-event-click = "appContext.curationContext.addSubcorpus")
+											button.btn.btn-default(data-event-click = "appContext.curationContext.metadataView.addSubcorpus")
 												i.fa.fa-plus
 						hr
 						.row

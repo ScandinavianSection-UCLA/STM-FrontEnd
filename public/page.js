@@ -37,7 +37,7 @@ define("Batman", ["batman"], function(Batman) {
 });
 
 require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($, Batman, WordCloud) {
-  var AppContext, Corpus, CurationContext, IndexContext, Record, STM, Topic, TopicsContext, findInStr, isScrolledIntoView;
+  var AppContext, Curation, Index, STM, Topics, findInStr, isScrolledIntoView;
   findInStr = function(chars, str, j) {
     var idx, ret;
     if (j == null) {
@@ -63,630 +63,653 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($,
     function AppContext() {
       AppContext.__super__.constructor.apply(this, arguments);
       if (window.location.pathname === "/") {
-        this.set("indexContext", new IndexContext);
+        this.set("indexContext", new Index.Context);
       }
       if (window.location.pathname === "/topics") {
-        this.set("topicsContext", new TopicsContext);
+        this.set("topicsContext", new Topics.Context);
       }
       if (window.location.pathname === "/curation") {
-        this.set("curationContext", new CurationContext);
+        this.set("curationContext", new Curation.Context);
       }
     }
 
     return AppContext;
 
   })(Batman.Model);
-  IndexContext = (function(_super) {
-    __extends(IndexContext, _super);
+  Index = new Object;
+  (function(exports) {
+    var Context;
+    return Context = (function(_super) {
+      __extends(Context, _super);
 
-    function IndexContext() {
-      IndexContext.__super__.constructor.apply(this, arguments);
-    }
+      function Context() {
+        Context.__super__.constructor.apply(this, arguments);
+      }
 
-    return IndexContext;
+      return Context;
 
-  })(Batman.Model);
-  TopicsContext = (function(_super) {
-    __extends(TopicsContext, _super);
+    })(Batman.Model);
+  })(Index);
+  Topics = new Object;
+  (function(exports) {
+    var Context, Record, Topic;
+    Context = (function(_super) {
+      __extends(Context, _super);
 
-    TopicsContext.accessor("isCurrentTopicSelected", function() {
-      return this.get("currentTopic") != null;
-    });
+      Context.accessor("isCurrentTopicSelected", function() {
+        return this.get("currentTopic") != null;
+      });
 
-    TopicsContext.accessor("filteredTopics", function() {
-      return this.get("topics").sort(function(a, b) {
-        return a.get("name").localeCompare(b.get("name"));
-      }).sort(function(a, b) {
-        return (a.get("hidden") ? 1 : 0) - (b.get("hidden") ? 1 : 0);
-      }).map((function(_this) {
-        return function(topic) {
-          return {
-            topic: topic,
-            indices: findInStr(_this.get("topicSearch_text").toLowerCase(), topic.get("name").toLowerCase())
+      Context.accessor("filteredTopics", function() {
+        return this.get("topics").sort(function(a, b) {
+          return a.get("name").localeCompare(b.get("name"));
+        }).sort(function(a, b) {
+          return (a.get("hidden") ? 1 : 0) - (b.get("hidden") ? 1 : 0);
+        }).map((function(_this) {
+          return function(topic) {
+            return {
+              topic: topic,
+              indices: findInStr(_this.get("topicSearch_text").toLowerCase(), topic.get("name").toLowerCase())
+            };
           };
-        };
-      })(this)).filter(function(x) {
-        return x.indices != null;
-      }).map((function(_this) {
-        return function(topic, idx) {
-          var c, i;
-          return {
-            topic: topic.topic,
-            indices: topic.indices,
-            active: idx === _this.get("topicsList_activeIndex"),
-            html: ((function() {
-              var _i, _len, _ref, _results;
-              _ref = topic.topic.get("name");
-              _results = [];
-              for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-                c = _ref[i];
-                if (__indexOf.call(topic.indices, i) >= 0) {
-                  _results.push("<strong>" + c + "</strong>");
-                } else {
-                  _results.push(c);
+        })(this)).filter(function(x) {
+          return x.indices != null;
+        }).map((function(_this) {
+          return function(topic, idx) {
+            var c, i;
+            return {
+              topic: topic.topic,
+              indices: topic.indices,
+              active: idx === _this.get("topicsList_activeIndex"),
+              html: ((function() {
+                var _i, _len, _ref, _results;
+                _ref = topic.topic.get("name");
+                _results = [];
+                for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+                  c = _ref[i];
+                  if (__indexOf.call(topic.indices, i) >= 0) {
+                    _results.push("<strong>" + c + "</strong>");
+                  } else {
+                    _results.push(c);
+                  }
                 }
+                return _results;
+              })()).join("")
+            };
+          };
+        })(this));
+      });
+
+      Context.accessor("filteredTopics_unhidden", function() {
+        return this.get("filteredTopics").filter(function(x) {
+          return !x.topic.get("hidden");
+        });
+      });
+
+      Context.accessor("filteredTopics_hidden", function() {
+        return this.get("filteredTopics").filter(function(x) {
+          return x.topic.get("hidden");
+        });
+      });
+
+      Context.accessor("anyFilteredTopics_hidden", function() {
+        return this.get("filteredTopics_hidden").length > 0;
+      });
+
+      function Context() {
+        Context.__super__.constructor.apply(this, arguments);
+        this.set("topicSearch_text", "");
+        this.set("topicsList_activeIndex", 0);
+        this.set("topics", []);
+        $.ajax({
+          url: "/data/topicsList",
+          dataType: "jsonp",
+          success: (function(_this) {
+            return function(response) {
+              return _this.set("topics", response.map(function(x) {
+                return new Topic(x);
+              }));
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+        $("#topicSearch").popover({
+          html: true,
+          animation: false,
+          placement: "bottom",
+          trigger: "focus",
+          content: function() {
+            return $("#topicsList");
+          }
+        }).on("hide.bs.popover", function() {
+          return $("#hidden-content").append($("#topicsList"));
+        });
+      }
+
+      Context.prototype.topicSearch_keydown = function(node, e) {
+        var fl, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
+        if ((_ref = e.which) === 13 || _ref === 27 || _ref === 38 || _ref === 40) {
+          e.preventDefault();
+        }
+        switch (e.which) {
+          case 13:
+            $("#topicSearch").blur();
+            if ((_ref1 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null) {
+              if ((_ref2 = _ref1.topic) != null) {
+                _ref2.onReady((function(_this) {
+                  return function(err, topic) {
+                    _this.set("currentTopic", topic);
+                    _this.drawWordCloud();
+                    return _this.drawPhraseCloud();
+                  };
+                })(this));
               }
-              return _results;
-            })()).join("")
-          };
-        };
-      })(this));
-    });
-
-    TopicsContext.accessor("filteredTopics_unhidden", function() {
-      return this.get("filteredTopics").filter(function(x) {
-        return !x.topic.get("hidden");
-      });
-    });
-
-    TopicsContext.accessor("filteredTopics_hidden", function() {
-      return this.get("filteredTopics").filter(function(x) {
-        return x.topic.get("hidden");
-      });
-    });
-
-    TopicsContext.accessor("anyFilteredTopics_hidden", function() {
-      return this.get("filteredTopics_hidden").length > 0;
-    });
-
-    function TopicsContext() {
-      TopicsContext.__super__.constructor.apply(this, arguments);
-      this.set("topicSearch_text", "");
-      this.set("topicsList_activeIndex", 0);
-      this.set("topics", []);
-      $.ajax({
-        url: "/data/topicsList",
-        dataType: "jsonp",
-        success: (function(_this) {
-          return function(response) {
-            return _this.set("topics", response.map(function(x) {
-              return new Topic(x);
-            }));
-          };
-        })(this),
-        error: function(request) {
-          return console.error(request);
-        }
-      });
-      $("#topicSearch").popover({
-        html: true,
-        animation: false,
-        placement: "bottom",
-        trigger: "focus",
-        content: function() {
-          return $("#topicsList");
-        }
-      }).on("hide.bs.popover", function() {
-        return $("#hidden-content").append($("#topicsList"));
-      });
-    }
-
-    TopicsContext.prototype.topicSearch_keydown = function(node, e) {
-      var fl, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
-      if ((_ref = e.which) === 13 || _ref === 27 || _ref === 38 || _ref === 40) {
-        e.preventDefault();
-      }
-      switch (e.which) {
-        case 13:
-          $("#topicSearch").blur();
-          if ((_ref1 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null) {
-            if ((_ref2 = _ref1.topic) != null) {
-              _ref2.onReady((function(_this) {
-                return function(err, topic) {
-                  _this.set("currentTopic", topic);
-                  _this.drawWordCloud();
-                  return _this.drawPhraseCloud();
-                };
-              })(this));
             }
+            this.set("topicSearch_text", (_ref3 = (_ref4 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null ? (_ref5 = _ref4.topic) != null ? _ref5.get("name") : void 0 : void 0) != null ? _ref3 : "");
+            return this.set("topicsList_activeIndex", 0);
+          case 27:
+            return $("#topicSearch").blur();
+          case 38:
+            this.set("topicsList_activeIndex", ((fl = this.get("filteredTopics").length) + this.get("topicsList_activeIndex") - 1) % fl);
+            if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
+              return $("#topicsList a.list-group-item.active")[0].scrollIntoView(true);
+            }
+            break;
+          case 40:
+            this.set("topicsList_activeIndex", (this.get("topicsList_activeIndex") + 1) % this.get("filteredTopics").length);
+            if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
+              return $("#topicsList a.list-group-item.active")[0].scrollIntoView(false);
+            }
+        }
+      };
+
+      Context.prototype.topicSearch_input = function() {
+        return this.set("topicsList_activeIndex", 0);
+      };
+
+      Context.prototype.drawWordCloud = function() {
+        var wordsMax, wordsMin;
+        wordsMax = Math.max.apply(Math, this.get("currentTopic").get("words").map(function(x) {
+          return x.count;
+        }));
+        wordsMin = Math.min.apply(Math, this.get("currentTopic").get("words").map(function(x) {
+          return x.count;
+        }));
+        return WordCloud($("#wordcloud")[0], {
+          list: this.get("currentTopic").get("words").map(function(x) {
+            return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12];
+          }),
+          gridSize: 10,
+          minRotation: -0.5,
+          maxRotation: 0.5,
+          rotateRatio: 0.2,
+          ellipticity: 0.5,
+          wait: 0,
+          abort: function() {
+            return console.error(arguments);
           }
-          this.set("topicSearch_text", (_ref3 = (_ref4 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null ? (_ref5 = _ref4.topic) != null ? _ref5.get("name") : void 0 : void 0) != null ? _ref3 : "");
-          return this.set("topicsList_activeIndex", 0);
-        case 27:
-          return $("#topicSearch").blur();
-        case 38:
-          this.set("topicsList_activeIndex", ((fl = this.get("filteredTopics").length) + this.get("topicsList_activeIndex") - 1) % fl);
-          if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
-            return $("#topicsList a.list-group-item.active")[0].scrollIntoView(true);
+        });
+      };
+
+      Context.prototype.drawPhraseCloud = function() {
+        var phrasesMax, phrasesMin;
+        phrasesMax = Math.max.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
+          return x.count;
+        }));
+        phrasesMin = Math.min.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
+          return x.count;
+        }));
+        return WordCloud($("#phrasecloud")[0], {
+          list: this.get("currentTopic").get("phrases").map(function(x) {
+            return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12];
+          }),
+          gridSize: 10,
+          minRotation: -0.5,
+          maxRotation: 0.5,
+          rotateRatio: 0.2,
+          ellipticity: 0.5,
+          wait: 0,
+          abort: function() {
+            return console.error(arguments);
           }
-          break;
-        case 40:
-          this.set("topicsList_activeIndex", (this.get("topicsList_activeIndex") + 1) % this.get("filteredTopics").length);
-          if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
-            return $("#topicsList a.list-group-item.active")[0].scrollIntoView(false);
-          }
+        });
+      };
+
+      Context.prototype.gotoTopic = function(node) {
+        var _ref, _ref1, _ref2;
+        if ((_ref = this.get("topics").filter(function(x) {
+          return x.get("id") === Number($(node).data("id"));
+        })[0]) != null) {
+          _ref.onReady((function(_this) {
+            return function(err, topic) {
+              _this.set("currentTopic", topic);
+              _this.drawWordCloud();
+              return _this.drawPhraseCloud();
+            };
+          })(this));
+        }
+        this.set("topicSearch_text", (_ref1 = (_ref2 = this.get("topics").filter(function(x) {
+          return x.get("id") === Number($(node).data("id"));
+        })[0]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
+        return this.set("topicsList_activeIndex", 0);
+      };
+
+      return Context;
+
+    })(Batman.Model);
+    Topic = (function(_super) {
+      __extends(Topic, _super);
+
+      Topic.accessor("filteredRecords", function() {
+        var _ref;
+        return (_ref = this.get("records")) != null ? _ref.map((function(_this) {
+          return function(record, idx) {
+            return {
+              record: record,
+              active: record === _this.get("activeRecord")
+            };
+          };
+        })(this)) : void 0;
+      });
+
+      Topic.accessor("toggleHidden_text", function() {
+        return "" + (this.get("hidden") ? "Unhide" : "Hide") + " Topic";
+      });
+
+      function Topic(_arg) {
+        var hidden, id, name;
+        id = _arg.id, name = _arg.name, hidden = _arg.hidden;
+        Topic.__super__.constructor.apply(this, arguments);
+        this.set("id", id);
+        this.set("name", name);
+        this.set("hidden", hidden);
+        this.set("isLoaded", false);
       }
-    };
 
-    TopicsContext.prototype.topicSearch_input = function() {
-      return this.set("topicsList_activeIndex", 0);
-    };
-
-    TopicsContext.prototype.drawWordCloud = function() {
-      var wordsMax, wordsMin;
-      wordsMax = Math.max.apply(Math, this.get("currentTopic").get("words").map(function(x) {
-        return x.count;
-      }));
-      wordsMin = Math.min.apply(Math, this.get("currentTopic").get("words").map(function(x) {
-        return x.count;
-      }));
-      return WordCloud($("#wordcloud")[0], {
-        list: this.get("currentTopic").get("words").map(function(x) {
-          return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12];
-        }),
-        gridSize: 10,
-        minRotation: -0.5,
-        maxRotation: 0.5,
-        rotateRatio: 0.2,
-        ellipticity: 0.5,
-        wait: 0,
-        abort: function() {
-          return console.error(arguments);
+      Topic.prototype.onReady = function(callback) {
+        if (this.get("isLoaded")) {
+          return callback(null, this);
         }
-      });
-    };
+        return $.ajax({
+          url: "/data/topicDetails",
+          dataType: "jsonp",
+          data: {
+            id: this.get("id")
+          },
+          success: (function(_this) {
+            return function(response) {
+              _this.set("id", response.id);
+              _this.set("name", response.name);
+              _this.set("words", response.words);
+              _this.set("phrases", response.phrases);
+              _this.set("records", response.records.map(function(x) {
+                return new Record(x);
+              }));
+              _this.set("isLoaded", true);
+              return callback(null, _this);
+            };
+          })(this),
+          error: function(request) {
+            console.error(request);
+            return callback(request);
+          }
+        });
+      };
 
-    TopicsContext.prototype.drawPhraseCloud = function() {
-      var phrasesMax, phrasesMin;
-      phrasesMax = Math.max.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
-        return x.count;
-      }));
-      phrasesMin = Math.min.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
-        return x.count;
-      }));
-      return WordCloud($("#phrasecloud")[0], {
-        list: this.get("currentTopic").get("phrases").map(function(x) {
-          return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12];
-        }),
-        gridSize: 10,
-        minRotation: -0.5,
-        maxRotation: 0.5,
-        rotateRatio: 0.2,
-        ellipticity: 0.5,
-        wait: 0,
-        abort: function() {
-          return console.error(arguments);
+      Topic.prototype.gotoRecord = function(node) {
+        var _ref;
+        return (_ref = this.get("records").filter(function(x) {
+          return x.get("article_id") === $(node).children("span").text();
+        })[0]) != null ? _ref.onReady((function(_this) {
+          return function(err, record) {
+            return _this.set("activeRecord", record);
+          };
+        })(this)) : void 0;
+      };
+
+      Topic.prototype.showRenameDialog = function() {
+        this.set("renameTopic_text", this.get("name"));
+        return $("#renameTopicModal").modal("show");
+      };
+
+      Topic.prototype.renameTopic = function() {
+        return $.ajax({
+          url: "/data/renameTopic",
+          dataType: "jsonp",
+          type: "POST",
+          data: {
+            id: this.get("id"),
+            name: this.get("renameTopic_text")
+          },
+          success: (function(_this) {
+            return function(response) {
+              _this.set("name", _this.get("renameTopic_text"));
+              if (appContext.get("topicsContext.currentTopic") === _this) {
+                appContext.set("topicsContext.topicSearch_text", _this.get("name"));
+              }
+              return $("#renameTopicModal").modal("hide");
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+      };
+
+      Topic.prototype.toggleHidden = function() {
+        return $.ajax({
+          url: "/data/setTopicHidden",
+          dataType: "jsonp",
+          type: "POST",
+          data: {
+            id: this.get("id"),
+            hidden: !this.get("hidden")
+          },
+          success: (function(_this) {
+            return function(response) {
+              return _this.set("hidden", !_this.get("hidden"));
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+      };
+
+      return Topic;
+
+    })(Batman.Model);
+    return Record = (function(_super) {
+      __extends(Record, _super);
+
+      Record.accessor("proportionPie", function() {
+        var p;
+        p = 100 * this.get("proportion");
+        if (p > 99.99) {
+          p = 99.99;
         }
+        return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
       });
-    };
 
-    TopicsContext.prototype.gotoTopic = function(node) {
-      var _ref, _ref1, _ref2;
-      if ((_ref = this.get("topics").filter(function(x) {
-        return x.get("id") === Number($(node).data("id"));
-      })[0]) != null) {
-        _ref.onReady((function(_this) {
-          return function(err, topic) {
-            _this.set("currentTopic", topic);
-            _this.drawWordCloud();
-            return _this.drawPhraseCloud();
+      Record.accessor("proportionTooltip", function() {
+        return "Proportion: " + ((this.get("proportion") * 100).toFixed(2)) + "%";
+      });
+
+      function Record(_arg) {
+        var article_id, proportion;
+        article_id = _arg.article_id, proportion = _arg.proportion;
+        Record.__super__.constructor.apply(this, arguments);
+        this.set("article_id", article_id);
+        this.set("proportion", proportion);
+        this.set("isLoaded", false);
+      }
+
+      Record.prototype.onReady = function(callback) {
+        if (this.get("isLoaded")) {
+          return callback(null, this);
+        }
+        return $.ajax({
+          url: "/data/article",
+          dataType: "jsonp",
+          data: {
+            article_id: this.get("article_id")
+          },
+          success: (function(_this) {
+            return function(response) {
+              _this.set("article_id", response.article_id);
+              _this.set("article", response.article);
+              _this.set("isLoaded", true);
+              return callback(null, _this);
+            };
+          })(this),
+          error: function(request) {
+            console.error(request);
+            return callback(request);
+          }
+        });
+      };
+
+      return Record;
+
+    })(Batman.Model);
+  })(Topics);
+  Curation = new Object;
+  (function(exports) {
+    var Corpus, MetadataView;
+    exports.Context = (function(_super) {
+      __extends(Context, _super);
+
+      function Context() {
+        Context.__super__.constructor.apply(this, arguments);
+        this.set("metadataView", new MetadataView);
+      }
+
+      return Context;
+
+    })(Batman.Model);
+    MetadataView = (function(_super) {
+      __extends(MetadataView, _super);
+
+      MetadataView.accessor("currentCorpus", function() {
+        return this.get("corpora").find((function(_this) {
+          return function(x) {
+            return x.get("name") === _this.get("corpus_text");
+          };
+        })(this));
+      });
+
+      MetadataView.accessor("currentSubcorpus", function() {
+        var _ref;
+        return (_ref = this.get("currentCorpus.subcorpora")) != null ? _ref.find((function(_this) {
+          return function(x) {
+            return x === _this.get("subcorpus_text");
+          };
+        })(this)) : void 0;
+      });
+
+      MetadataView.accessor("corpusIsNew", function() {
+        return (this.get("currentCorpus") == null) && (this.get("corpus_text").match(/^\s*$/) == null) && !this.get("corpus_typeahead_open");
+      });
+
+      MetadataView.accessor("corpusIsSelected", function() {
+        return this.get("currentCorpus") != null;
+      });
+
+      MetadataView.accessor("subcorpusIsNew", function() {
+        return (this.get("currentSubcorpus") == null) && (this.get("subcorpus_text").match(/^\s*$/) == null) && !this.get("subcorpus_typeahead_open") && (this.get("currentCorpus") != null);
+      });
+
+      MetadataView.accessor("subcorpusIsSelected", function() {
+        return this.get("currentSubcorpus") != null;
+      });
+
+      function MetadataView() {
+        MetadataView.__super__.constructor.apply(this, arguments);
+        this.set("corpora", new Batman.Set);
+        this.set("corpus_text", "");
+        this.set("subcorpus_text", "");
+        this.set("corpus_typeahead_open", false);
+        this.set("subcorpus_typeahead_open", false);
+        this.observe("currentCorpus", function(corpus) {
+          return corpus != null ? corpus.getReady() : void 0;
+        });
+        $.ajax({
+          url: "/data/corporaList",
+          dataType: "jsonp",
+          success: (function(_this) {
+            return function(response) {
+              var _ref;
+              return (_ref = _this.get("corpora")).add.apply(_ref, response.map(function(x) {
+                return new Corpus(x);
+              }));
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+        $("#corpusInput").typeahead({
+          minLength: 0,
+          highlight: true
+        }, {
+          source: (function(_this) {
+            return function(query, callback) {
+              return callback(_this.get("corpora").filter(function(x) {
+                return x.get("name").toLowerCase().match(query.toLowerCase());
+              }).toArray());
+            };
+          })(this),
+          displayKey: function(x) {
+            return x.get("name");
+          }
+        }).on("typeahead:opened", (function(_this) {
+          return function() {
+            return _this.set("corpus_typeahead_open", true);
+          };
+        })(this)).on("typeahead:closed", (function(_this) {
+          return function() {
+            return _this.set("corpus_typeahead_open", false);
+          };
+        })(this)).on("typeahead:selected", (function(_this) {
+          return function() {
+            return _this.set("corpus_text", $("#corpusInput").typeahead("val"));
+          };
+        })(this));
+        $("#subcorpusInput").typeahead({
+          minLength: 0,
+          highlight: true
+        }, {
+          source: (function(_this) {
+            return function(query, callback) {
+              var _ref;
+              return (_ref = _this.get("currentCorpus")) != null ? _ref.onReady(function(err, corpus) {
+                return callback(corpus.get("subcorpora").filter(function(x) {
+                  return x.toLowerCase().match(query.toLowerCase());
+                }).toArray());
+              }) : void 0;
+            };
+          })(this),
+          displayKey: function(x) {
+            return x;
+          }
+        }).on("typeahead:opened", (function(_this) {
+          return function() {
+            return _this.set("subcorpus_typeahead_open", true);
+          };
+        })(this)).on("typeahead:closed", (function(_this) {
+          return function() {
+            return _this.set("subcorpus_typeahead_open", false);
+          };
+        })(this)).on("typeahead:selected", (function(_this) {
+          return function() {
+            return _this.set("subcorpus_text", $("#subcorpusInput").typeahead("val"));
           };
         })(this));
       }
-      this.set("topicSearch_text", (_ref1 = (_ref2 = this.get("topics").filter(function(x) {
-        return x.get("id") === Number($(node).data("id"));
-      })[0]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
-      return this.set("topicsList_activeIndex", 0);
-    };
 
-    return TopicsContext;
+      MetadataView.prototype.addCorpus = function() {
+        return $.ajax({
+          url: "/data/corpus",
+          dataType: "jsonp",
+          type: "PUT",
+          data: {
+            corpus: this.get("corpus_text")
+          },
+          success: (function(_this) {
+            return function(_arg) {
+              var success;
+              success = _arg.success;
+              if (!success) {
+                return console.error("Corpus already exists.");
+              }
+              return _this.get("corpora").add(new Corpus(_this.get("corpus_text")));
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+      };
 
-  })(Batman.Model);
-  Topic = (function(_super) {
-    __extends(Topic, _super);
+      MetadataView.prototype.addSubcorpus = function() {
+        var corpus;
+        corpus = this.get("currentCorpus");
+        if (corpus == null) {
+          return;
+        }
+        return $.ajax({
+          url: "/data/subcorpus",
+          dataType: "jsonp",
+          type: "PUT",
+          data: {
+            corpus: corpus.get("name"),
+            subcorpus: this.get("subcorpus_text")
+          },
+          success: (function(_this) {
+            return function(_arg) {
+              var success;
+              success = _arg.success;
+              if (!success) {
+                return console.error("Subcorpus already exists or Corpus doesn't exist.");
+              }
+              return corpus.onReady(function(err, corpus) {
+                return corpus.get("subcorpora").add(_this.get("subcorpus_text"));
+              });
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+      };
 
-    Topic.accessor("filteredRecords", function() {
-      var _ref;
-      return (_ref = this.get("records")) != null ? _ref.map((function(_this) {
-        return function(record, idx) {
-          return {
-            record: record,
-            active: record === _this.get("activeRecord")
-          };
-        };
-      })(this)) : void 0;
-    });
+      return MetadataView;
 
-    Topic.accessor("toggleHidden_text", function() {
-      return "" + (this.get("hidden") ? "Unhide" : "Hide") + " Topic";
-    });
+    })(Batman.Model);
+    return Corpus = (function(_super) {
+      __extends(Corpus, _super);
 
-    function Topic(_arg) {
-      var hidden, id, name;
-      id = _arg.id, name = _arg.name, hidden = _arg.hidden;
-      Topic.__super__.constructor.apply(this, arguments);
-      this.set("id", id);
-      this.set("name", name);
-      this.set("hidden", hidden);
-      this.set("isLoaded", false);
-    }
-
-    Topic.prototype.onReady = function(callback) {
-      if (this.get("isLoaded")) {
-        return callback(null, this);
+      function Corpus(name) {
+        Corpus.__super__.constructor.apply(this, arguments);
+        this.set("name", name);
+        this.set("subcorpora", new Batman.Set);
       }
-      return $.ajax({
-        url: "/data/topicDetails",
-        dataType: "jsonp",
-        data: {
-          id: this.get("id")
-        },
-        success: (function(_this) {
-          return function(response) {
-            _this.set("id", response.id);
-            _this.set("name", response.name);
-            _this.set("words", response.words);
-            _this.set("phrases", response.phrases);
-            _this.set("records", response.records.map(function(x) {
-              return new Record(x);
-            }));
-            _this.set("isLoaded", true);
-            return callback(null, _this);
-          };
-        })(this),
-        error: function(request) {
-          console.error(request);
-          return callback(request);
+
+      Corpus.prototype.onReady = function(callback) {
+        if (this.get("isLoaded")) {
+          return typeof callback === "function" ? callback(null, this) : void 0;
         }
-      });
-    };
+        return $.ajax({
+          url: "/data/subcorporaList",
+          dataType: "jsonp",
+          data: {
+            corpus: this.get("name")
+          },
+          success: (function(_this) {
+            return function(response) {
+              var _ref;
+              (_ref = _this.get("subcorpora")).add.apply(_ref, response.subcorpora);
+              _this.set("isLoaded", true);
+              return typeof callback === "function" ? callback(null, _this) : void 0;
+            };
+          })(this),
+          error: function(request) {
+            console.error(request);
+            return typeof callback === "function" ? callback(request) : void 0;
+          }
+        });
+      };
 
-    Topic.prototype.gotoRecord = function(node) {
-      var _ref;
-      return (_ref = this.get("records").filter(function(x) {
-        return x.get("article_id") === $(node).children("span").text();
-      })[0]) != null ? _ref.onReady((function(_this) {
-        return function(err, record) {
-          return _this.set("activeRecord", record);
-        };
-      })(this)) : void 0;
-    };
+      Corpus.prototype.getReady = function() {
+        return this.onReady();
+      };
 
-    Topic.prototype.showRenameDialog = function() {
-      this.set("renameTopic_text", this.get("name"));
-      return $("#renameTopicModal").modal("show");
-    };
+      return Corpus;
 
-    Topic.prototype.renameTopic = function() {
-      return $.ajax({
-        url: "/data/renameTopic",
-        dataType: "jsonp",
-        type: "POST",
-        data: {
-          id: this.get("id"),
-          name: this.get("renameTopic_text")
-        },
-        success: (function(_this) {
-          return function(response) {
-            _this.set("name", _this.get("renameTopic_text"));
-            if (appContext.get("topicsContext.currentTopic") === _this) {
-              appContext.set("topicsContext.topicSearch_text", _this.get("name"));
-            }
-            return $("#renameTopicModal").modal("hide");
-          };
-        })(this),
-        error: function(request) {
-          return console.error(request);
-        }
-      });
-    };
-
-    Topic.prototype.toggleHidden = function() {
-      return $.ajax({
-        url: "/data/setTopicHidden",
-        dataType: "jsonp",
-        type: "POST",
-        data: {
-          id: this.get("id"),
-          hidden: !this.get("hidden")
-        },
-        success: (function(_this) {
-          return function(response) {
-            return _this.set("hidden", !_this.get("hidden"));
-          };
-        })(this),
-        error: function(request) {
-          return console.error(request);
-        }
-      });
-    };
-
-    return Topic;
-
-  })(Batman.Model);
-  Record = (function(_super) {
-    __extends(Record, _super);
-
-    Record.accessor("proportionPie", function() {
-      var p;
-      p = 100 * this.get("proportion");
-      if (p > 99.99) {
-        p = 99.99;
-      }
-      return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
-    });
-
-    Record.accessor("proportionTooltip", function() {
-      return "Proportion: " + ((this.get("proportion") * 100).toFixed(2)) + "%";
-    });
-
-    function Record(_arg) {
-      var article_id, proportion;
-      article_id = _arg.article_id, proportion = _arg.proportion;
-      Record.__super__.constructor.apply(this, arguments);
-      this.set("article_id", article_id);
-      this.set("proportion", proportion);
-      this.set("isLoaded", false);
-    }
-
-    Record.prototype.onReady = function(callback) {
-      if (this.get("isLoaded")) {
-        return callback(null, this);
-      }
-      return $.ajax({
-        url: "/data/article",
-        dataType: "jsonp",
-        data: {
-          article_id: this.get("article_id")
-        },
-        success: (function(_this) {
-          return function(response) {
-            _this.set("article_id", response.article_id);
-            _this.set("article", response.article);
-            _this.set("isLoaded", true);
-            return callback(null, _this);
-          };
-        })(this),
-        error: function(request) {
-          console.error(request);
-          return callback(request);
-        }
-      });
-    };
-
-    return Record;
-
-  })(Batman.Model);
-  CurationContext = (function(_super) {
-    __extends(CurationContext, _super);
-
-    CurationContext.accessor("currentCorpus", function() {
-      return this.get("corpora").find((function(_this) {
-        return function(x) {
-          return x.get("name") === _this.get("corpus_text");
-        };
-      })(this));
-    });
-
-    CurationContext.accessor("currentSubcorpus", function() {
-      var _ref;
-      return (_ref = this.get("currentCorpus.subcorpora")) != null ? _ref.find((function(_this) {
-        return function(x) {
-          return x === _this.get("subcorpus_text");
-        };
-      })(this)) : void 0;
-    });
-
-    CurationContext.accessor("corpusIsNew", function() {
-      return (this.get("currentCorpus") == null) && (this.get("corpus_text").match(/^\s*$/) == null) && !this.get("corpus_typeahead_open");
-    });
-
-    CurationContext.accessor("corpusIsSelected", function() {
-      return this.get("currentCorpus") != null;
-    });
-
-    CurationContext.accessor("subcorpusIsNew", function() {
-      return (this.get("currentSubcorpus") == null) && (this.get("subcorpus_text").match(/^\s*$/) == null) && !this.get("subcorpus_typeahead_open") && (this.get("currentCorpus") != null);
-    });
-
-    CurationContext.accessor("subcorpusIsSelected", function() {
-      return this.get("currentSubcorpus") != null;
-    });
-
-    function CurationContext() {
-      CurationContext.__super__.constructor.apply(this, arguments);
-      this.set("corpora", new Batman.Set);
-      this.set("corpus_text", "");
-      this.set("subcorpus_text", "");
-      this.set("corpus_typeahead_open", false);
-      this.set("subcorpus_typeahead_open", false);
-      this.observe("currentCorpus", function(corpus) {
-        return corpus != null ? corpus.getReady() : void 0;
-      });
-      $.ajax({
-        url: "/data/corporaList",
-        dataType: "jsonp",
-        success: (function(_this) {
-          return function(response) {
-            var _ref;
-            return (_ref = _this.get("corpora")).add.apply(_ref, response.map(function(x) {
-              return new Corpus(x);
-            }));
-          };
-        })(this),
-        error: function(request) {
-          return console.error(request);
-        }
-      });
-      $("#corpusInput").typeahead({
-        minLength: 0,
-        highlight: true
-      }, {
-        source: (function(_this) {
-          return function(query, callback) {
-            return callback(_this.get("corpora").filter(function(x) {
-              return x.get("name").toLowerCase().match(query.toLowerCase());
-            }).toArray());
-          };
-        })(this),
-        displayKey: function(x) {
-          return x.get("name");
-        }
-      }).on("typeahead:opened", (function(_this) {
-        return function() {
-          return _this.set("corpus_typeahead_open", true);
-        };
-      })(this)).on("typeahead:closed", (function(_this) {
-        return function() {
-          return _this.set("corpus_typeahead_open", false);
-        };
-      })(this)).on("typeahead:selected", (function(_this) {
-        return function() {
-          return _this.set("corpus_text", $("#corpusInput").typeahead("val"));
-        };
-      })(this));
-      $("#subcorpusInput").typeahead({
-        minLength: 0,
-        highlight: true
-      }, {
-        source: (function(_this) {
-          return function(query, callback) {
-            var _ref;
-            return (_ref = _this.get("currentCorpus")) != null ? _ref.onReady(function(err, corpus) {
-              return callback(corpus.get("subcorpora").filter(function(x) {
-                return x.toLowerCase().match(query.toLowerCase());
-              }).toArray());
-            }) : void 0;
-          };
-        })(this),
-        displayKey: function(x) {
-          return x;
-        }
-      }).on("typeahead:opened", (function(_this) {
-        return function() {
-          return _this.set("subcorpus_typeahead_open", true);
-        };
-      })(this)).on("typeahead:closed", (function(_this) {
-        return function() {
-          return _this.set("subcorpus_typeahead_open", false);
-        };
-      })(this)).on("typeahead:selected", (function(_this) {
-        return function() {
-          return _this.set("subcorpus_text", $("#subcorpusInput").typeahead("val"));
-        };
-      })(this));
-    }
-
-    CurationContext.prototype.addCorpus = function() {
-      return $.ajax({
-        url: "/data/corpus",
-        dataType: "jsonp",
-        type: "PUT",
-        data: {
-          corpus: this.get("corpus_text")
-        },
-        success: (function(_this) {
-          return function(_arg) {
-            var success;
-            success = _arg.success;
-            if (!success) {
-              return console.error("Corpus already exists.");
-            }
-            return _this.get("corpora").add(new Corpus(_this.get("corpus_text")));
-          };
-        })(this),
-        error: function(request) {
-          return console.error(request);
-        }
-      });
-    };
-
-    CurationContext.prototype.addSubcorpus = function() {
-      var corpus;
-      corpus = this.get("currentCorpus");
-      if (corpus == null) {
-        return;
-      }
-      return $.ajax({
-        url: "/data/subcorpus",
-        dataType: "jsonp",
-        type: "PUT",
-        data: {
-          corpus: corpus.get("name"),
-          subcorpus: this.get("subcorpus_text")
-        },
-        success: (function(_this) {
-          return function(_arg) {
-            var success;
-            success = _arg.success;
-            if (!success) {
-              return console.error("Subcorpus already exists or Corpus doesn't exist.");
-            }
-            return corpus.onReady(function(err, corpus) {
-              return corpus.get("subcorpora").add(_this.get("subcorpus_text"));
-            });
-          };
-        })(this),
-        error: function(request) {
-          return console.error(request);
-        }
-      });
-    };
-
-    return CurationContext;
-
-  })(Batman.Model);
-  Corpus = (function(_super) {
-    __extends(Corpus, _super);
-
-    function Corpus(name) {
-      Corpus.__super__.constructor.apply(this, arguments);
-      this.set("name", name);
-      this.set("subcorpora", new Batman.Set);
-    }
-
-    Corpus.prototype.onReady = function(callback) {
-      if (this.get("isLoaded")) {
-        return typeof callback === "function" ? callback(null, this) : void 0;
-      }
-      return $.ajax({
-        url: "/data/subcorporaList",
-        dataType: "jsonp",
-        data: {
-          corpus: this.get("name")
-        },
-        success: (function(_this) {
-          return function(response) {
-            var _ref;
-            (_ref = _this.get("subcorpora")).add.apply(_ref, response.subcorpora);
-            _this.set("isLoaded", true);
-            return typeof callback === "function" ? callback(null, _this) : void 0;
-          };
-        })(this),
-        error: function(request) {
-          console.error(request);
-          return typeof callback === "function" ? callback(request) : void 0;
-        }
-      });
-    };
-
-    Corpus.prototype.getReady = function() {
-      return this.onReady();
-    };
-
-    return Corpus;
-
-  })(Batman.Model);
+    })(Batman.Model);
+  })(Curation);
   STM = (function(_super) {
     __extends(STM, _super);
 

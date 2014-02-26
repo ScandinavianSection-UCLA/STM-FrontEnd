@@ -18,9 +18,15 @@ Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
 	topic: type: mongoose.Schema.ObjectId, ref: "Topic"
 	proportion: Number
 
-Corpus = mongoose.model "Corpora", new mongoose.Schema
+metaDB = mongoose.createConnection "/tmp/mongodb-27017.sock/stm"
+
+Corpus = metaDB.model "Corpus", (new mongoose.Schema
 	name: String
-	subcorpora: [String]
+	subcorpora: [
+		name: String
+		status: String
+	]
+), "corpora"
 
 exports.getTopicsList = (callback) ->
 	Topic.find({}).sort(name: 1).exec (err, topics) ->
@@ -83,7 +89,7 @@ exports.getSubcorporaList = (corpus, callback) ->
 	#return callback null, corpus: corpus, subcorpora: [1..5].map (x) -> "#{corpus} #{x}"
 	Corpus.findOne name: corpus, (err, corpus) ->
 		return callback err if err?
-		callback null, if corpus? then success: true, corpus: corpus, subcorpora: corpus.subcorpora else success: false
+		callback null, if corpus? then success: true, corpus: corpus, subcorpora: corpus.subcorpora.map((x) -> x.name) else success: false
 
 exports.insertCorpus = (corpus, callback) ->
 	Corpus.update {name: corpus}, {$setOnInsert: name: corpus, subcorpora: []}, upsert: true, (err, n, res) ->
@@ -91,7 +97,7 @@ exports.insertCorpus = (corpus, callback) ->
 		callback null, success: !res.updatedExisting
 
 exports.insertSubcorpus = (corpus, subcorpus, callback) ->
-	Corpus.findOneAndUpdate {name: corpus, subcorpora: $ne: subcorpus}, {$push: subcorpora: subcorpus}, (err, corpus) ->
+	Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": $ne: subcorpus}, {$push: subcorpora: name: subcorpus}, (err, corpus) ->
 		return callback err if err?
 		callback null, success: corpus?
 
