@@ -1,6 +1,7 @@
 express = require "express"
 http = require "http"
 core = require "./core"
+request = require "request"
 
 web = express()
 web.configure ->
@@ -60,6 +61,11 @@ web.put "/data/subcorpus", (req, res, next) ->
 	core.insertSubcorpus req.param("corpus"), req.param("subcorpus"), (err, success) ->
 		return res.jsonp 500, err if err?
 		res.jsonp success
+
+web.post "/data/upload/:corpus/:subcorpus", (req, res, next) ->
+	console.log corpus: req.param("corpus"), subcorpus: req.param("subcorpus")
+	console.log req
+	res.jsonp success: true
 
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->

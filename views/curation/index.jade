@@ -6,14 +6,11 @@ block vars
 
 block content
 	.container(data-context = "curationContext")
-		ol.breadcrumb
-			li Metadata
-			li Data
 		.row
-			.col-sm-6.col-sm-offset-3
+			div.col-sm-6.col-sm-offset-3(data-addclass-col-sm-offset-1 = "pendingTasksView.isEmpty | not", data-removeclass-col-sm-offset-3 = "pendingTasksView.isEmpty | not")
 				.panel.panel-default(data-context = "metadataView")
 					.panel-heading
-						h3.panel-title Step 1: Metadata
+						h3.panel-title Metadata
 					.panel-body
 						.form-horizontal
 							.form-group(data-addclass-has-success = "corpusIsSelected", data-addclass-has-feedback = "corpusIsSelected")
@@ -37,3 +34,24 @@ block content
 						hr
 						.row
 							button.btn.btn-default.col-sm-4.col-sm-offset-4(disabled = "disabled", data-bind-disabled = "subcorpusIsSelected | not", data-addclass-btn-success = "subcorpusIsSelected", data-removeclass-btn-default = "subcorpusIsSelected") Continue
+				.panel.panel-default(data-context = "addFilesView")
+					.panel-heading
+						h3.panel-title Files
+					#dropFiles.panel-body.lead(style = "background-color: rgba(0, 0, 0, 0.02); text-align: center; margin-bottom: 0; color: rgba(0, 0, 0, 0.2); cursor: pointer")
+						| Drop files here to upload
+			.col-sm-4(data-showif = "pendingTasksView.isEmpty | not", style = "display: none")
+				.panel.panel-default(data-context = "pendingTasksView")
+					.panel-heading
+						h3.panel-title Pending Tasks
+					ul.list-group
+						li.list-group-item(data-foreach-task = "pendingTasks")
+							p.pull-left
+								small Uploading&nbsp;
+								strong(data-bind = "task.fileName")
+								br
+								small To&nbsp;
+								strong(data-bind = "task.corpus.name | append '/' | append task.subcorpus")
+							p.pull-right(style = "margin-bottom: 4px", data-bind = "task.friendlyFileSize")
+							.clearfix
+							.progress(style = "margin-bottom: 4px")
+								.progress-bar(role = "progressbar", data-bind-style = "'width: ' | append task.percentDone | append '%'", data-addclass-progress-bar-success = "task.success", data-addclass-progress-bar-danged = "task.failure")

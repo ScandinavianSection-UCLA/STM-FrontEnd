@@ -5,18 +5,20 @@ require.config
 		batman: "/batmanjs/batman"
 		wordcloud: "/wordcloudjs/wordcloud"
 		typeahead: "/components/typeahead.js/dist/typeahead.bundle.min"
+		dropzone: "/components/dropzone/downloads/dropzone-amd-module.min"
 	shim:
 		bootstrap: deps: ["jquery"]
 		batman: deps: ["jquery"], exports: "Batman"
 		wordcloud: exports: "WordCloud"
 		typeahead: deps: ["jquery"]
+		dropzone: deps: ["jquery"]
 	waitSeconds: 30
 
 appContext = undefined
 
 define "Batman", ["batman"], (Batman) -> Batman.DOM.readers.batmantarget = Batman.DOM.readers.target and delete Batman.DOM.readers.target and Batman
 
-require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], ($, Batman, WordCloud) ->
+require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"], ($, Batman, WordCloud) ->
 
 	findInStr = (chars, str, j = 0) ->
 		return [] if chars is ""
@@ -29,9 +31,9 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], ($, Batman,
 	class AppContext extends Batman.Model
 		constructor: ->
 			super
-			@set "indexContext", new Index.Context if window.location.pathname is "/"
-			@set "topicsContext", new Topics.Context if window.location.pathname is "/topics"
-			@set "curationContext", new Curation.Context if window.location.pathname is "/curation"
+			@set "indexContext", Index.context = new Index.Context if window.location.pathname is "/"
+			@set "topicsContext", Topics.context = new Topics.Context if window.location.pathname is "/topics"
+			@set "curationContext", Curation.context = new Curation.Context if window.location.pathname is "/curation"
 
 	Index = new Object
 	do (exports = Index) ->
@@ -216,6 +218,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], ($, Batman,
 			constructor: ->
 				super
 				@set "metadataView", new MetadataView
+				@set "addFilesView", new AddFilesView
+				@set "pendingTasksView", new PendingTasksView
 
 		class MetadataView extends Batman.Model
 			@accessor "currentCorpus", -> @get("corpora").find((x) => x.get("name") is @get "corpus_text")
@@ -276,6 +280,31 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], ($, Batman,
 					error: (request) ->
 						console.error request
 
+		class AddFilesView extends Batman.Model
+			constructor: ->
+				$("#dropFiles").dropzone
+					url: "/data/upload/<placeholder>"
+					accept: (file, callback) ->
+						callback if exports.context.get("metadataView.currentSubcorpus")? then undefined else "Error: Corpus / Subcorpus not selected."
+					init: ->
+						@on "processing", (file) ->
+							file.task = new UploadTask file.name, file.size, (currentCorpus = exports.context.get "metadataView.currentCorpus"), (currentSubcorpus = exports.context.get "metadataView.currentSubcorpus")
+							exports.context.get("pendingTasksView.pendingTasks").add file.task
+							@options.url = "/data/upload/#{currentCorpus.get "name"}/#{currentSubcorpus}"
+						@on "uploadprogress", (file, percentDone, bytesSent) ->
+							file.task.set "bytesSent", bytesSent
+						@on "success", (file) ->
+							file.task.set "status", "success"
+						@on "error", (file, error) ->
+							file.task?.set "status", "failure"
+					previewsContainer: document.createElement()
+
+		class PendingTasksView extends Batman.Model
+			@accessor "isEmpty", -> @get("pendingTasks.length") is 0
+			constructor: ->
+				super
+				@set "pendingTasks", new Batman.Set
+
 		class Corpus extends Batman.Model
 			constructor: (name) ->
 				super
@@ -294,6 +323,25 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], ($, Batman,
 						callback? request
 			getReady: ->
 				@onReady()
+
+		class UploadTask extends Batman.Model
+			@accessor "friendlyFileSize", ->
+				suffixes = ["KiB", "MiB", "GiB", "TiB"]
+				order = Math.min (parseInt Math.log(@get("fileSize") + 1) / Math.log 1024), 4
+				if order is 0
+					"#{@get "fileSize"} bytes"
+				else
+					"#{(@get("fileSize") / (order + 1)).toFixed 2} #{suffixes[order - 1]}"
+			@accessor "percentDone", -> @get("bytesSent")/@get("fileSize") * 100
+			@accessor "success", -> @get("status") is "success"
+			@accessor "failure", -> @get("status") is "failure"
+			constructor: (fileName, fileSize, corpus, subcorpus) ->
+				super
+				@set "fileName", fileName
+				@set "corpus", corpus
+				@set "subcorpus", subcorpus
+				@set "fileSize", fileSize
+				@set "bytesSent", 0
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

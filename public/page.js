@@ -10,7 +10,8 @@ require.config({
     bootstrap: "/components/bootstrap/dist/js/bootstrap.min",
     batman: "/batmanjs/batman",
     wordcloud: "/wordcloudjs/wordcloud",
-    typeahead: "/components/typeahead.js/dist/typeahead.bundle.min"
+    typeahead: "/components/typeahead.js/dist/typeahead.bundle.min",
+    dropzone: "/components/dropzone/downloads/dropzone-amd-module.min"
   },
   shim: {
     bootstrap: {
@@ -25,6 +26,9 @@ require.config({
     },
     typeahead: {
       deps: ["jquery"]
+    },
+    dropzone: {
+      deps: ["jquery"]
     }
   },
   waitSeconds: 30
@@ -36,7 +40,7 @@ define("Batman", ["batman"], function(Batman) {
   return Batman.DOM.readers.batmantarget = Batman.DOM.readers.target && delete Batman.DOM.readers.target && Batman;
 });
 
-require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($, Batman, WordCloud) {
+require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"], function($, Batman, WordCloud) {
   var AppContext, Curation, Index, STM, Topics, findInStr, isScrolledIntoView;
   findInStr = function(chars, str, j) {
     var idx, ret;
@@ -63,13 +67,13 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($,
     function AppContext() {
       AppContext.__super__.constructor.apply(this, arguments);
       if (window.location.pathname === "/") {
-        this.set("indexContext", new Index.Context);
+        this.set("indexContext", Index.context = new Index.Context);
       }
       if (window.location.pathname === "/topics") {
-        this.set("topicsContext", new Topics.Context);
+        this.set("topicsContext", Topics.context = new Topics.Context);
       }
       if (window.location.pathname === "/curation") {
-        this.set("curationContext", new Curation.Context);
+        this.set("curationContext", Curation.context = new Curation.Context);
       }
     }
 
@@ -477,13 +481,15 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($,
   })(Topics);
   Curation = new Object;
   (function(exports) {
-    var Corpus, MetadataView;
+    var AddFilesView, Corpus, MetadataView, PendingTasksView, UploadTask;
     exports.Context = (function(_super) {
       __extends(Context, _super);
 
       function Context() {
         Context.__super__.constructor.apply(this, arguments);
         this.set("metadataView", new MetadataView);
+        this.set("addFilesView", new AddFilesView);
+        this.set("pendingTasksView", new PendingTasksView);
       }
 
       return Context;
@@ -668,7 +674,56 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($,
       return MetadataView;
 
     })(Batman.Model);
-    return Corpus = (function(_super) {
+    AddFilesView = (function(_super) {
+      __extends(AddFilesView, _super);
+
+      function AddFilesView() {
+        $("#dropFiles").dropzone({
+          url: "/data/upload/<placeholder>",
+          accept: function(file, callback) {
+            return callback(exports.context.get("metadataView.currentSubcorpus") != null ? void 0 : "Error: Corpus / Subcorpus not selected.");
+          },
+          init: function() {
+            this.on("processing", function(file) {
+              var currentCorpus, currentSubcorpus;
+              file.task = new UploadTask(file.name, file.size, (currentCorpus = exports.context.get("metadataView.currentCorpus")), (currentSubcorpus = exports.context.get("metadataView.currentSubcorpus")));
+              exports.context.get("pendingTasksView.pendingTasks").add(file.task);
+              return this.options.url = "/data/upload/" + (currentCorpus.get("name")) + "/" + currentSubcorpus;
+            });
+            this.on("uploadprogress", function(file, percentDone, bytesSent) {
+              return file.task.set("bytesSent", bytesSent);
+            });
+            this.on("success", function(file) {
+              return file.task.set("status", "success");
+            });
+            return this.on("error", function(file, error) {
+              var _ref;
+              return (_ref = file.task) != null ? _ref.set("status", "failure") : void 0;
+            });
+          },
+          previewsContainer: document.createElement()
+        });
+      }
+
+      return AddFilesView;
+
+    })(Batman.Model);
+    PendingTasksView = (function(_super) {
+      __extends(PendingTasksView, _super);
+
+      PendingTasksView.accessor("isEmpty", function() {
+        return this.get("pendingTasks.length") === 0;
+      });
+
+      function PendingTasksView() {
+        PendingTasksView.__super__.constructor.apply(this, arguments);
+        this.set("pendingTasks", new Batman.Set);
+      }
+
+      return PendingTasksView;
+
+    })(Batman.Model);
+    Corpus = (function(_super) {
       __extends(Corpus, _super);
 
       function Corpus(name) {
@@ -707,6 +762,44 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead"], function($,
       };
 
       return Corpus;
+
+    })(Batman.Model);
+    return UploadTask = (function(_super) {
+      __extends(UploadTask, _super);
+
+      UploadTask.accessor("friendlyFileSize", function() {
+        var order, suffixes;
+        suffixes = ["KiB", "MiB", "GiB", "TiB"];
+        order = Math.min(parseInt(Math.log(this.get("fileSize") + 1) / Math.log(1024)), 4);
+        if (order === 0) {
+          return "" + (this.get("fileSize")) + " bytes";
+        } else {
+          return "" + ((this.get("fileSize") / (order + 1)).toFixed(2)) + " " + suffixes[order - 1];
+        }
+      });
+
+      UploadTask.accessor("percentDone", function() {
+        return this.get("bytesSent") / this.get("fileSize") * 100;
+      });
+
+      UploadTask.accessor("success", function() {
+        return this.get("status") === "success";
+      });
+
+      UploadTask.accessor("failure", function() {
+        return this.get("status") === "failure";
+      });
+
+      function UploadTask(fileName, fileSize, corpus, subcorpus) {
+        UploadTask.__super__.constructor.apply(this, arguments);
+        this.set("fileName", fileName);
+        this.set("corpus", corpus);
+        this.set("subcorpus", subcorpus);
+        this.set("fileSize", fileSize);
+        this.set("bytesSent", 0);
+      }
+
+      return UploadTask;
 
     })(Batman.Model);
   })(Curation);
