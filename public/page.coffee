@@ -37,13 +37,13 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 
 	Index = new Object
 	do (exports = Index) ->
-		class Context extends Batman.Model
+		class exports.Context extends Batman.Model
 			constructor: ->
 				super
 
 	Topics = new Object
 	do (exports = Topics) ->
-		class Context extends Batman.Model
+		class exports.Context extends Batman.Model
 			@accessor "isCurrentTopicSelected", -> @get("currentTopic")?
 			@accessor "filteredTopics", ->
 				@get("topics")

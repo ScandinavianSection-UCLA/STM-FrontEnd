@@ -82,8 +82,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
   })(Batman.Model);
   Index = new Object;
   (function(exports) {
-    var Context;
-    return Context = (function(_super) {
+    return exports.Context = (function(_super) {
       __extends(Context, _super);
 
       function Context() {
@@ -96,8 +95,8 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
   })(Index);
   Topics = new Object;
   (function(exports) {
-    var Context, Record, Topic;
-    Context = (function(_super) {
+    var Record, Topic;
+    exports.Context = (function(_super) {
       __extends(Context, _super);
 
       Context.accessor("isCurrentTopicSelected", function() {
