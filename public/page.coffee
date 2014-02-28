@@ -355,7 +355,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				if order is 0
 					"#{@get "fileSize"} bytes"
 				else
-					"#{(@get("fileSize") / (order + 1)).toFixed 2} #{suffixes[order - 1]}"
+					"#{(@get("fileSize") / Math.pow(1024, order)).toFixed 2} #{suffixes[order - 1]}"
 			@accessor "percentDone", -> @get("bytesSent")/@get("fileSize") * 100
 			@accessor "success", -> @get("status") is "success"
 			@accessor "failure", -> @get("status") is "failure"

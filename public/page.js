@@ -834,7 +834,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
         if (order === 0) {
           return "" + (this.get("fileSize")) + " bytes";
         } else {
-          return "" + ((this.get("fileSize") / (order + 1)).toFixed(2)) + " " + suffixes[order - 1];
+          return "" + ((this.get("fileSize") / Math.pow(1024, order)).toFixed(2)) + " " + suffixes[order - 1];
         }
       });
 
