@@ -303,7 +303,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 						console.error res.error if res.error?
 					error: (file, error) ->
 						file.task?.set "status", "failure"
-					previewsContainer: document.createElement()
+					previewsContainer: document.createElement("div")
 
 		class PendingTasksView extends Batman.Model
 			@accessor "isEmpty", -> @get("pendingTasks.length") is 0

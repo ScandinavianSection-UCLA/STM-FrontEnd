@@ -714,7 +714,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
             var _ref;
             return (_ref = file.task) != null ? _ref.set("status", "failure") : void 0;
           },
-          previewsContainer: document.createElement()
+          previewsContainer: document.createElement("div")
         });
       }
 
