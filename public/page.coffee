@@ -223,7 +223,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 
 		class MetadataView extends Batman.Model
 			@accessor "currentCorpus", -> @get("corpora").find((x) => x.get("name") is @get "corpus_text")
-			@accessor "currentSubcorpus", -> @get("currentCorpus.subcorpora")?.find((x) => x is @get "subcorpus_text")
+			@accessor "currentSubcorpus", -> @get("currentCorpus.subcorpora")?.find((x) => x.get("name") is @get "subcorpus_text")
 			@accessor "corpusIsNew", -> !@get("currentCorpus")? and !@get("corpus_text").match(/^\s*$/)? and !@get("corpus_typeahead_open")
 			@accessor "corpusIsSelected", -> @get("currentCorpus")?
 			@accessor "subcorpusIsNew", -> !@get("currentSubcorpus")? and !@get("subcorpus_text").match(/^\s*$/)? and !@get("subcorpus_typeahead_open") and @get("currentCorpus")?
@@ -236,7 +236,9 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				@set "corpus_typeahead_open", false
 				@set "subcorpus_typeahead_open", false
 				@observe "currentCorpus", (corpus) ->
-					corpus?.getReady()
+					corpus?.loadSubcorpora()
+				@observe "currentSubcorpus", (subcorpus) ->
+					subcorpus?.loadFilesList()
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
@@ -254,9 +256,9 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				$ "#subcorpusInput"
 					.typeahead {minLength: 0, highlight: true},
 						source: (query, callback) =>
-							@get("currentCorpus")?.onReady (err, corpus) =>
-								callback corpus.get("subcorpora").filter((x) -> x.toLowerCase().match query.toLowerCase()).toArray()
-						displayKey: (x) -> x
+							@get("currentCorpus")?.loadSubcorpora (err, corpus) =>
+								callback corpus.get("subcorpora").filter((x) -> x.get("name").toLowerCase().match query.toLowerCase()).toArray()
+						displayKey: (x) -> x.get "name"
 					.on "typeahead:opened", => @set "subcorpus_typeahead_open", true
 					.on "typeahead:closed", => @set "subcorpus_typeahead_open", false
 					.on "typeahead:selected", => @set "subcorpus_text", $("#subcorpusInput").typeahead("val")
@@ -275,28 +277,32 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 					url: "/data/subcorpus", dataType: "jsonp", type: "PUT", data: corpus: corpus.get("name"), subcorpus: @get("subcorpus_text")
 					success: ({success}) =>
 						return console.error "Subcorpus already exists or Corpus doesn't exist." unless success
-						corpus.onReady (err, corpus) =>
-							corpus.get("subcorpora").add @get("subcorpus_text")
+						corpus.loadSubcorpora (err, corpus) =>
+							corpus.get("subcorpora").add new Subcorpus @get("subcorpus_text"), corpus
 					error: (request) ->
 						console.error request
 
 		class AddFilesView extends Batman.Model
+			@accessor "isFilesListEmpty", -> !exports.context.get("metadataView.currentSubcorpus")? or exports.context.get("metadataView.currentSubcorpus.filesList.length") is 0
+			@accessor "sortedFilesList", -> exports.context.get "metadataView.currentSubcorpus.sortedFilesList"
 			constructor: ->
 				$("#dropFiles").dropzone
-					url: "/data/upload/<placeholder>"
+					url: "/data/file"
+					parallelUploads: 5
 					accept: (file, callback) ->
 						callback if exports.context.get("metadataView.currentSubcorpus")? then undefined else "Error: Corpus / Subcorpus not selected."
-					init: ->
-						@on "processing", (file) ->
-							file.task = new UploadTask file.name, file.size, (currentCorpus = exports.context.get "metadataView.currentCorpus"), (currentSubcorpus = exports.context.get "metadataView.currentSubcorpus")
-							exports.context.get("pendingTasksView.pendingTasks").add file.task
-							@options.url = "/data/upload/#{currentCorpus.get "name"}/#{currentSubcorpus}"
-						@on "uploadprogress", (file, percentDone, bytesSent) ->
-							file.task.set "bytesSent", bytesSent
-						@on "success", (file) ->
-							file.task.set "status", "success"
-						@on "error", (file, error) ->
-							file.task?.set "status", "failure"
+					sending: (file, xhr, formData) ->
+						file.task = new UploadTask file.name, file.size, (currentCorpus = exports.context.get "metadataView.currentCorpus"), (currentSubcorpus = exports.context.get "metadataView.currentSubcorpus")
+						exports.context.get("pendingTasksView.pendingTasks").add file.task
+						formData.append "corpus", currentCorpus.get "name"
+						formData.append "subcorpus", currentSubcorpus.get "name"
+					uploadprogress: (file, percentDone, bytesSent) ->
+						file.task.set "bytesSent", bytesSent
+					success: (file, res) ->
+						file.task.set "status", if res.success then "success" else "failure"
+						console.error res.error if res.error?
+					error: (file, error) ->
+						file.task?.set "status", "failure"
 					previewsContainer: document.createElement()
 
 		class PendingTasksView extends Batman.Model
@@ -310,19 +316,37 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				super
 				@set "name", name
 				@set "subcorpora", new Batman.Set
-			onReady: (callback) ->
-				return callback? null, @ if @get "isLoaded"
+			loadSubcorpora: (callback) ->
+				return callback? null, @ if @get "isSubcorporaLoaded"
 				$.ajax
 					url: "/data/subcorporaList", dataType: "jsonp", data: corpus: @get "name"
 					success: (response) =>
-						@get("subcorpora").add response.subcorpora...
-						@set "isLoaded", true
+						@get("subcorpora").add (response.subcorpora.map (x) => new Subcorpus x, @)...
+						@set "isSubcorporaLoaded", true
 						callback? null, @
 					error: (request) ->
 						console.error request
 						callback? request
-			getReady: ->
-				@onReady()
+
+		class Subcorpus extends Batman.Model
+			@accessor "isFilesListEmpty", -> @get("filesList.length") is 0
+			@accessor "sortedFilesList", -> @get("filesList.toArray").sort (a, b) -> a.localeCompare b
+			constructor: (name, corpus) ->
+				super
+				@set "name", name
+				@set "corpus", corpus
+				@set "filesList", new Batman.Set
+			loadFilesList: (callback) ->
+				return callback? null, @ if @get "isFilesListLoaded"
+				$.ajax
+					url: "/data/filesList", dataType: "jsonp", data: corpus: @get("corpus.name"), subcorpus: @get("name")
+					success: (response) =>
+						@get("filesList").add response.files...
+						@set "isFilesListLoaded", true
+						callback? null, @
+					error: (request) ->
+						console.error request
+						callback? request
 
 		class UploadTask extends Batman.Model
 			@accessor "friendlyFileSize", ->
@@ -342,6 +366,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				@set "subcorpus", subcorpus
 				@set "fileSize", fileSize
 				@set "bytesSent", 0
+				@observe "success", (success) ->
+					exports.context.get("metadataView.currentSubcorpus.filesList").add fileName if success
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

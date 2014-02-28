@@ -22,7 +22,7 @@ block content
 										span.input-group-btn(data-showif = "corpusIsNew", style = "display: none")
 											button.btn.btn-default(data-event-click = "appContext.curationContext.metadataView.addCorpus")
 												i.fa.fa-plus
-							.form-group(data-addclass-has-success = "subcorpusIsSelected", data-addclass-has-feedback = "subcorpusIsSelected")
+							.form-group(data-addclass-has-success = "subcorpusIsSelected", data-addclass-has-feedback = "subcorpusIsSelected", style = "margin-bottom: 0")
 								label.col-sm-3.control-label Sub Corpus
 								.col-sm-8
 									div(data-addclass-input-group = "subcorpusIsNew")
@@ -31,18 +31,19 @@ block content
 										span.input-group-btn(data-showif = "subcorpusIsNew", style = "display: none")
 											button.btn.btn-default(data-event-click = "appContext.curationContext.metadataView.addSubcorpus")
 												i.fa.fa-plus
-						hr
-						.row
-							button.btn.btn-default.col-sm-4.col-sm-offset-4(disabled = "disabled", data-bind-disabled = "subcorpusIsSelected | not", data-addclass-btn-success = "subcorpusIsSelected", data-removeclass-btn-default = "subcorpusIsSelected") Continue
 				.panel.panel-default(data-context = "addFilesView")
 					.panel-heading
 						h3.panel-title Files
 					#dropFiles.panel-body.lead(style = "background-color: rgba(0, 0, 0, 0.02); text-align: center; margin-bottom: 0; color: rgba(0, 0, 0, 0.2); cursor: pointer")
 						| Drop files here to upload
+
+					ul.list-group(data-showif = "isFilesListEmpty | not", style = "display: none")
+						div
+						li.list-group-item(data-foreach-file = "sortedFilesList", data-bind = "file")
 			.col-sm-4(data-showif = "pendingTasksView.isEmpty | not", style = "display: none")
 				.panel.panel-default(data-context = "pendingTasksView")
 					.panel-heading
-						h3.panel-title Pending Tasks
+						h3.panel-title Tasks
 					ul.list-group
 						li.list-group-item(data-foreach-task = "pendingTasks")
 							p.pull-left
@@ -50,8 +51,8 @@ block content
 								strong(data-bind = "task.fileName")
 								br
 								small To&nbsp;
-								strong(data-bind = "task.corpus.name | append '/' | append task.subcorpus")
+								strong(data-bind = "task.corpus.name | append '/' | append task.subcorpus.name")
 							p.pull-right(style = "margin-bottom: 4px", data-bind = "task.friendlyFileSize")
 							.clearfix
 							.progress(style = "margin-bottom: 4px")
-								.progress-bar(role = "progressbar", data-bind-style = "'width: ' | append task.percentDone | append '%'", data-addclass-progress-bar-success = "task.success", data-addclass-progress-bar-danged = "task.failure")
+								.progress-bar(role = "progressbar", data-bind-style = "'width: ' | append task.percentDone | append '%'", data-addclass-progress-bar-success = "task.success", data-addclass-progress-bar-danger = "task.failure")

@@ -3,17 +3,19 @@ async = require "async"
 xml2js = require "xml2js"
 fs = require "fs"
 
-corpus = "english"
-subCorpus = "1888"
+globalOptions =
+	corpus: "english"
+	subCorpus: "1888"
+	corporaDir: "corpora"
 
-mongoose.connect "/tmp/mongodb-27017.sock/stm_#{corpus}"
+mongoose.connect "/tmp/mongodb-27017.sock/stm_#{globalOptions.corpus}"
 
 Topic = mongoose.model "Topic", new mongoose.Schema
 	id: type: Number
 	name: String
 	hidden: Boolean
 
-Record = mongoose.model "SubCorpus_#{subCorpus}", new mongoose.Schema
+Record = mongoose.model "SubCorpus_#{globalOptions.subCorpus}", new mongoose.Schema
 	article_id: String
 	topic: type: mongoose.Schema.ObjectId, ref: "Topic"
 	proportion: Number
@@ -100,6 +102,30 @@ exports.insertSubcorpus = (corpus, subcorpus, callback) ->
 	Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": $ne: subcorpus}, {$push: subcorpora: name: subcorpus}, (err, corpus) ->
 		return callback err if err?
 		callback null, success: corpus?
+
+exports.addFile = (tempFile, corpus, subcorpus, callback) ->
+	Corpus.findOne {name: corpus, "subcorpora.name": subcorpus}, {"subcorpora.$": 1}, (err, doc) ->
+		return callback err if err?
+		if doc?
+			fs.mkdir globalOptions.corporaDir, (err) ->
+				fs.mkdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}", (err) ->
+					fs.rename tempFile.path, "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/#{tempFile.name}", (err) ->
+						unless err?
+							callback null, success: true
+						else
+							callback null, success: false, error: err
+		else
+			fs.unlink tempFile.path, (err) ->
+				callback null, success: false, error: "Corpora/Subcorpora does not exist."
+
+exports.getFilesList = (corpus, subcorpus, callback) ->
+	Corpus.findOne {name: corpus, "subcorpora.name": subcorpus}, {"subcorpora.$": 1}, (err, doc) ->
+		return callback err if err?
+		if doc?
+			fs.readdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}", (err, files) ->
+				callback null, corpus: corpus, subcorpus: subcorpus, files: if err? then [] else files
+		else
+			callback null, success: false, error: "Corpora/Subcorpora does not exist."
 
 # Deprecated
 exports.getTopics = (callback) ->

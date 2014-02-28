@@ -62,10 +62,15 @@ web.put "/data/subcorpus", (req, res, next) ->
 		return res.jsonp 500, err if err?
 		res.jsonp success
 
-web.post "/data/upload/:corpus/:subcorpus", (req, res, next) ->
-	console.log corpus: req.param("corpus"), subcorpus: req.param("subcorpus")
-	console.log req
-	res.jsonp success: true
+web.post "/data/file", (req, res, next) ->
+	core.addFile req.files.file, req.param("corpus"), req.param("subcorpus"), (err, success) ->
+		return res.jsonp 500, err if err?
+		res.jsonp success
+
+web.get "/data/filesList", (req, res, next) ->
+	core.getFilesList req.param("corpus"), req.param("subcorpus"), (err, result) ->
+		return res.jsonp 500, err if err?
+		res.jsonp result
 
 web.get /\/([a-z]+)/, (req, res, next) ->
 	res.render req.params[0], (err, html) ->
