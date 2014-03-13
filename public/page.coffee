@@ -6,6 +6,8 @@ require.config
 		wordcloud: "/wordcloudjs/wordcloud"
 		typeahead: "/components/typeahead.js/dist/typeahead.bundle.min"
 		dropzone: "/components/dropzone/downloads/dropzone-amd-module.min"
+		socketIO: "/socket.io/socket.io"
+		async: "/components/async/lib/async"
 	shim:
 		bootstrap: deps: ["jquery"]
 		batman: deps: ["jquery"], exports: "Batman"
@@ -18,7 +20,7 @@ appContext = undefined
 
 define "Batman", ["batman"], (Batman) -> Batman.DOM.readers.batmantarget = Batman.DOM.readers.target and delete Batman.DOM.readers.target and Batman
 
-require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"], ($, Batman, WordCloud) ->
+require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typeahead", "dropzone"], ($, Batman, WordCloud, socketIO, async) ->
 
 	findInStr = (chars, str, j = 0) ->
 		return [] if chars is ""
@@ -214,12 +216,15 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 
 	Curation = new Object
 	do (exports = Curation) ->
+		socket = undefined
+
 		class exports.Context extends Batman.Model
 			constructor: ->
 				super
 				@set "metadataView", new MetadataView
 				@set "addFilesView", new AddFilesView
 				@set "pendingTasksView", new PendingTasksView
+				socket = socketIO.connect()
 
 		class MetadataView extends Batman.Model
 			@accessor "currentCorpus", -> @get("corpora").find((x) => x.get("name") is @get "corpus_text")
@@ -238,7 +243,7 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				@observe "currentCorpus", (corpus) ->
 					corpus?.loadSubcorpora()
 				@observe "currentSubcorpus", (subcorpus) ->
-					subcorpus?.loadFilesList()
+					subcorpus?.loadFilesList 0
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
@@ -285,6 +290,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 		class AddFilesView extends Batman.Model
 			@accessor "isFilesListEmpty", -> !exports.context.get("metadataView.currentSubcorpus")? or exports.context.get("metadataView.currentSubcorpus.filesList.length") is 0
 			@accessor "sortedFilesList", -> exports.context.get "metadataView.currentSubcorpus.sortedFilesList"
+			@accessor "filesListNextAvailable", -> exports.context.get "metadataView.currentSubcorpus.filesListNextAvailable"
+			@accessor "filesListPrevAvailable", -> exports.context.get "metadataView.currentSubcorpus.filesListPrevAvailable"
 			constructor: ->
 				$("#dropFiles").dropzone
 					url: "/data/file"
@@ -299,11 +306,33 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 					uploadprogress: (file, percentDone, bytesSent) ->
 						file.task.set "bytesSent", bytesSent
 					success: (file, res) ->
-						file.task.set "status", if res.success then "success" else "failure"
+						if res.success
+							file.task.set "status", "success"
+						else if res.status is "extracting"
+							file.task.set "status", "extracting"
+							socket.emit "subscribe", res.hash
+							socket.on res.hash, (message, result) ->
+								switch message
+									when "progress"
+										file.task.set "bytesExtracted", result.bytesDone
+									when "extracted"
+										file.task.set "status", "extracted"
+									when "completed"
+										file.task.set "status", "success"
+										from = exports.context.get "metadataView.currentSubcorpus.filesListLoadedFrom"
+										to = exports.context.get "metadataView.currentSubcorpus.filesListLoadedTo"
+										async.eachSeries ((x for x in [from ... to - 10] by 10).concat Math.max to - 10, 0), (x, callback) ->
+											exports.context.get("metadataView.currentSubcorpus").forceLoadFilesList x
+						else
+							file.task.set "status", "failure"
 						console.error res.error if res.error?
 					error: (file, error) ->
 						file.task?.set "status", "failure"
 					previewsContainer: document.createElement("div")
+			loadMoreNextFiles: ->
+				exports.context.get("metadataView.currentSubcorpus").loadFilesList (exports.context.get("metadataView.currentSubcorpus.filesListLoadedTo") ? 0) + 1
+			loadMorePrevFiles: ->
+				exports.context.get("metadataView.currentSubcorpus").loadFilesList Math.max ((exports.context.get("metadataView.currentSubcorpus.filesListLoadedFrom") ? 0) - 10), 0
 
 		class PendingTasksView extends Batman.Model
 			@accessor "isEmpty", -> @get("pendingTasks.length") is 0
@@ -336,14 +365,26 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				@set "name", name
 				@set "corpus", corpus
 				@set "filesList", new Batman.Set
-			loadFilesList: (callback) ->
-				return callback? null, @ if @get "isFilesListLoaded"
+			loadFilesList: (from, callback) ->
+				return callback? null, @ unless false in (x in [@get("filesListLoadedFrom") .. @get("filesListLoadedTo")] for x in [from, from + 9])
+				@forceLoadFilesList from, callback
+			forceLoadFilesList: (from, callback) ->
 				$.ajax
-					url: "/data/filesList", dataType: "jsonp", data: corpus: @get("corpus.name"), subcorpus: @get("name")
+					url: "/data/filesList", dataType: "jsonp", data: corpus: @get("corpus.name"), subcorpus: @get("name"), from: from
 					success: (response) =>
 						@get("filesList").add response.files...
-						@set "isFilesListLoaded", true
+						if response.fileIndices.from >= @get("filesListLoadedFrom") and response.fileIndices.to <= @get("filesListLoadedTo")
+						else unless response.fileIndices.from > @get "filesListLoadedFrom"
+							@set "filesListLoadedFrom", response.fileIndices.from
+							@set "filesListLoadedTo", Math.max(response.fileIndices.to, Math.min(response.fileIndices.from + 29, @get("filesListLoadedTo") ? 0))
+							@get("filesList").remove (@get("filesList.toArray").sort((a, b) -> a.localeCompare b)[30...])...
+						else unless response.fileIndices.to < @get "filesListLoadedTo"
+							@set "filesListLoadedTo", response.fileIndices.to
+							@set "filesListLoadedFrom", Math.min(response.fileIndices.from, Math.max(response.fileIndices.to - 29, @get("filesListLoadedFrom") ? 0))
+							@get("filesList").remove (@get("filesList.toArray").sort((a, b) -> a.localeCompare b)[...-30])...
 						callback? null, @
+						@set "filesListNextAvailable", @get("filesListLoadedTo") + 1 < response.totalFiles
+						@set "filesListPrevAvailable", @get("filesListLoadedFrom") > 0
 					error: (request) ->
 						console.error request
 						callback? request
@@ -357,8 +398,12 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				else
 					"#{(@get("fileSize") / Math.pow(1024, order)).toFixed 2} #{suffixes[order - 1]}"
 			@accessor "percentDone", -> @get("bytesSent")/@get("fileSize") * 100
+			@accessor "percentExtractionDone", -> @get("bytesExtracted")/@get("fileSize") * 100
 			@accessor "success", -> @get("status") is "success"
 			@accessor "failure", -> @get("status") is "failure"
+			@accessor "extracting", -> @get("status") is "extracting"
+			@accessor "extracted", -> @get("status") is "extracted"
+			@accessor "isArchive", -> @get("status") in ["extracted", "extracting"]
 			constructor: (fileName, fileSize, corpus, subcorpus) ->
 				super
 				@set "fileName", fileName
@@ -366,8 +411,8 @@ require ["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
 				@set "subcorpus", subcorpus
 				@set "fileSize", fileSize
 				@set "bytesSent", 0
-				@observe "success", (success) ->
-					exports.context.get("metadataView.currentSubcorpus.filesList").add fileName if success
+				@observe "status", (success, extracted) ->
+					exports.context.get("metadataView.currentSubcorpus.filesList").add fileName if success is "success" and extracted is "extracted"
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

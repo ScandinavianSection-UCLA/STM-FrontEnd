@@ -50,3 +50,10 @@ body {
   overflow: scroll;
   height: 314px;
 }
+.pending-task .progress {
+  margin-bottom: 4px;
+  position: relative;
+}
+.pending-task .progress .progress-bar {
+  position: absolute;
+}

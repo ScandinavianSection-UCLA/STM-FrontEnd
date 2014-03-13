@@ -8,7 +8,8 @@
     "jade": "~1.1.5",
     "mongoose": "~3.8.6",
     "xml2js": "~0.4.1",
-    "request": "~2.34.0"
+    "request": "~2.34.0",
+    "socket.io-client": "~0.9.16"
   },
   "repository": {
     "type": "git",

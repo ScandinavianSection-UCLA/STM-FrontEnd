@@ -2,6 +2,7 @@ express = require "express"
 http = require "http"
 core = require "./core"
 request = require "request"
+socketIO = require "socket.io"
 
 web = express()
 web.configure ->
@@ -63,12 +64,23 @@ web.put "/data/subcorpus", (req, res, next) ->
 		res.jsonp success
 
 web.post "/data/file", (req, res, next) ->
-	core.addFile req.files.file, req.param("corpus"), req.param("subcorpus"), (err, success) ->
+	core.addFile req.files.file, req.param("corpus"), req.param("subcorpus"), (err, response) ->
 		return res.jsonp 500, err if err?
-		res.jsonp success
+		if response.success
+			res.jsonp response
+		else if response.extractor?
+			res.jsonp status: "extracting", hash: response.extractor.hash
+			response.extractor.on "progress", (progress) ->
+				io.sockets.in(response.extractor.hash).volatile.emit response.extractor.hash, "progress", progress
+			response.extractor.on "extracted", ->
+				io.sockets.in(response.extractor.hash).emit response.extractor.hash, "extracted"
+			response.extractor.on "completed", ->
+				io.sockets.in(response.extractor.hash).emit response.extractor.hash, "completed"
+		else
+			res.jsonp response
 
 web.get "/data/filesList", (req, res, next) ->
-	core.getFilesList req.param("corpus"), req.param("subcorpus"), (err, result) ->
+	core.getFilesList req.param("corpus"), req.param("subcorpus"), Number(req.param "from") ? 0, (err, result) ->
 		return res.jsonp 500, err if err?
 		res.jsonp result
 
@@ -81,5 +93,13 @@ web.get /\/([a-z]+)/, (req, res, next) ->
 #	res.render "404"
 
 server = http.createServer web
+
+io = socketIO.listen server
+io.configure ->
+	io.set "log level", 0
+
+io.sockets.on "connection", (socket) ->
+	socket.on "subscribe", (hash) ->
+		socket.join hash
 
 server.listen (port = process.env.PORT ? 5080), -> console.log "Listening on port #{port}"

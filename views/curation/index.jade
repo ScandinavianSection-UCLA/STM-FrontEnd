@@ -39,13 +39,17 @@ block content
 
 					ul.list-group(data-showif = "isFilesListEmpty | not", style = "display: none")
 						div
+						li.list-group-item(data-showif = "filesListPrevAvailable")
+							a(href = "#", data-event-click = "appContext.curationContext.addFilesView.loadMorePrevFiles") Load More…
 						li.list-group-item(data-foreach-file = "sortedFilesList", data-bind = "file")
+						li.list-group-item(data-showif = "filesListNextAvailable")
+							a(href = "#", data-event-click = "appContext.curationContext.addFilesView.loadMoreNextFiles") Load More…
 			.col-sm-4(data-showif = "pendingTasksView.isEmpty | not", style = "display: none")
 				.panel.panel-default(data-context = "pendingTasksView")
 					.panel-heading
 						h3.panel-title Tasks
 					ul.list-group
-						li.list-group-item(data-foreach-task = "pendingTasks")
+						li.list-group-item.pending-task(data-foreach-task = "pendingTasks")
 							p.pull-left
 								small Uploading&nbsp;
 								strong(data-bind = "task.fileName")
@@ -54,5 +58,6 @@ block content
 								strong(data-bind = "task.corpus.name | append '/' | append task.subcorpus.name")
 							p.pull-right(style = "margin-bottom: 4px", data-bind = "task.friendlyFileSize")
 							.clearfix
-							.progress(style = "margin-bottom: 4px")
+							.progress(data-addclass-active = "task.extracted", data-addclass-progress-striped = "task.extracted")
 								.progress-bar(role = "progressbar", data-bind-style = "'width: ' | append task.percentDone | append '%'", data-addclass-progress-bar-success = "task.success", data-addclass-progress-bar-danger = "task.failure")
+								.progress-bar.progress-bar-info(role = "progressbar", data-bind-style = "'width: ' | append task.percentExtractionDone | append '%'", data-showif = "task.isArchive")

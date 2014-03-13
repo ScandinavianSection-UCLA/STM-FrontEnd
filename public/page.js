@@ -11,7 +11,9 @@ require.config({
     batman: "/batmanjs/batman",
     wordcloud: "/wordcloudjs/wordcloud",
     typeahead: "/components/typeahead.js/dist/typeahead.bundle.min",
-    dropzone: "/components/dropzone/downloads/dropzone-amd-module.min"
+    dropzone: "/components/dropzone/downloads/dropzone-amd-module.min",
+    socketIO: "/socket.io/socket.io",
+    async: "/components/async/lib/async"
   },
   shim: {
     bootstrap: {
@@ -40,7 +42,7 @@ define("Batman", ["batman"], function(Batman) {
   return Batman.DOM.readers.batmantarget = Batman.DOM.readers.target && delete Batman.DOM.readers.target && Batman;
 });
 
-require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"], function($, Batman, WordCloud) {
+require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typeahead", "dropzone"], function($, Batman, WordCloud, socketIO, async) {
   var AppContext, Curation, Index, STM, Topics, findInStr, isScrolledIntoView;
   findInStr = function(chars, str, j) {
     var idx, ret;
@@ -480,7 +482,8 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
   })(Topics);
   Curation = new Object;
   (function(exports) {
-    var AddFilesView, Corpus, MetadataView, PendingTasksView, Subcorpus, UploadTask;
+    var AddFilesView, Corpus, MetadataView, PendingTasksView, Subcorpus, UploadTask, socket;
+    socket = void 0;
     exports.Context = (function(_super) {
       __extends(Context, _super);
 
@@ -489,6 +492,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
         this.set("metadataView", new MetadataView);
         this.set("addFilesView", new AddFilesView);
         this.set("pendingTasksView", new PendingTasksView);
+        socket = socketIO.connect();
       }
 
       return Context;
@@ -541,7 +545,7 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
           return corpus != null ? corpus.loadSubcorpora() : void 0;
         });
         this.observe("currentSubcorpus", function(subcorpus) {
-          return subcorpus != null ? subcorpus.loadFilesList() : void 0;
+          return subcorpus != null ? subcorpus.loadFilesList(0) : void 0;
         });
         $.ajax({
           url: "/data/corporaList",
@@ -687,6 +691,14 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
         return exports.context.get("metadataView.currentSubcorpus.sortedFilesList");
       });
 
+      AddFilesView.accessor("filesListNextAvailable", function() {
+        return exports.context.get("metadataView.currentSubcorpus.filesListNextAvailable");
+      });
+
+      AddFilesView.accessor("filesListPrevAvailable", function() {
+        return exports.context.get("metadataView.currentSubcorpus.filesListPrevAvailable");
+      });
+
       function AddFilesView() {
         $("#dropFiles").dropzone({
           url: "/data/file",
@@ -705,7 +717,37 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
             return file.task.set("bytesSent", bytesSent);
           },
           success: function(file, res) {
-            file.task.set("status", res.success ? "success" : "failure");
+            if (res.success) {
+              file.task.set("status", "success");
+            } else if (res.status === "extracting") {
+              file.task.set("status", "extracting");
+              socket.emit("subscribe", res.hash);
+              socket.on(res.hash, function(message, result) {
+                var from, to, x;
+                switch (message) {
+                  case "progress":
+                    return file.task.set("bytesExtracted", result.bytesDone);
+                  case "extracted":
+                    return file.task.set("status", "extracted");
+                  case "completed":
+                    file.task.set("status", "success");
+                    from = exports.context.get("metadataView.currentSubcorpus.filesListLoadedFrom");
+                    to = exports.context.get("metadataView.currentSubcorpus.filesListLoadedTo");
+                    return async.eachSeries(((function() {
+                      var _i, _ref, _results;
+                      _results = [];
+                      for (x = _i = from, _ref = to - 10; _i < _ref; x = _i += 10) {
+                        _results.push(x);
+                      }
+                      return _results;
+                    })()).concat(Math.max(to - 10, 0)), function(x, callback) {
+                      return exports.context.get("metadataView.currentSubcorpus").forceLoadFilesList(x);
+                    });
+                }
+              });
+            } else {
+              file.task.set("status", "failure");
+            }
             if (res.error != null) {
               return console.error(res.error);
             }
@@ -717,6 +759,16 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
           previewsContainer: document.createElement("div")
         });
       }
+
+      AddFilesView.prototype.loadMoreNextFiles = function() {
+        var _ref;
+        return exports.context.get("metadataView.currentSubcorpus").loadFilesList(((_ref = exports.context.get("metadataView.currentSubcorpus.filesListLoadedTo")) != null ? _ref : 0) + 1);
+      };
+
+      AddFilesView.prototype.loadMorePrevFiles = function() {
+        var _ref;
+        return exports.context.get("metadataView.currentSubcorpus").loadFilesList(Math.max(((_ref = exports.context.get("metadataView.currentSubcorpus.filesListLoadedFrom")) != null ? _ref : 0) - 10, 0));
+      };
 
       return AddFilesView;
 
@@ -795,23 +847,60 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
         this.set("filesList", new Batman.Set);
       }
 
-      Subcorpus.prototype.loadFilesList = function(callback) {
-        if (this.get("isFilesListLoaded")) {
+      Subcorpus.prototype.loadFilesList = function(from, callback) {
+        var x;
+        if (__indexOf.call((function() {
+          var _i, _j, _len, _ref, _ref1, _ref2, _results, _results1;
+          _ref = [from, from + 9];
+          _results = [];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            x = _ref[_i];
+            _results.push(__indexOf.call((function() {
+              _results1 = [];
+              for (var _j = _ref1 = this.get("filesListLoadedFrom"), _ref2 = this.get("filesListLoadedTo"); _ref1 <= _ref2 ? _j <= _ref2 : _j >= _ref2; _ref1 <= _ref2 ? _j++ : _j--){ _results1.push(_j); }
+              return _results1;
+            }).apply(this), x) >= 0);
+          }
+          return _results;
+        }).call(this), false) < 0) {
           return typeof callback === "function" ? callback(null, this) : void 0;
         }
+        return this.forceLoadFilesList(from, callback);
+      };
+
+      Subcorpus.prototype.forceLoadFilesList = function(from, callback) {
         return $.ajax({
           url: "/data/filesList",
           dataType: "jsonp",
           data: {
             corpus: this.get("corpus.name"),
-            subcorpus: this.get("name")
+            subcorpus: this.get("name"),
+            from: from
           },
           success: (function(_this) {
             return function(response) {
-              var _ref;
+              var _ref, _ref1, _ref2, _ref3, _ref4;
               (_ref = _this.get("filesList")).add.apply(_ref, response.files);
-              _this.set("isFilesListLoaded", true);
-              return typeof callback === "function" ? callback(null, _this) : void 0;
+              if (response.fileIndices.from >= _this.get("filesListLoadedFrom") && response.fileIndices.to <= _this.get("filesListLoadedTo")) {
+
+              } else if (!(response.fileIndices.from > _this.get("filesListLoadedFrom"))) {
+                _this.set("filesListLoadedFrom", response.fileIndices.from);
+                _this.set("filesListLoadedTo", Math.max(response.fileIndices.to, Math.min(response.fileIndices.from + 29, (_ref1 = _this.get("filesListLoadedTo")) != null ? _ref1 : 0)));
+                (_ref2 = _this.get("filesList")).remove.apply(_ref2, (_this.get("filesList.toArray").sort(function(a, b) {
+                  return a.localeCompare(b);
+                }).slice(30)));
+              } else if (!(response.fileIndices.to < _this.get("filesListLoadedTo"))) {
+                _this.set("filesListLoadedTo", response.fileIndices.to);
+                _this.set("filesListLoadedFrom", Math.min(response.fileIndices.from, Math.max(response.fileIndices.to - 29, (_ref3 = _this.get("filesListLoadedFrom")) != null ? _ref3 : 0)));
+                (_ref4 = _this.get("filesList")).remove.apply(_ref4, (_this.get("filesList.toArray").sort(function(a, b) {
+                  return a.localeCompare(b);
+                }).slice(0, -30)));
+              }
+              if (typeof callback === "function") {
+                callback(null, _this);
+              }
+              _this.set("filesListNextAvailable", _this.get("filesListLoadedTo") + 1 < response.totalFiles);
+              return _this.set("filesListPrevAvailable", _this.get("filesListLoadedFrom") > 0);
             };
           })(this),
           error: function(request) {
@@ -842,12 +931,29 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
         return this.get("bytesSent") / this.get("fileSize") * 100;
       });
 
+      UploadTask.accessor("percentExtractionDone", function() {
+        return this.get("bytesExtracted") / this.get("fileSize") * 100;
+      });
+
       UploadTask.accessor("success", function() {
         return this.get("status") === "success";
       });
 
       UploadTask.accessor("failure", function() {
         return this.get("status") === "failure";
+      });
+
+      UploadTask.accessor("extracting", function() {
+        return this.get("status") === "extracting";
+      });
+
+      UploadTask.accessor("extracted", function() {
+        return this.get("status") === "extracted";
+      });
+
+      UploadTask.accessor("isArchive", function() {
+        var _ref;
+        return (_ref = this.get("status")) === "extracted" || _ref === "extracting";
       });
 
       function UploadTask(fileName, fileSize, corpus, subcorpus) {
@@ -857,8 +963,8 @@ require(["jquery", "Batman", "wordcloud", "bootstrap", "typeahead", "dropzone"],
         this.set("subcorpus", subcorpus);
         this.set("fileSize", fileSize);
         this.set("bytesSent", 0);
-        this.observe("success", function(success) {
-          if (success) {
+        this.observe("status", function(success, extracted) {
+          if (success === "success" && extracted === "extracted") {
             return exports.context.get("metadataView.currentSubcorpus.filesList").add(fileName);
           }
         });
