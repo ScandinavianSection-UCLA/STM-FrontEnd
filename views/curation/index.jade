@@ -31,7 +31,7 @@ block content
 										span.input-group-btn(data-showif = "subcorpusIsNew", style = "display: none")
 											button.btn.btn-default(data-event-click = "appContext.curationContext.metadataView.addSubcorpus")
 												i.fa.fa-plus
-				.panel.panel-default(data-context = "addFilesView")
+				.panel.panel-default(data-context = "addFilesView", data-showif = "appContext.curationContext.metadataView.subcorpusIsSelected", style = "display: none")
 					.panel-heading
 						h3.panel-title Files
 					#dropFiles.panel-body.lead(style = "background-color: rgba(0, 0, 0, 0.02); text-align: center; margin-bottom: 0; color: rgba(0, 0, 0, 0.2); cursor: pointer")

@@ -545,7 +545,9 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           return corpus != null ? corpus.loadSubcorpora() : void 0;
         });
         this.observe("currentSubcorpus", function(subcorpus) {
-          return subcorpus != null ? subcorpus.loadFilesList(0) : void 0;
+          return subcorpus != null ? subcorpus.loadFilesList(0, function() {
+            return subcorpus != null ? subcorpus.get("filesList").add() : void 0;
+          }) : void 0;
         });
         $.ajax({
           url: "/data/corporaList",

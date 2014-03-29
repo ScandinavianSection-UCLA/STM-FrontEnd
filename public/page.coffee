@@ -243,7 +243,8 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@observe "currentCorpus", (corpus) ->
 					corpus?.loadSubcorpora()
 				@observe "currentSubcorpus", (subcorpus) ->
-					subcorpus?.loadFilesList 0
+					subcorpus?.loadFilesList 0, ->
+						subcorpus?.get("filesList").add()
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
