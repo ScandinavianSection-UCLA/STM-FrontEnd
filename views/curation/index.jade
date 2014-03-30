@@ -44,6 +44,20 @@ block content
 						li.list-group-item(data-foreach-file = "sortedFilesList", data-bind = "file")
 						li.list-group-item(data-showif = "filesListNextAvailable")
 							a(href = "#", data-event-click = "appContext.curationContext.addFilesView.loadMoreNextFiles") Load More…
+				.panel.panel-default(data-context = "malletProcessView", data-showif = "appContext.curationContext.metadataView.subcorpusIsSelected", style = "display: none")
+					.panel-heading
+						h3.panel-title Topic Modeling
+					.panel-body
+						#topicsProgress.text-center(data-showif = "processing")
+							span.label.label-default(data-addclass-label-primary = "processingIngestChunks", data-addclass-label-success = "processedIngestChunks", data-removeclass-label-default = "notprocessedIngestChunks | not") Ingest Chunks
+							span.text-muted &nbsp;&rarr;&nbsp;
+							span.label.label-default(data-addclass-label-primary = "processingTrainTopics", data-addclass-label-success = "processedTrainTopics", data-removeclass-label-default = "notprocessedTrainTopics | not") Train Topics
+							span.text-muted &nbsp;&rarr;&nbsp;
+							span.label.label-default(data-addclass-label-primary = "processingInferTopics", data-addclass-label-success = "processedInferTopics", data-removeclass-label-default = "notprocessedInferTopics | not") Infer Topics
+							span.text-muted &nbsp;&rarr;&nbsp;
+							span.label.label-default(data-addclass-label-primary = "processingStoreProportions", data-addclass-label-success = "processedStoreProportions", data-removeclass-label-default = "notprocessedStoreProportions | not") Store Proportions
+						.text-center(data-showif = "processing | not")
+							button.btn.btn-primary(data-event-click = "appContext.curationContext.malletProcessView.startTopicModeling") Start Topic Modeling
 			.col-sm-4(data-showif = "pendingTasksView.isEmpty | not", style = "display: none")
 				.panel.panel-default(data-context = "pendingTasksView")
 					.panel-heading

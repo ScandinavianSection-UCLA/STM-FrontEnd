@@ -1,0 +1,3 @@
+[submodule "TopicSaturation-Importer"]
+	path = TopicSaturation-Importer
+	url = https://github.com/ScandinavianSection-UCLA/TopicSaturation-Importer.git

@@ -1,6 +1,6 @@
 require.config
 	paths:
-		jquery: "/components/jquery/jquery.min"
+		jquery: "/components/jquery/dist/jquery.min"
 		bootstrap: "/components/bootstrap/dist/js/bootstrap.min"
 		batman: "/batmanjs/batman"
 		wordcloud: "/wordcloudjs/wordcloud"
@@ -341,6 +341,22 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				super
 				@set "pendingTasks", new Batman.Set
 
+		class MalletProcessView extends Batman.Model
+			@accessor "processingIngestChunks", -> @get("status") is "processingIngestChunks"
+			@accessor "processingTrainTopics", -> @get("status") is "processingTrainTopics"
+			@accessor "processingInferTopics", -> @get("status") is "processingInferTopics"
+			@accessor "processingStoreProportions", -> @get("status") is "processingStoreProportions"
+			@accessor "processedIngestChunks", -> @get("status") in ["processingTrainTopics", "processingInferTopics", "processingStoreProportions", "completed"]
+			@accessor "processedTrainTopics", -> @get("status") in ["processingInferTopics", "processingStoreProportions", "completed"]
+			@accessor "processedInferTopics", -> @get("status") in ["processingStoreProportions", "completed"]
+			@accessor "processedStoreProportions", -> @get("status") in ["completed"]
+			@accessor "notprocessedIngestChunks", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
+			@accessor "notprocessedTrainTopics", -> not @get("processingTrainTopics") and not @get("processedTrainTopics")
+			@accessor "notprocessedInferTopics", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
+			@accessor "notprocessedStoreProportions", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
+			startTopicModeling: ->
+				# ...
+
 		class Corpus extends Batman.Model
 			constructor: (name) ->
 				super
@@ -413,7 +429,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "fileSize", fileSize
 				@set "bytesSent", 0
 				@observe "status", (success, extracted) ->
-					exports.context.get("metadataView.currentSubcorpus.filesList").add fileName if success is "success" and extracted is "extracted"
+					exports.context.get("metadataView.currentSubcorpus.filesList").add fileName if success is "success" and extracted isnt "extracted"
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

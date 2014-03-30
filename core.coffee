@@ -129,11 +129,12 @@ exports.addFile = (tempFile, corpus, subcorpus, callback) ->
 				unless stdout.toString("utf8").toLowerCase().match(/(compress)|(zip)|(archive)|(tar)/)?
 					fs.mkdir globalOptions.corporaDir, (err) ->
 						fs.mkdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}", (err) ->
-							fs.rename tempFile.path, "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/#{tempFile.name}", (err) ->
-								unless err?
-									callback null, success: true
-								else
-									callback null, success: false, error: err
+							fs.mkdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files", (err) ->
+								fs.rename tempFile.path, "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files/#{tempFile.name}", (err) ->
+									unless err?
+										callback null, success: true
+									else
+										callback null, success: false, error: err
 				else
 					fs.stat tempFile.path, (err, stat) ->
 						return callback err if err?
@@ -160,6 +161,7 @@ exports.addFile = (tempFile, corpus, subcorpus, callback) ->
 								extractor.emit "extracted"
 								fs.mkdir globalOptions.corporaDir, (err) ->
 									fs.mkdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}", (err) ->
+										fs.mkdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files", (err) ->
 										processDir = (sourceDir, targetDir, callback) ->
 											fs.readdir sourceDir, (err, files) ->
 												async.map files, (file, callback) ->
@@ -172,7 +174,7 @@ exports.addFile = (tempFile, corpus, subcorpus, callback) ->
 																callback err, file.split("/")[-1..]
 												, (err, files) ->
 													callback null, files.reduce (a, b) -> a.concat b
-										processDir tempDir, "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}", (err, files) ->
+										processDir tempDir, "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files", (err, files) ->
 											extractor.emit "completed"
 
 		else
@@ -183,7 +185,7 @@ exports.getFilesList = (corpus, subcorpus, from, callback) ->
 	Corpus.findOne {name: corpus, "subcorpora.name": subcorpus}, {"subcorpora.$": 1}, (err, doc) ->
 		return callback err if err?
 		if doc?
-			fs.readdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}", (err, files) ->
+			fs.readdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files", (err, files) ->
 				files = [] if err?
 				callback null,
 					corpus: corpus
@@ -193,6 +195,46 @@ exports.getFilesList = (corpus, subcorpus, from, callback) ->
 					files: files[from .. from + 9]
 		else
 			callback null, success: false, error: "Corpora/Subcorpora does not exist."
+
+exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
+	Corpus.findOne {name: corpus, "subcorpora.name": subcorpus}, {"subcorpora.$": 1}, (err, doc) ->
+		return callback err if err?
+			if doc?
+				ingestChunks = (callback) ->
+					child_process.exec "mallet import-dir
+						--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files/
+						--output #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
+						--token-regex '\\p{L}[\\p{L}\\p{P}]*\\p{L}'
+						--keep-sequence
+						--remove-stopwords"
+					, (err, stdout, stderr) ->
+						console.error stderr.toString "utf8"
+						return callback "#{err}: #{stderr.toString "utf8"}" if err?
+						callback()
+				trainTopics = (callback) ->
+					child_process.exec "mallet train-topics
+						--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
+						--num-topics #{num_topics}
+						--xml-topic-phrase-report #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml
+						--inferencer-filename #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/inferencer.mallet
+						--random-seed 1
+						--num-threads 2"
+					, (err, stdout, stderr) ->
+						console.error stderr.toString "utf8"
+						return callback "#{err}: #{stderr.toString "utf8"}" if err?
+						callback()
+				inferTopics = (callback) ->
+					child_process.exec "mallet infer-topics
+						--inferencer #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/inferencer.mallet
+						--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
+						--output-doc-topics #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt"
+					, (err, stdout, stderr) ->
+						console.error stderr.toString "utf8"
+						return callback "#{err}: #{stderr.toString "utf8"}" if err?
+						callback()
+				
+			else
+				callback null, success: false, error: "Corpora/Subcorpora does not exist."
 
 # Deprecated
 exports.getTopics = (callback) ->

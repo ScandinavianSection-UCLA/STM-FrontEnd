@@ -57,3 +57,10 @@ body {
 .pending-task .progress .progress-bar {
   position: absolute;
 }
+#topicsProgress {
+  margin-bottom: 20px;
+}
+#topicsProgress span.label {
+  font-size: 100%;
+  border-radius: 1em;
+}

@@ -6,7 +6,7 @@ var appContext,
 
 require.config({
   paths: {
-    jquery: "/components/jquery/jquery.min",
+    jquery: "/components/jquery/dist/jquery.min",
     bootstrap: "/components/bootstrap/dist/js/bootstrap.min",
     batman: "/batmanjs/batman",
     wordcloud: "/wordcloudjs/wordcloud",
@@ -966,7 +966,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         this.set("fileSize", fileSize);
         this.set("bytesSent", 0);
         this.observe("status", function(success, extracted) {
-          if (success === "success" && extracted === "extracted") {
+          if (success === "success" && extracted !== "extracted") {
             return exports.context.get("metadataView.currentSubcorpus.filesList").add(fileName);
           }
         });
