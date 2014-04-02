@@ -482,7 +482,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
   })(Topics);
   Curation = new Object;
   (function(exports) {
-    var AddFilesView, Corpus, MetadataView, PendingTasksView, Subcorpus, UploadTask, socket;
+    var AddFilesView, Corpus, MalletProcessView, MetadataView, PendingTasksView, Subcorpus, UploadTask, socket;
     socket = void 0;
     exports.Context = (function(_super) {
       __extends(Context, _super);
@@ -788,6 +788,109 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       }
 
       return PendingTasksView;
+
+    })(Batman.Model);
+    MalletProcessView = (function(_super) {
+      __extends(MalletProcessView, _super);
+
+      function MalletProcessView() {
+        return MalletProcessView.__super__.constructor.apply(this, arguments);
+      }
+
+      MalletProcessView.accessor("processingIngestChunks", function() {
+        return this.get("status") === "processingIngestChunks";
+      });
+
+      MalletProcessView.accessor("processingTrainTopics", function() {
+        return this.get("status") === "processingTrainTopics";
+      });
+
+      MalletProcessView.accessor("processingInferTopics", function() {
+        return this.get("status") === "processingInferTopics";
+      });
+
+      MalletProcessView.accessor("processingStoreProportions", function() {
+        return this.get("status") === "processingStoreProportions";
+      });
+
+      MalletProcessView.accessor("processedIngestChunks", function() {
+        var _ref;
+        return (_ref = this.get("status")) === "processingTrainTopics" || _ref === "processingInferTopics" || _ref === "processingStoreProportions" || _ref === "completed";
+      });
+
+      MalletProcessView.accessor("processedTrainTopics", function() {
+        var _ref;
+        return (_ref = this.get("status")) === "processingInferTopics" || _ref === "processingStoreProportions" || _ref === "completed";
+      });
+
+      MalletProcessView.accessor("processedInferTopics", function() {
+        var _ref;
+        return (_ref = this.get("status")) === "processingStoreProportions" || _ref === "completed";
+      });
+
+      MalletProcessView.accessor("processedStoreProportions", function() {
+        var _ref;
+        return (_ref = this.get("status")) === "completed";
+      });
+
+      MalletProcessView.accessor("notprocessedIngestChunks", function() {
+        return !this.get("processingIngestChunks") && !this.get("processedIngestChunks");
+      });
+
+      MalletProcessView.accessor("notprocessedTrainTopics", function() {
+        return !this.get("processingTrainTopics") && !this.get("processedTrainTopics");
+      });
+
+      MalletProcessView.accessor("notprocessedInferTopics", function() {
+        return !this.get("processingIngestChunks") && !this.get("processedIngestChunks");
+      });
+
+      MalletProcessView.accessor("notprocessedStoreProportions", function() {
+        return !this.get("processingIngestChunks") && !this.get("processedIngestChunks");
+      });
+
+      MalletProcessView.prototype.startTopicModeling = function() {
+        var corpus, subcorpus;
+        corpus = exports.context.get("metadataView.currentCorpus");
+        subcorpus = exports.context.get("metadataView.currentSubcorpus");
+        return $.ajax({
+          url: "/data/startTopicModeling",
+          dataType: "jsonp",
+          type: "POST",
+          data: {
+            corpus: corpus.get("name"),
+            subcorpus: subcorpus.get("name")
+          },
+          success: (function(_this) {
+            return function(_arg) {
+              var hash, success;
+              success = _arg.success, hash = _arg.hash;
+              if (!success) {
+                return console.error("Subcorpus already exists or Corpus doesn't exist.");
+              }
+              _this.set("status", "processingIngestChunks");
+              socket.emit("subscribe", res.hash);
+              return socket.on(res.hash, function(message) {
+                switch (message) {
+                  case "processedIngestChunks":
+                    return _this.set("status", "processingTrainTopics");
+                  case "processedTrainTopics":
+                    return _this.set("status", "processingInferTopics");
+                  case "processedInferTopics":
+                    return _this.set("status", "processingStoreProportions");
+                  case "processedStoreProportions":
+                    return _this.set("status", "completed");
+                }
+              });
+            };
+          })(this),
+          error: function(request) {
+            return console.error(request);
+          }
+        });
+      };
+
+      return MalletProcessView;
 
     })(Batman.Model);
     Corpus = (function(_super) {
