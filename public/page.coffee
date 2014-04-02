@@ -355,7 +355,26 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "notprocessedInferTopics", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
 			@accessor "notprocessedStoreProportions", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
 			startTopicModeling: ->
-				# ...
+				corpus = exports.context.get "metadataView.currentCorpus"
+				subcorpus = exports.context.get "metadataView.currentSubcorpus"
+				$.ajax
+					url: "/data/startTopicModeling", dataType: "jsonp", type: "POST", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name")
+					success: ({success, hash}) =>
+						return console.error "Subcorpus already exists or Corpus doesn't exist." unless success
+						@set "status", "processingIngestChunks"
+						socket.emit "subscribe", res.hash
+						socket.on res.hash, (message) =>
+							switch message
+								when "processedIngestChunks"
+									@set "status", "processingTrainTopics"
+								when "processedTrainTopics"
+									@set "status", "processingInferTopics"
+								when "processedInferTopics"
+									@set "status", "processingStoreProportions"
+								when "processedStoreProportions"
+									@set "status", "completed"
+					error: (request) ->
+						console.error request
 
 		class Corpus extends Batman.Model
 			constructor: (name) ->

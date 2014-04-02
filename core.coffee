@@ -197,44 +197,83 @@ exports.getFilesList = (corpus, subcorpus, from, callback) ->
 			callback null, success: false, error: "Corpora/Subcorpora does not exist."
 
 exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
+	exports.processTopicModeling.hashes ?= {}
+	Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": subcorpus, "subcorpora.status": $ne: "processing"}, {$set: "subcorpora.$.status": "processing"}, {"subcorpora.$": 1}, (err, doc) ->
+		return callback err if err?
+		if doc?
+			ingestChunks = (callback) ->
+				child_process.exec "mallet import-dir
+					--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files/
+					--output #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
+					--token-regex '\\p{L}[\\p{L}\\p{P}]*\\p{L}'
+					--keep-sequence
+					--remove-stopwords"
+				, (err, stdout, stderr) ->
+					console.log "--- IngestChunks ---"
+					console.error stderr.toString "utf8"
+					console.log stdout.toString "utf8"
+					return callback "#{err}: #{stderr.toString "utf8"}" if err?
+					callback()
+			trainTopics = (callback) ->
+				child_process.exec "mallet train-topics
+					--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
+					--num-topics #{num_topics}
+					--xml-topic-phrase-report #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml
+					--inferencer-filename #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/inferencer.mallet
+					--random-seed 1
+					--num-threads 2"
+				, (err, stdout, stderr) ->
+					console.log "--- TrainTopics ---"
+					console.error stderr.toString "utf8"
+					console.log stdout.toString "utf8"
+					return callback "#{err}: #{stderr.toString "utf8"}" if err?
+					callback()
+			inferTopics = (callback) ->
+				child_process.exec "mallet infer-topics
+					--inferencer #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/inferencer.mallet
+					--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
+					--output-doc-topics #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt"
+				, (err, stdout, stderr) ->
+					console.log "--- InferTopics ---"
+					console.error stderr.toString "utf8"
+					console.log stdout.toString "utf8"
+					return callback "#{err}: #{stderr.toString "utf8"}" if err?
+					callback()
+			storeProportions = (callback) ->
+				child_process.exec "coffee TopicSaturation-Importer/importer.coffee
+					#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt
+					#{corpus}
+					#{subcorpus}"
+				, (err, stdout, stdin) ->
+					console.log "--- StoreProportions ---"
+					console.error stderr.toString "utf8"
+					console.log stdout.toString "utf8"
+					return callback "#{err}: #{stderr.toString "utf8"}" if err?
+					callback()
+			emitter = new EventEmitter
+			emitter.hash = md5 "processTopicModeling#{Math.random()}#{doc.subcorpora[0]._id.toString()}"
+			exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()] = emitter.hash
+			callback null, statusEmitter: emitter
+			ingestChunks ->
+				emitter.emit "processedIngestChunks"
+				trainTopics ->
+					emitter.emit "processedTrainTopics"
+					inferTopics ->
+						emitter.emit "processedInferTopics"
+						storeProportions ->
+							emitter.emit "processedStoreProportions"
+							Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": subcorpus, "subcorpora.status": "processing"}, {$set: "subcorpora.$.status": "processed"}, {"subcorpora.$": 1}, ->
+								delete exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()]
+		else
+			callback null, success: false, error: "Corpora/Subcorpora does not exist or is already being processed."
+
+exports.getSubcorpusStatus = (corpus, subcorpus, callback) ->
 	Corpus.findOne {name: corpus, "subcorpora.name": subcorpus}, {"subcorpora.$": 1}, (err, doc) ->
 		return callback err if err?
-			if doc?
-				ingestChunks = (callback) ->
-					child_process.exec "mallet import-dir
-						--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files/
-						--output #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
-						--token-regex '\\p{L}[\\p{L}\\p{P}]*\\p{L}'
-						--keep-sequence
-						--remove-stopwords"
-					, (err, stdout, stderr) ->
-						console.error stderr.toString "utf8"
-						return callback "#{err}: #{stderr.toString "utf8"}" if err?
-						callback()
-				trainTopics = (callback) ->
-					child_process.exec "mallet train-topics
-						--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
-						--num-topics #{num_topics}
-						--xml-topic-phrase-report #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml
-						--inferencer-filename #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/inferencer.mallet
-						--random-seed 1
-						--num-threads 2"
-					, (err, stdout, stderr) ->
-						console.error stderr.toString "utf8"
-						return callback "#{err}: #{stderr.toString "utf8"}" if err?
-						callback()
-				inferTopics = (callback) ->
-					child_process.exec "mallet infer-topics
-						--inferencer #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/inferencer.mallet
-						--input #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/chunks.mallet
-						--output-doc-topics #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt"
-					, (err, stdout, stderr) ->
-						console.error stderr.toString "utf8"
-						return callback "#{err}: #{stderr.toString "utf8"}" if err?
-						callback()
-				
-			else
-				callback null, success: false, error: "Corpora/Subcorpora does not exist."
+		if doc?
+			callback null, success: true, hash: exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()]
+		else
+			callback null, success: false, error: "Corpora/Subcorpora does not exist."
 
 # Deprecated
 exports.getTopics = (callback) ->
