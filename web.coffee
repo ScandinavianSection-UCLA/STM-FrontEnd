@@ -3,6 +3,7 @@ http = require "http"
 core = require "./core"
 request = require "request"
 socketIO = require "socket.io"
+longjohn = require "longjohn"
 
 web = express()
 web.configure ->
