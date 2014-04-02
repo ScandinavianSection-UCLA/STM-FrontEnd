@@ -224,6 +224,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "metadataView", new MetadataView
 				@set "addFilesView", new AddFilesView
 				@set "pendingTasksView", new PendingTasksView
+				@set "malletProcessView", new MalletProcessView
 				socket = socketIO.connect()
 
 		class MetadataView extends Batman.Model

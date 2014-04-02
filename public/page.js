@@ -492,6 +492,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         this.set("metadataView", new MetadataView);
         this.set("addFilesView", new AddFilesView);
         this.set("pendingTasksView", new PendingTasksView);
+        this.set("malletProcessView", new MalletProcessView);
         socket = socketIO.connect();
       }
 
