@@ -147,7 +147,7 @@ exports.addFile = (tempFile, corpus, subcorpus, callback) ->
 						fs.mkdir tempDir, (err) ->
 							return callback err if err?
 							callback null, status: "extracting", extractor: extractor
-							tar_process = child_process.spawn "tar", ["-xC", tempDir]
+							tar_process = child_process.spawn "tar", ["-xzC", tempDir]
 							fin = fs.createReadStream tempFile.path
 							fin.on "data", (chunk) ->
 								extractor.bytesDone += chunk.length
