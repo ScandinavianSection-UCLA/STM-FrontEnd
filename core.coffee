@@ -250,7 +250,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 					console.log stdout.toString "utf8"
 					return callback "#{err}: #{stderr.toString "utf8"}" if err?
 					callback()
-			emitter = new EventEmitter
+			emitter = new events.EventEmitter
 			emitter.hash = md5 "processTopicModeling#{Math.random()}#{doc.subcorpora[0]._id.toString()}"
 			exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()] = emitter.hash
 			callback null, statusEmitter: emitter
