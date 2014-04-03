@@ -89,7 +89,7 @@ web.post "/data/startTopicModeling", (req, res, next) ->
 	core.processTopicModeling req.param("corpus"), req.param("subcorpus"), Number(req.param "num_topics") ? 0, (err, response) ->
 		return res.jsonp 500, err if err?
 		if response.success
-			res.jsonp status: "processingIngestChunks", hash: response.statusEmitter.hash
+			res.jsonp success: true, status: "processingIngestChunks", hash: response.statusEmitter.hash
 			response.statusEmitter.on "processedIngestChunks", ->
 				io.sockets.in(response.statusEmitter.hash).emit "processedIngestChunks"
 			response.statusEmitter.on "processedTrainTopics", ->
