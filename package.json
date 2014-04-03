@@ -10,7 +10,8 @@
     "xml2js": "~0.4.1",
     "request": "~2.34.0",
     "socket.io": "~0.9.16",
-    "longjohn": "~0.2.4"
+    "longjohn": "~0.2.4",
+    "colors": "~0.6.2"
   },
   "repository": {
     "type": "git",

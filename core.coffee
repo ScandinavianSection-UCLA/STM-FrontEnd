@@ -5,6 +5,7 @@ fs = require "fs"
 child_process = require "child_process"
 crypto = require "crypto"
 events = require "events"
+colors = require "colors"
 
 md5 = (str) ->
 	crypto.createHash("md5").update(str).digest("hex")
@@ -224,7 +225,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 					--num-threads 2"
 				, (err, stdout, stderr) ->
 					console.log "--- TrainTopics ---"
-					console.error stderr.toString "utf8"
+					console.error stderr.toString("utf8").redBG
 					console.log stdout.toString "utf8"
 					return callback "#{err}: #{stderr.toString "utf8"}" if err?
 					callback()
@@ -235,7 +236,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 					--output-doc-topics #{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt"
 				, (err, stdout, stderr) ->
 					console.log "--- InferTopics ---"
-					console.error stderr.toString "utf8"
+					console.error stderr.toString("utf8").redBG
 					console.log stdout.toString "utf8"
 					return callback "#{err}: #{stderr.toString "utf8"}" if err?
 					callback()
@@ -246,7 +247,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 					#{subcorpus}"
 				, (err, stdout, stdin) ->
 					console.log "--- StoreProportions ---"
-					console.error stderr.toString "utf8"
+					console.error stderr.toString("utf8").redBG
 					console.log stdout.toString "utf8"
 					return callback "#{err}: #{stderr.toString "utf8"}" if err?
 					callback()
