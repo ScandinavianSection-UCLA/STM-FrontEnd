@@ -3,7 +3,7 @@ http = require "http"
 core = require "./core"
 request = require "request"
 socketIO = require "socket.io"
-longjohn = require "longjohn"
+# longjohn = require "longjohn"
 
 web = express()
 web.configure ->
@@ -88,15 +88,18 @@ web.get "/data/filesList", (req, res, next) ->
 web.post "/data/startTopicModeling", (req, res, next) ->
 	core.processTopicModeling req.param("corpus"), req.param("subcorpus"), Number(req.param "num_topics") ? 0, (err, response) ->
 		return res.jsonp 500, err if err?
-		res.jsonp status: "processingIngestChunks", hash: response.statusEmitter.hash
-		response.statusEmitter.on "processedIngestChunks", ->
-			io.sockets.in(response.statusEmitter.hash).emit "processedIngestChunks"
-		response.statusEmitter.on "processedTrainTopics", ->
-			io.sockets.in(response.statusEmitter.hash).emit "processedTrainTopics"
-		response.statusEmitter.on "processedInferTopics", ->
-			io.sockets.in(response.statusEmitter.hash).emit "processedInferTopics"
-		response.statusEmitter.on "processedStoreProportions", ->
-			io.sockets.in(response.statusEmitter.hash).emit "processedStoreProportions"
+		if response.success
+			res.jsonp status: "processingIngestChunks", hash: response.statusEmitter.hash
+			response.statusEmitter.on "processedIngestChunks", ->
+				io.sockets.in(response.statusEmitter.hash).emit "processedIngestChunks"
+			response.statusEmitter.on "processedTrainTopics", ->
+				io.sockets.in(response.statusEmitter.hash).emit "processedTrainTopics"
+			response.statusEmitter.on "processedInferTopics", ->
+				io.sockets.in(response.statusEmitter.hash).emit "processedInferTopics"
+			response.statusEmitter.on "processedStoreProportions", ->
+				io.sockets.in(response.statusEmitter.hash).emit "processedStoreProportions"
+		else
+			res.jsonp response
 
 web.get "/data/subcorpusStatus", (req, res, next) ->
 	core.getSubcorpusStatus req.param("corpus"), req.param("subcorpus"), (err, result) ->
