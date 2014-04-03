@@ -864,10 +864,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           },
           success: (function(_this) {
             return function(_arg) {
-              var hash, success;
-              success = _arg.success, hash = _arg.hash;
+              var error, hash, success;
+              success = _arg.success, hash = _arg.hash, error = _arg.error;
               if (!success) {
-                return console.error("Subcorpus already exists or Corpus doesn't exist.");
+                return console.error(error);
               }
               _this.set("status", "processingIngestChunks");
               socket.emit("subscribe", res.hash);

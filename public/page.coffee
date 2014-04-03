@@ -360,8 +360,8 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				subcorpus = exports.context.get "metadataView.currentSubcorpus"
 				$.ajax
 					url: "/data/startTopicModeling", dataType: "jsonp", type: "POST", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name")
-					success: ({success, hash}) =>
-						return console.error "Subcorpus already exists or Corpus doesn't exist." unless success
+					success: ({success, hash, error}) =>
+						return console.error error unless success
 						@set "status", "processingIngestChunks"
 						socket.emit "subscribe", res.hash
 						socket.on res.hash, (message) =>
