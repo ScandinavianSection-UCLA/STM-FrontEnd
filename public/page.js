@@ -871,8 +871,8 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
                 return console.error(error);
               }
               _this.set("status", "processingIngestChunks");
-              socket.emit("subscribe", res.hash);
-              return socket.on(res.hash, function(message) {
+              socket.emit("subscribe", hash);
+              return socket.on(hash, function(message) {
                 switch (message) {
                   case "processedIngestChunks":
                     return _this.set("status", "processingTrainTopics");

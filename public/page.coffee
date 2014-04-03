@@ -363,8 +363,8 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					success: ({success, hash, error}) =>
 						return console.error error unless success
 						@set "status", "processingIngestChunks"
-						socket.emit "subscribe", res.hash
-						socket.on res.hash, (message) =>
+						socket.emit "subscribe", hash
+						socket.on hash, (message) =>
 							switch message
 								when "processedIngestChunks"
 									@set "status", "processingTrainTopics"
