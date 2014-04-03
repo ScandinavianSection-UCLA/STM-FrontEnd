@@ -245,7 +245,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 					#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt
 					#{corpus}
 					#{subcorpus}"
-				, (err, stdout, stdin) ->
+				, (err, stdout, stderr) ->
 					console.log "--- StoreProportions ---"
 					console.error stderr.toString("utf8").redBG
 					console.log stdout.toString "utf8"
@@ -254,7 +254,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 			emitter = new events.EventEmitter
 			emitter.hash = md5 "processTopicModeling#{Math.random()}#{doc.subcorpora[0]._id.toString()}"
 			exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()] = emitter.hash
-			callback null, statusEmitter: emitter
+			callback null, success: true, statusEmitter: emitter
 			ingestChunks ->
 				emitter.emit "processedIngestChunks"
 				trainTopics ->

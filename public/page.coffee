@@ -359,7 +359,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				corpus = exports.context.get "metadataView.currentCorpus"
 				subcorpus = exports.context.get "metadataView.currentSubcorpus"
 				$.ajax
-					url: "/data/startTopicModeling", dataType: "jsonp", type: "POST", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name")
+					url: "/data/startTopicModeling", dataType: "jsonp", type: "POST", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name"), num_topics: 50
 					success: ({success, hash, error}) =>
 						return console.error error unless success
 						@set "status", "processingIngestChunks"

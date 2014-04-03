@@ -860,7 +860,8 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           type: "POST",
           data: {
             corpus: corpus.get("name"),
-            subcorpus: subcorpus.get("name")
+            subcorpus: subcorpus.get("name"),
+            num_topics: 50
           },
           success: (function(_this) {
             return function(_arg) {
