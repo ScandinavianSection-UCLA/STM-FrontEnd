@@ -255,22 +255,20 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 			emitter.hash = md5 "processTopicModeling#{Math.random()}#{doc.subcorpora[0]._id.toString()}"
 			exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()] = emitter.hash
 			callback null, success: true, statusEmitter: emitter
-			###
 			ingestChunks (err) ->
 				return console.error "Error in IngestChunks: #{err}".redBG if err?
 				emitter.emit "processedIngestChunks"
 				trainTopics (err) ->
 					return console.error "Error in TrainTopics: #{err}".redBG if err?
 					emitter.emit "processedTrainTopics"
-					###
-			inferTopics (err) ->
-				return console.error "Error in InferTopics: #{err}".redBG if err?
-				emitter.emit "processedInferTopics"
-				storeProportions (err) ->
-					return console.error "Error in StoreProportions: #{err}".redBG if err?
-					emitter.emit "processedStoreProportions"
-					Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": subcorpus, "subcorpora.status": "processing"}, {$set: "subcorpora.$.status": "processed"}, {"subcorpora.$": 1}, ->
-						delete exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()]
+					inferTopics (err) ->
+						return console.error "Error in InferTopics: #{err}".redBG if err?
+						emitter.emit "processedInferTopics"
+						storeProportions (err) ->
+							# return console.error "Error in StoreProportions: #{err}".redBG if err?
+							emitter.emit "processedStoreProportions"
+							Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": subcorpus, "subcorpora.status": "processing"}, {$set: "subcorpora.$.status": "processed"}, {"subcorpora.$": 1}, ->
+								delete exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()]
 		else
 			callback null, success: false, error: "Corpora/Subcorpora does not exist or is already being processed."
 
