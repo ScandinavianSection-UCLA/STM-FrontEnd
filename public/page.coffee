@@ -365,7 +365,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						return console.error error unless success
 						if status isnt "not processed"
 							@set "status", status
-							@subscribeToProcessEvents()
+							@subscribeToProcessEvents hash
 						@set "loaded", true
 					error: (request) ->
 						console.error request
@@ -379,10 +379,10 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						return console.error error unless success
 						@set "status", "processingIngestChunks"
 						console.log "processingIngestChunks"
-						@subscribeToProcessEvents()
+						@subscribeToProcessEvents hash
 					error: (request) ->
 						console.error request
-			subscribeToProcessEvents: ->
+			subscribeToProcessEvents: (hash) ->
 				socket.emit "subscribe", hash
 				socket.on hash, (message) =>
 					switch message

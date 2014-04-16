@@ -878,7 +878,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
               }
               if (status !== "not processed") {
                 _this.set("status", status);
-                _this.subscribeToProcessEvents();
+                _this.subscribeToProcessEvents(hash);
               }
               return _this.set("loaded", true);
             };
@@ -912,7 +912,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
               }
               _this.set("status", "processingIngestChunks");
               console.log("processingIngestChunks");
-              return _this.subscribeToProcessEvents();
+              return _this.subscribeToProcessEvents(hash);
             };
           })(this),
           error: function(request) {
@@ -921,7 +921,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         });
       };
 
-      MalletProcessView.prototype.subscribeToProcessEvents = function() {
+      MalletProcessView.prototype.subscribeToProcessEvents = function(hash) {
         socket.emit("subscribe", hash);
         return socket.on(hash, (function(_this) {
           return function(message) {
