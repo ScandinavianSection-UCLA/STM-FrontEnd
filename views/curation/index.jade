@@ -49,13 +49,13 @@ block content
 						h3.panel-title Topic Modeling
 					.panel-body
 						#topicsProgress.text-center(data-showif = "processing")
-							span.label.label-default(data-addclass-label-primary = "processingIngestChunks", data-addclass-label-success = "processedIngestChunks", data-removeclass-label-default = "notprocessedIngestChunks | not") Ingest Chunks
+							span.label.label-default(data-addclass-label-primary = "processingIngestChunks", data-addclass-label-success = "processedIngestChunks", data-removeclass-label-default = "notprocessedIngestChunks | not", data-toggle = "tooltip", title = "Ingest Chunks", data-placement = "top") 1
 							span.text-muted &nbsp;&rarr;&nbsp;
-							span.label.label-default(data-addclass-label-primary = "processingTrainTopics", data-addclass-label-success = "processedTrainTopics", data-removeclass-label-default = "notprocessedTrainTopics | not") Train Topics
+							span.label.label-default(data-addclass-label-primary = "processingTrainTopics", data-addclass-label-success = "processedTrainTopics", data-removeclass-label-default = "notprocessedTrainTopics | not", data-toggle = "tooltip", title = "Train Topics", data-placement = "top") 2
 							span.text-muted &nbsp;&rarr;&nbsp;
-							span.label.label-default(data-addclass-label-primary = "processingInferTopics", data-addclass-label-success = "processedInferTopics", data-removeclass-label-default = "notprocessedInferTopics | not") Infer Topics
+							span.label.label-default(data-addclass-label-primary = "processingInferTopics", data-addclass-label-success = "processedInferTopics", data-removeclass-label-default = "notprocessedInferTopics | not", data-toggle = "tooltip", title = "Infer Topics", data-placement = "top") 3
 							span.text-muted &nbsp;&rarr;&nbsp;
-							span.label.label-default(data-addclass-label-primary = "processingStoreProportions", data-addclass-label-success = "processedStoreProportions", data-removeclass-label-default = "notprocessedStoreProportions | not") Store Proportions
+							span.label.label-default(data-addclass-label-primary = "processingStoreProportions", data-addclass-label-success = "processedStoreProportions", data-removeclass-label-default = "notprocessedStoreProportions | not", data-toggle = "tooltip", title = "Store Proportions", data-placement = "top") 4
 						.text-center(data-showif = "processing | not")
 							button.btn.btn-primary(data-event-click = "appContext.curationContext.malletProcessView.startTopicModeling") Start Topic Modeling
 			.col-sm-4(data-showif = "pendingTasksView.isEmpty | not", style = "display: none")

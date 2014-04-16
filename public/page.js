@@ -1147,6 +1147,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
   STM.run();
   return $(function() {
     appContext.set("pageLoaded", true);
+    $("[data-toggle='tooltip']").tooltip();
     return setInterval((function() {
       return $("#relatedArticles svg:not([data-ttd='true'])").tooltip().attr("data-ttd", true);
     }), 1000);

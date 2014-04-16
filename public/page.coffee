@@ -479,4 +479,5 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 	STM.run()
 	$ ->
 		appContext.set "pageLoaded", true
+		$("[data-toggle='tooltip']").tooltip()
 		setInterval (-> $("#relatedArticles svg:not([data-ttd='true'])").tooltip().attr "data-ttd", true), 1000
