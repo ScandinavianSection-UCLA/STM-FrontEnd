@@ -254,7 +254,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 			emitter = new events.EventEmitter
 			emitter.hash = md5 "processTopicModeling#{Math.random()}#{doc.subcorpora[0]._id.toString()}"
 			exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()] = emitter
-			callback null, success: true, statusEmitters: emitter
+			callback null, success: true, statusEmitter: emitter
 			emitter.status = "processingIngestChunks"
 			ingestChunks (err) ->
 				return console.error "Error in IngestChunks: #{err}".redBG if err?
