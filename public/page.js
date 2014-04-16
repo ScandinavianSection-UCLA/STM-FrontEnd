@@ -548,12 +548,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         this.observe("currentSubcorpus", function(subcorpus) {
           if (subcorpus != null) {
             subcorpus.loadFilesList(0, function() {
-              return subcorpus != null ? subcorpus.get("filesList").add() : void 0;
+              return subcorpus.get("filesList").add();
             });
           }
-          if (subcorpus != null) {
-            return exports.context.get("malletProcessView").loadStatus(subcorpus);
-          }
+          return subcorpus != null ? subcorpus.loadStatus() : void 0;
         });
         $.ajax({
           url: "/data/corporaList",
@@ -803,6 +801,11 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return MalletProcessView.__super__.constructor.apply(this, arguments);
       }
 
+      MalletProcessView.accessor("status", function() {
+        var _ref;
+        return (_ref = exports.context) != null ? _ref.get("metadataView.currentSubcorpus.status") : void 0;
+      });
+
       MalletProcessView.accessor("processing", function() {
         return this.get("status") != null;
       });
@@ -859,37 +862,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return !this.get("processingStoreProportions") && !this.get("processedStoreProportions");
       });
 
-      MalletProcessView.prototype.loadStatus = function(subcorpus) {
-        this.set("loaded", false);
-        return $.ajax({
-          url: "/data/subcorpusStatus",
-          dataType: "jsonp",
-          type: "GET",
-          data: {
-            corpus: subcorpus.get("corpus.name"),
-            subcorpus: subcorpus.get("name")
-          },
-          success: (function(_this) {
-            return function(_arg) {
-              var error, hash, status, success;
-              success = _arg.success, status = _arg.status, hash = _arg.hash, error = _arg.error;
-              if (!success) {
-                return console.error(error);
-              }
-              if (status !== "not processed") {
-                _this.set("status", status);
-                _this.subscribeToProcessEvents(hash);
-              }
-              return _this.set("loaded", true);
-            };
-          })(this),
-          error: function(request) {
-            console.error(request);
-            return this.set("loaded", true);
-          }
-        });
-      };
-
       MalletProcessView.prototype.startTopicModeling = function() {
         var corpus, subcorpus;
         corpus = exports.context.get("metadataView.currentCorpus");
@@ -919,28 +891,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return console.error(request);
           }
         });
-      };
-
-      MalletProcessView.prototype.subscribeToProcessEvents = function(hash) {
-        socket.emit("subscribe", hash);
-        return socket.on(hash, (function(_this) {
-          return function(message) {
-            switch (message) {
-              case "processingTrainTopics":
-                _this.set("status", "processingTrainTopics");
-                return console.log("processingTrainTopics");
-              case "processingInferTopics":
-                _this.set("status", "processingInferTopics");
-                return console.log("processingInferTopics");
-              case "processingStoreProportions":
-                _this.set("status", "processingStoreProportions");
-                return console.log("processingStoreProportions");
-              case "completed":
-                _this.set("status", "completed");
-                return console.log("completed");
-            }
-          };
-        })(this));
       };
 
       return MalletProcessView;
@@ -1066,6 +1016,59 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return typeof callback === "function" ? callback(request) : void 0;
           }
         });
+      };
+
+      Subcorpus.prototype.loadStatus = function() {
+        this.set("loaded", false);
+        return $.ajax({
+          url: "/data/subcorpusStatus",
+          dataType: "jsonp",
+          type: "GET",
+          data: {
+            corpus: this.get("corpus.name"),
+            subcorpus: this.get("name")
+          },
+          success: (function(_this) {
+            return function(_arg) {
+              var error, hash, status, success;
+              success = _arg.success, status = _arg.status, hash = _arg.hash, error = _arg.error;
+              if (!success) {
+                return console.error(error);
+              }
+              if (status !== "not processed") {
+                _this.set("status", status);
+                _this.subscribeToProcessEvents(hash);
+              }
+              return _this.set("loaded", true);
+            };
+          })(this),
+          error: function(request) {
+            console.error(request);
+            return this.set("loaded", true);
+          }
+        });
+      };
+
+      Subcorpus.prototype.subscribeToProcessEvents = function(hash) {
+        socket.emit("subscribe", hash);
+        return socket.on(hash, (function(_this) {
+          return function(message) {
+            switch (message) {
+              case "processingTrainTopics":
+                _this.set("status", "processingTrainTopics");
+                return console.log("processingTrainTopics");
+              case "processingInferTopics":
+                _this.set("status", "processingInferTopics");
+                return console.log("processingInferTopics");
+              case "processingStoreProportions":
+                _this.set("status", "processingStoreProportions");
+                return console.log("processingStoreProportions");
+              case "completed":
+                _this.set("status", "completed");
+                return console.log("completed");
+            }
+          };
+        })(this));
       };
 
       return Subcorpus;

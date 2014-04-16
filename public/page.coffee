@@ -245,8 +245,8 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					corpus?.loadSubcorpora()
 				@observe "currentSubcorpus", (subcorpus) ->
 					subcorpus?.loadFilesList 0, ->
-						subcorpus?.get("filesList").add()
-					exports.context.get("malletProcessView").loadStatus subcorpus if subcorpus?
+						subcorpus.get("filesList").add()
+					subcorpus?.loadStatus()
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
@@ -344,6 +344,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "pendingTasks", new Batman.Set
 
 		class MalletProcessView extends Batman.Model
+			@accessor "status", -> exports.context?.get "metadataView.currentSubcorpus.status"
 			@accessor "processing", -> @get("status")?
 			@accessor "processingIngestChunks", -> @get("status") is "processingIngestChunks"
 			@accessor "processingTrainTopics", -> @get("status") is "processingTrainTopics"
@@ -357,19 +358,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "notprocessedTrainTopics", -> not @get("processingTrainTopics") and not @get("processedTrainTopics")
 			@accessor "notprocessedInferTopics", -> not @get("processingInferTopics") and not @get("processedInferTopics")
 			@accessor "notprocessedStoreProportions", -> not @get("processingStoreProportions") and not @get("processedStoreProportions")
-			loadStatus: (subcorpus) ->
-				@set "loaded", false
-				$.ajax
-					url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: subcorpus.get("corpus.name"), subcorpus: subcorpus.get("name")
-					success: ({success, status, hash, error}) =>
-						return console.error error unless success
-						if status isnt "not processed"
-							@set "status", status
-							@subscribeToProcessEvents hash
-						@set "loaded", true
-					error: (request) ->
-						console.error request
-						@set "loaded", true
 			startTopicModeling: ->
 				corpus = exports.context.get "metadataView.currentCorpus"
 				subcorpus = exports.context.get "metadataView.currentSubcorpus"
@@ -382,22 +370,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						@subscribeToProcessEvents hash
 					error: (request) ->
 						console.error request
-			subscribeToProcessEvents: (hash) ->
-				socket.emit "subscribe", hash
-				socket.on hash, (message) =>
-					switch message
-						when "processingTrainTopics"
-							@set "status", "processingTrainTopics"
-							console.log "processingTrainTopics"
-						when "processingInferTopics"
-							@set "status", "processingInferTopics"
-							console.log "processingInferTopics"
-						when "processingStoreProportions"
-							@set "status", "processingStoreProportions"
-							console.log "processingStoreProportions"
-						when "completed"
-							@set "status", "completed"
-							console.log "completed"
 
 		class Corpus extends Batman.Model
 			constructor: (name) ->
@@ -447,6 +419,35 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					error: (request) ->
 						console.error request
 						callback? request
+			loadStatus: ->
+				@set "loaded", false
+				$.ajax
+					url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: @get("corpus.name"), subcorpus: @get("name")
+					success: ({success, status, hash, error}) =>
+						return console.error error unless success
+						if status isnt "not processed"
+							@set "status", status
+							@subscribeToProcessEvents hash
+						@set "loaded", true
+					error: (request) ->
+						console.error request
+						@set "loaded", true
+			subscribeToProcessEvents: (hash) ->
+				socket.emit "subscribe", hash
+				socket.on hash, (message) =>
+					switch message
+						when "processingTrainTopics"
+							@set "status", "processingTrainTopics"
+							console.log "processingTrainTopics"
+						when "processingInferTopics"
+							@set "status", "processingInferTopics"
+							console.log "processingInferTopics"
+						when "processingStoreProportions"
+							@set "status", "processingStoreProportions"
+							console.log "processingStoreProportions"
+						when "completed"
+							@set "status", "completed"
+							console.log "completed"
 
 		class UploadTask extends Batman.Model
 			@accessor "friendlyFileSize", ->
