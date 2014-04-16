@@ -198,7 +198,7 @@ exports.getFilesList = (corpus, subcorpus, from, callback) ->
 			callback null, success: false, error: "Corpora/Subcorpora does not exist."
 
 exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
-	exports.processTopicModeling.hashes ?= {}
+	exports.processTopicModeling.statusEmitters ?= {}
 	Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": subcorpus, "subcorpora.status": $ne: "processing"}, {$set: "subcorpora.$.status": "processing"}, {"subcorpora.$": 1}, (err, doc) ->
 		return callback err if err?
 		if doc?
