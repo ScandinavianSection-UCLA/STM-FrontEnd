@@ -246,6 +246,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@observe "currentSubcorpus", (subcorpus) ->
 					subcorpus?.loadFilesList 0, ->
 						subcorpus?.get("filesList").add()
+					exports.context.get("malletProcessView").loadStatus()
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
@@ -356,7 +357,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "notprocessedTrainTopics", -> not @get("processingTrainTopics") and not @get("processedTrainTopics")
 			@accessor "notprocessedInferTopics", -> not @get("processingInferTopics") and not @get("processedInferTopics")
 			@accessor "notprocessedStoreProportions", -> not @get("processingStoreProportions") and not @get("processedStoreProportions")
-			constructor: ->
+			loadStatus: ->
 				@set "loaded", false
 				corpus = exports.context.get "metadataView.currentCorpus"
 				subcorpus = exports.context.get "metadataView.currentSubcorpus"

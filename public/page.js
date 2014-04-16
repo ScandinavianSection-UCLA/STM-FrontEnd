@@ -546,9 +546,12 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           return corpus != null ? corpus.loadSubcorpora() : void 0;
         });
         this.observe("currentSubcorpus", function(subcorpus) {
-          return subcorpus != null ? subcorpus.loadFilesList(0, function() {
-            return subcorpus != null ? subcorpus.get("filesList").add() : void 0;
-          }) : void 0;
+          if (subcorpus != null) {
+            subcorpus.loadFilesList(0, function() {
+              return subcorpus != null ? subcorpus.get("filesList").add() : void 0;
+            });
+          }
+          return exports.context.get("malletProcessView").loadStatus();
         });
         $.ajax({
           url: "/data/corporaList",
@@ -794,6 +797,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
     MalletProcessView = (function(_super) {
       __extends(MalletProcessView, _super);
 
+      function MalletProcessView() {
+        return MalletProcessView.__super__.constructor.apply(this, arguments);
+      }
+
       MalletProcessView.accessor("processing", function() {
         return this.get("status") != null;
       });
@@ -850,12 +857,12 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return !this.get("processingStoreProportions") && !this.get("processedStoreProportions");
       });
 
-      function MalletProcessView() {
+      MalletProcessView.prototype.loadStatus = function() {
         var corpus, subcorpus;
         this.set("loaded", false);
         corpus = exports.context.get("metadataView.currentCorpus");
         subcorpus = exports.context.get("metadataView.currentSubcorpus");
-        $.ajax({
+        return $.ajax({
           url: "/data/subcorpusStatus",
           dataType: "jsonp",
           type: "GET",
@@ -882,7 +889,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return this.set("loaded", true);
           }
         });
-      }
+      };
 
       MalletProcessView.prototype.startTopicModeling = function() {
         var corpus, subcorpus;
