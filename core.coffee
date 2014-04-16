@@ -253,22 +253,23 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 					callback()
 			emitter = new events.EventEmitter
 			emitter.hash = md5 "processTopicModeling#{Math.random()}#{doc.subcorpora[0]._id.toString()}"
-			exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()] = emitter.hash
-			callback null, success: true, statusEmitter: emitter
+			exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()] = emitter
+			callback null, success: true, statusEmitters: emitter
+			emitter.status = "processingIngestChunks"
 			ingestChunks (err) ->
 				return console.error "Error in IngestChunks: #{err}".redBG if err?
-				emitter.emit "processedIngestChunks"
+				emitter.emit emitter.status = "processingTrainTopics"
 				trainTopics (err) ->
 					return console.error "Error in TrainTopics: #{err}".redBG if err?
-					emitter.emit "processedTrainTopics"
+					emitter.emit emitter.status = "processingInferTopics"
 					inferTopics (err) ->
 						return console.error "Error in InferTopics: #{err}".redBG if err?
-						emitter.emit "processedInferTopics"
+						emitter.emit emitter.status = "processingStoreProportions"
 						storeProportions (err) ->
 							# return console.error "Error in StoreProportions: #{err}".redBG if err?
-							emitter.emit "processedStoreProportions"
+							emitter.emit emitter.status = "completed"
 							Corpus.findOneAndUpdate {name: corpus, "subcorpora.name": subcorpus, "subcorpora.status": "processing"}, {$set: "subcorpora.$.status": "processed"}, {"subcorpora.$": 1}, ->
-								delete exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()]
+								delete exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()]
 		else
 			callback null, success: false, error: "Corpora/Subcorpora does not exist or is already being processed."
 
@@ -276,7 +277,12 @@ exports.getSubcorpusStatus = (corpus, subcorpus, callback) ->
 	Corpus.findOne {name: corpus, "subcorpora.name": subcorpus}, {"subcorpora.$": 1}, (err, doc) ->
 		return callback err if err?
 		if doc?
-			callback null, success: true, hash: exports.processTopicModeling.hashes[doc.subcorpora[0]._id.toString()]
+			unless doc.subcorpora[0].status
+				callback null, success: true, status: "not processed"
+			else if doc.subcorpora[0].status is "processing"
+				callback null, success: true, status: exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()].status, hash: exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()]
+			else if doc.subcorpora[0].status is "processed"
+				callback null, success: true, status: "completed"
 		else
 			callback null, success: false, error: "Corpora/Subcorpora does not exist."
 

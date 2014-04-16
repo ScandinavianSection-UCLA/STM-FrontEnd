@@ -343,6 +343,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "pendingTasks", new Batman.Set
 
 		class MalletProcessView extends Batman.Model
+			@accessor "processing", -> @get("status")?
 			@accessor "processingIngestChunks", -> @get("status") is "processingIngestChunks"
 			@accessor "processingTrainTopics", -> @get("status") is "processingTrainTopics"
 			@accessor "processingInferTopics", -> @get("status") is "processingInferTopics"
@@ -353,8 +354,21 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "processedStoreProportions", -> @get("status") in ["completed"]
 			@accessor "notprocessedIngestChunks", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
 			@accessor "notprocessedTrainTopics", -> not @get("processingTrainTopics") and not @get("processedTrainTopics")
-			@accessor "notprocessedInferTopics", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
-			@accessor "notprocessedStoreProportions", -> not @get("processingIngestChunks") and not @get("processedIngestChunks")
+			@accessor "notprocessedInferTopics", -> not @get("processingInferTopics") and not @get("processedInferTopics")
+			@accessor "notprocessedStoreProportions", -> not @get("processingStoreProportions") and not @get("processedStoreProportions")
+			constructor: ->
+				@set "loaded", false
+				corpus = exports.context.get "metadataView.currentCorpus"
+				subcorpus = exports.context.get "metadataView.currentSubcorpus"
+				$.ajax
+					url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name")
+					success: ({success, status, hash, error}) =>
+						return console.error error unless success
+						if status isnt "not processed"
+							@set "status", status
+							@subscribeToProcessEvents()
+					error: (request) ->
+						console.error request
 			startTopicModeling: ->
 				corpus = exports.context.get "metadataView.currentCorpus"
 				subcorpus = exports.context.get "metadataView.currentSubcorpus"
@@ -363,19 +377,27 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					success: ({success, hash, error}) =>
 						return console.error error unless success
 						@set "status", "processingIngestChunks"
-						socket.emit "subscribe", hash
-						socket.on hash, (message) =>
-							switch message
-								when "processedIngestChunks"
-									@set "status", "processingTrainTopics"
-								when "processedTrainTopics"
-									@set "status", "processingInferTopics"
-								when "processedInferTopics"
-									@set "status", "processingStoreProportions"
-								when "processedStoreProportions"
-									@set "status", "completed"
+						console.log "processingIngestChunks"
+						@subscribeToProcessEvents()
 					error: (request) ->
 						console.error request
+			subscribeToProcessEvents: ->
+				socket.emit "subscribe", hash
+				socket.on hash, (message) =>
+					switch message
+						when "processingTrainTopics"
+							@set "status", "processingTrainTopics"
+							console.log "processingTrainTopics"
+						when "processingInferTopics"
+							@set "status", "processingInferTopics"
+							console.log "processingInferTopics"
+						when "processingStoreProportions"
+							@set "status", "processingStoreProportions"
+							console.log "processingStoreProportions"
+						when "completed"
+							@set "status", "completed"
+							console.log "completed"
+
 
 		class Corpus extends Batman.Model
 			constructor: (name) ->

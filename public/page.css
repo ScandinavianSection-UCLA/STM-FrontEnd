@@ -58,7 +58,7 @@ body {
   position: absolute;
 }
 #topicsProgress {
-  margin-bottom: 20px;
+  bottom-margin: 0;
 }
 #topicsProgress span.label {
   font-size: 100%;

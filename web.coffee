@@ -90,14 +90,19 @@ web.post "/data/startTopicModeling", (req, res, next) ->
 		return res.jsonp 500, err if err?
 		if response.success
 			res.jsonp success: true, status: "processingIngestChunks", hash: response.statusEmitter.hash
+			console.log "Hash: #{response.statusEmitter.hash}"
 			response.statusEmitter.on "processedIngestChunks", ->
-				io.sockets.in(response.statusEmitter.hash).emit "processedIngestChunks"
+				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedIngestChunks"
+				console.log "Hash: #{response.statusEmitter.hash}, Status: processedIngestChunks"
 			response.statusEmitter.on "processedTrainTopics", ->
-				io.sockets.in(response.statusEmitter.hash).emit "processedTrainTopics"
+				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedTrainTopics"
+				console.log "Hash: #{response.statusEmitter.hash}, Status: processedTrainTopics"
 			response.statusEmitter.on "processedInferTopics", ->
-				io.sockets.in(response.statusEmitter.hash).emit "processedInferTopics"
+				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedInferTopics"
+				console.log "Hash: #{response.statusEmitter.hash}, Status: processedInferTopics"
 			response.statusEmitter.on "processedStoreProportions", ->
-				io.sockets.in(response.statusEmitter.hash).emit "processedStoreProportions"
+				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedStoreProportions"
+				console.log "Hash: #{response.statusEmitter.hash}, Status: processedStoreProportions"
 		else
 			res.jsonp response
 

@@ -798,6 +798,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return MalletProcessView.__super__.constructor.apply(this, arguments);
       }
 
+      MalletProcessView.accessor("processing", function() {
+        return this.get("status") != null;
+      });
+
       MalletProcessView.accessor("processingIngestChunks", function() {
         return this.get("status") === "processingIngestChunks";
       });
@@ -843,11 +847,11 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       });
 
       MalletProcessView.accessor("notprocessedInferTopics", function() {
-        return !this.get("processingIngestChunks") && !this.get("processedIngestChunks");
+        return !this.get("processingInferTopics") && !this.get("processedInferTopics");
       });
 
       MalletProcessView.accessor("notprocessedStoreProportions", function() {
-        return !this.get("processingIngestChunks") && !this.get("processedIngestChunks");
+        return !this.get("processingStoreProportions") && !this.get("processedStoreProportions");
       });
 
       MalletProcessView.prototype.startTopicModeling = function() {
@@ -875,13 +879,17 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
               return socket.on(hash, function(message) {
                 switch (message) {
                   case "processedIngestChunks":
-                    return _this.set("status", "processingTrainTopics");
+                    _this.set("status", "processingTrainTopics");
+                    return console.log("processingTrainTopics");
                   case "processedTrainTopics":
-                    return _this.set("status", "processingInferTopics");
+                    _this.set("status", "processingInferTopics");
+                    return console.log("processingInferTopics");
                   case "processedInferTopics":
-                    return _this.set("status", "processingStoreProportions");
+                    _this.set("status", "processingStoreProportions");
+                    return console.log("processingStoreProportions");
                   case "processedStoreProportions":
-                    return _this.set("status", "completed");
+                    _this.set("status", "completed");
+                    return console.log("completed");
                 }
               });
             };
