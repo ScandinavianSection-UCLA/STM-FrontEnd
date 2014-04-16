@@ -552,7 +552,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             });
           }
           if (subcorpus != null) {
-            return exports.context.get("malletProcessView").loadStatus();
+            return exports.context.get("malletProcessView").loadStatus(subcorpus);
           }
         });
         $.ajax({
@@ -859,17 +859,14 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return !this.get("processingStoreProportions") && !this.get("processedStoreProportions");
       });
 
-      MalletProcessView.prototype.loadStatus = function() {
-        var corpus, subcorpus;
+      MalletProcessView.prototype.loadStatus = function(subcorpus) {
         this.set("loaded", false);
-        corpus = exports.context.get("metadataView.currentCorpus");
-        subcorpus = exports.context.get("metadataView.currentSubcorpus");
         return $.ajax({
           url: "/data/subcorpusStatus",
           dataType: "jsonp",
           type: "GET",
           data: {
-            corpus: corpus.get("name"),
+            corpus: subcorpus.get("corpus.name"),
             subcorpus: subcorpus.get("name")
           },
           success: (function(_this) {

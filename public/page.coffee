@@ -246,7 +246,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@observe "currentSubcorpus", (subcorpus) ->
 					subcorpus?.loadFilesList 0, ->
 						subcorpus?.get("filesList").add()
-					exports.context.get("malletProcessView").loadStatus() if subcorpus?
+					exports.context.get("malletProcessView").loadStatus subcorpus if subcorpus?
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
@@ -357,12 +357,10 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "notprocessedTrainTopics", -> not @get("processingTrainTopics") and not @get("processedTrainTopics")
 			@accessor "notprocessedInferTopics", -> not @get("processingInferTopics") and not @get("processedInferTopics")
 			@accessor "notprocessedStoreProportions", -> not @get("processingStoreProportions") and not @get("processedStoreProportions")
-			loadStatus: ->
+			loadStatus: (subcorpus) ->
 				@set "loaded", false
-				corpus = exports.context.get "metadataView.currentCorpus"
-				subcorpus = exports.context.get "metadataView.currentSubcorpus"
 				$.ajax
-					url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name")
+					url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: subcorpus.get("corpus.name"), subcorpus: subcorpus.get("name")
 					success: ({success, status, hash, error}) =>
 						return console.error error unless success
 						if status isnt "not processed"
