@@ -551,7 +551,9 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
               return subcorpus != null ? subcorpus.get("filesList").add() : void 0;
             });
           }
-          return exports.context.get("malletProcessView").loadStatus();
+          if (subcorpus != null) {
+            return exports.context.get("malletProcessView").loadStatus();
+          }
         });
         $.ajax({
           url: "/data/corporaList",

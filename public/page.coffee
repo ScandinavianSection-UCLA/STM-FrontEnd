@@ -246,7 +246,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@observe "currentSubcorpus", (subcorpus) ->
 					subcorpus?.loadFilesList 0, ->
 						subcorpus?.get("filesList").add()
-					exports.context.get("malletProcessView").loadStatus()
+					exports.context.get("malletProcessView").loadStatus() if subcorpus?
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp"
 					success: (response) =>
