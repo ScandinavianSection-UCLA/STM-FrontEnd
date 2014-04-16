@@ -794,10 +794,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
     MalletProcessView = (function(_super) {
       __extends(MalletProcessView, _super);
 
-      function MalletProcessView() {
-        return MalletProcessView.__super__.constructor.apply(this, arguments);
-      }
-
       MalletProcessView.accessor("processing", function() {
         return this.get("status") != null;
       });
@@ -854,6 +850,40 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return !this.get("processingStoreProportions") && !this.get("processedStoreProportions");
       });
 
+      function MalletProcessView() {
+        var corpus, subcorpus;
+        this.set("loaded", false);
+        corpus = exports.context.get("metadataView.currentCorpus");
+        subcorpus = exports.context.get("metadataView.currentSubcorpus");
+        $.ajax({
+          url: "/data/subcorpusStatus",
+          dataType: "jsonp",
+          type: "GET",
+          data: {
+            corpus: corpus.get("name"),
+            subcorpus: subcorpus.get("name")
+          },
+          success: (function(_this) {
+            return function(_arg) {
+              var error, hash, status, success;
+              success = _arg.success, status = _arg.status, hash = _arg.hash, error = _arg.error;
+              if (!success) {
+                return console.error(error);
+              }
+              if (status !== "not processed") {
+                _this.set("status", status);
+                _this.subscribeToProcessEvents();
+              }
+              return _this.set("loaded", true);
+            };
+          })(this),
+          error: function(request) {
+            console.error(request);
+            return this.set("loaded", true);
+          }
+        });
+      }
+
       MalletProcessView.prototype.startTopicModeling = function() {
         var corpus, subcorpus;
         corpus = exports.context.get("metadataView.currentCorpus");
@@ -875,29 +905,36 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
                 return console.error(error);
               }
               _this.set("status", "processingIngestChunks");
-              socket.emit("subscribe", hash);
-              return socket.on(hash, function(message) {
-                switch (message) {
-                  case "processedIngestChunks":
-                    _this.set("status", "processingTrainTopics");
-                    return console.log("processingTrainTopics");
-                  case "processedTrainTopics":
-                    _this.set("status", "processingInferTopics");
-                    return console.log("processingInferTopics");
-                  case "processedInferTopics":
-                    _this.set("status", "processingStoreProportions");
-                    return console.log("processingStoreProportions");
-                  case "processedStoreProportions":
-                    _this.set("status", "completed");
-                    return console.log("completed");
-                }
-              });
+              console.log("processingIngestChunks");
+              return _this.subscribeToProcessEvents();
             };
           })(this),
           error: function(request) {
             return console.error(request);
           }
         });
+      };
+
+      MalletProcessView.prototype.subscribeToProcessEvents = function() {
+        socket.emit("subscribe", hash);
+        return socket.on(hash, (function(_this) {
+          return function(message) {
+            switch (message) {
+              case "processingTrainTopics":
+                _this.set("status", "processingTrainTopics");
+                return console.log("processingTrainTopics");
+              case "processingInferTopics":
+                _this.set("status", "processingInferTopics");
+                return console.log("processingInferTopics");
+              case "processingStoreProportions":
+                _this.set("status", "processingStoreProportions");
+                return console.log("processingStoreProportions");
+              case "completed":
+                _this.set("status", "completed");
+                return console.log("completed");
+            }
+          };
+        })(this));
       };
 
       return MalletProcessView;

@@ -367,8 +367,10 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						if status isnt "not processed"
 							@set "status", status
 							@subscribeToProcessEvents()
+						@set "loaded", true
 					error: (request) ->
 						console.error request
+						@set "loaded", true
 			startTopicModeling: ->
 				corpus = exports.context.get "metadataView.currentCorpus"
 				subcorpus = exports.context.get "metadataView.currentSubcorpus"
@@ -397,7 +399,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						when "completed"
 							@set "status", "completed"
 							console.log "completed"
-
 
 		class Corpus extends Batman.Model
 			constructor: (name) ->
