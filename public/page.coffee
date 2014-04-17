@@ -295,6 +295,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "sortedFilesList", -> exports.context.get "metadataView.currentSubcorpus.sortedFilesList"
 			@accessor "filesListNextAvailable", -> exports.context.get "metadataView.currentSubcorpus.filesListNextAvailable"
 			@accessor "filesListPrevAvailable", -> exports.context.get "metadataView.currentSubcorpus.filesListPrevAvailable"
+			@accessor "enableAddFiles", -> !exports.context.get("metadataView.currentSubcorpus.status")?
 			constructor: ->
 				$("#dropFiles").dropzone
 					url: "/data/file"

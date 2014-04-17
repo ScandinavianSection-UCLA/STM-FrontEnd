@@ -705,6 +705,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return exports.context.get("metadataView.currentSubcorpus.filesListPrevAvailable");
       });
 
+      AddFilesView.accessor("enableAddFiles", function() {
+        return exports.context.get("metadataView.currentSubcorpus.status") == null;
+      });
+
       function AddFilesView() {
         $("#dropFiles").dropzone({
           url: "/data/file",
