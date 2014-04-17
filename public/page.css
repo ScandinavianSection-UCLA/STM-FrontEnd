@@ -64,6 +64,9 @@ body {
   font-size: 100%;
   border-radius: 1em;
 }
-#addFilesView ul:first-child li:first-of-type {
+#addFilesView #dropFiles.hidden {
+  display: none;
+}
+#addFilesView #dropFiles.hidden + ul:first-child li:first-of-type {
   border-bottom-width: 0;
 }

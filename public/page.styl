@@ -71,7 +71,10 @@ html, body
 
 #addFilesView
 	
-	ul:first-child
+	#dropFiles.hidden
+		display none
+	
+		& + ul:first-child
 
-		li:first-of-type
-			border-bottom-width 0
+			li:first-of-type
+				border-bottom-width 0
