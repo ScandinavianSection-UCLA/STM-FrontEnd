@@ -67,6 +67,6 @@ body {
 #addFilesView #dropFiles.hidden {
   display: none;
 }
-#addFilesView #dropFiles.hidden + ul li:first-of-type {
-  border-bottom-width: 0;
+#addFilesView #dropFiles.hidden + ul {
+  margin-top: -1px;
 }
