@@ -16,3 +16,9 @@ public/components
 
 npm-debug.log
 node_modules
+
+answers.tar
+answers.zip
+answers/
+answers_5.zip
+corpora/
