@@ -45,14 +45,19 @@ web.post "/data/setTopicHidden", (req, res, next) ->
 		res.jsonp success
 
 web.get "/data/corporaList", (req, res, next) ->
-	core.getCorporaList (err, corpora) ->
-		return res.jsonp 500, err if err?
-		res.jsonp corpora
+	core.getCorporaList
+		processedOnly: req.param "processedOnly"
+		(err, corpora) ->
+			return res.jsonp 500, err if err?
+			res.jsonp corpora
 
 web.get "/data/subcorporaList", (req, res, next) ->
-	core.getSubcorporaList req.param("corpus"), (err, subcorpora) ->
-		return res.jsonp 500, err if err?
-		res.jsonp subcorpora
+	core.getSubcorporaList
+		corpus: req.param "corpus"
+		processedOnly: req.param "processedOnly"
+		(err, subcorpora) ->
+			return res.jsonp 500, err if err?
+			res.jsonp subcorpora
 
 web.put "/data/corpus", (req, res, next) ->
 	core.insertCorpus req.param("corpus"), (err, success) ->

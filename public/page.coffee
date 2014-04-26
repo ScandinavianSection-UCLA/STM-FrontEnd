@@ -17,6 +17,7 @@ require.config
 	waitSeconds: 30
 
 appContext = undefined
+socket = undefined
 
 define "Batman", ["batman"], (Batman) -> Batman.DOM.readers.batmantarget = Batman.DOM.readers.target and delete Batman.DOM.readers.target and Batman
 
@@ -46,6 +47,11 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 	Topics = new Object
 	do (exports = Topics) ->
 		class exports.Context extends Batman.Model
+			@accessor "currentCorpus", -> @get("corpora").find((x) => x.get("name") is @get "corpus_text")
+			@accessor "currentSubcorpus", -> @get("currentCorpus.subcorpora")?.find((x) => x.get("name") is @get "subcorpus_text")
+			@accessor "corpusIsSelected", -> @get("currentCorpus")?
+			@accessor "subcorpusIsSelected", -> @get("currentSubcorpus")?
+			# Old
 			@accessor "isCurrentTopicSelected", -> @get("currentTopic")?
 			@accessor "filteredTopics", ->
 				@get("topics")
@@ -80,6 +86,35 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					.popover
 						html: true, animation: false, placement: "bottom", trigger: "focus", content: -> $("#topicsList")
 					.on "hide.bs.popover", -> $("#hidden-content").append $("#topicsList")
+				# New ...
+				@set "corpora", new Batman.Set
+				@set "corpus_text", ""
+				@set "subcorpus_text", ""
+				@set "corpus_placeholder", "Corpus"
+				@set "subcorpus_placeholder", "Subcorpus"
+				$.ajax
+					url: "/data/corporaList", dataType: "jsonp", data: processedOnly: true
+					success: (response) =>
+						@get("corpora").add (response.map (x) => new Corpus x)...
+					error: (request) ->
+						console.error request
+				$ "#corpusInput"
+					.typeahead {minLength: 0, highlight: true},
+						source: (query, callback) =>
+							callback @get("corpora").filter((x) -> x.get("name").toLowerCase().match query.toLowerCase()).toArray()
+						displayKey: (x) -> x.get "name"
+					.on "typeahead:opened", => @set "corpus_typeahead_open", true
+					.on "typeahead:closed", => @set "corpus_typeahead_open", false
+					.on "typeahead:selected", => @set "corpus_text", $("#corpusInput").typeahead("val")
+				$ "#subcorpusInput"
+					.typeahead {minLength: 0, highlight: true},
+						source: (query, callback) =>
+							@get("currentCorpus")?.loadSubcorpora (err, corpus) =>
+								callback corpus.get("subcorpora").filter((x) -> x.get("name").toLowerCase().match query.toLowerCase()).toArray()
+						displayKey: (x) -> x.get "name"
+					.on "typeahead:opened", => @set "subcorpus_typeahead_open", true
+					.on "typeahead:closed", => @set "subcorpus_typeahead_open", false
+					.on "typeahead:selected", => @set "subcorpus_text", $("#subcorpusInput").typeahead("val")
 			topicSearch_keydown: (node, e) ->
 				e.preventDefault() if e.which in [13, 27, 38, 40]
 				switch e.which
@@ -134,6 +169,17 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					@drawPhraseCloud()
 				@set "topicSearch_text", @get("topics").filter((x) -> x.get("id") is Number $(node).data "id")[0]?.get("name") ? ""
 				@set "topicsList_activeIndex", 0
+			# New ...
+			text_focused: (elem) ->
+				if $(elem).attr("id") is "corpusInput"
+					@set "corpus_placeholder", ""
+				else if $(elem).attr("id") is "subcorpusInput"
+					@set "subcorpus_placeholder", ""
+			text_blurred: (elem) ->
+				if $(elem).attr("id") is "corpusInput"
+					@set "corpus_placeholder", if @get("corpus_text") == "" then "Corpus" else ""
+				else if $(elem).attr("id") is "subcorpusInput"
+					@set "subcorpus_placeholder", if @get("subcorpus_text") == "" then "Subcorpus" else ""
 
 		class Topic extends Batman.Model
 			@accessor "filteredRecords", ->
@@ -216,7 +262,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 
 	Curation = new Object
 	do (exports = Curation) ->
-		socket = undefined
 
 		class exports.Context extends Batman.Model
 			constructor: ->
@@ -372,84 +417,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					error: (request) ->
 						console.error request
 
-		class Corpus extends Batman.Model
-			constructor: (name) ->
-				super
-				@set "name", name
-				@set "subcorpora", new Batman.Set
-			loadSubcorpora: (callback) ->
-				return callback? null, @ if @get "isSubcorporaLoaded"
-				$.ajax
-					url: "/data/subcorporaList", dataType: "jsonp", data: corpus: @get "name"
-					success: (response) =>
-						@get("subcorpora").add (response.subcorpora.map (x) => new Subcorpus x, @)...
-						@set "isSubcorporaLoaded", true
-						callback? null, @
-					error: (request) ->
-						console.error request
-						callback? request
-
-		class Subcorpus extends Batman.Model
-			@accessor "isFilesListEmpty", -> @get("filesList.length") is 0
-			@accessor "sortedFilesList", -> @get("filesList.toArray").sort (a, b) -> a.localeCompare b
-			constructor: (name, corpus) ->
-				super
-				@set "name", name
-				@set "corpus", corpus
-				@set "filesList", new Batman.Set
-			loadFilesList: (from, callback) ->
-				return callback? null, @ unless false in (x in [@get("filesListLoadedFrom") .. @get("filesListLoadedTo")] for x in [from, from + 9])
-				@forceLoadFilesList from, callback
-			forceLoadFilesList: (from, callback) ->
-				$.ajax
-					url: "/data/filesList", dataType: "jsonp", data: corpus: @get("corpus.name"), subcorpus: @get("name"), from: from
-					success: (response) =>
-						@get("filesList").add response.files...
-						if response.fileIndices.from >= @get("filesListLoadedFrom") and response.fileIndices.to <= @get("filesListLoadedTo")
-						else unless response.fileIndices.from > @get "filesListLoadedFrom"
-							@set "filesListLoadedFrom", response.fileIndices.from
-							@set "filesListLoadedTo", Math.max(response.fileIndices.to, Math.min(response.fileIndices.from + 29, @get("filesListLoadedTo") ? 0))
-							@get("filesList").remove (@get("filesList.toArray").sort((a, b) -> a.localeCompare b)[30...])...
-						else unless response.fileIndices.to < @get "filesListLoadedTo"
-							@set "filesListLoadedTo", response.fileIndices.to
-							@set "filesListLoadedFrom", Math.min(response.fileIndices.from, Math.max(response.fileIndices.to - 29, @get("filesListLoadedFrom") ? 0))
-							@get("filesList").remove (@get("filesList.toArray").sort((a, b) -> a.localeCompare b)[...-30])...
-						callback? null, @
-						@set "filesListNextAvailable", @get("filesListLoadedTo") + 1 < response.totalFiles
-						@set "filesListPrevAvailable", @get("filesListLoadedFrom") > 0
-					error: (request) ->
-						console.error request
-						callback? request
-			loadStatus: ->
-				@set "loaded", false
-				$.ajax
-					url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: @get("corpus.name"), subcorpus: @get("name")
-					success: ({success, status, hash, error}) =>
-						return console.error error unless success
-						if status isnt "not processed"
-							@set "status", status
-							@subscribeToProcessEvents hash
-						@set "loaded", true
-					error: (request) ->
-						console.error request
-						@set "loaded", true
-			subscribeToProcessEvents: (hash) ->
-				socket.emit "subscribe", hash
-				socket.on hash, (message) =>
-					switch message
-						when "processingTrainTopics"
-							@set "status", "processingTrainTopics"
-							console.log "processingTrainTopics"
-						when "processingInferTopics"
-							@set "status", "processingInferTopics"
-							console.log "processingInferTopics"
-						when "processingStoreProportions"
-							@set "status", "processingStoreProportions"
-							console.log "processingStoreProportions"
-						when "completed"
-							@set "status", "completed"
-							console.log "completed"
-
 		class UploadTask extends Batman.Model
 			@accessor "friendlyFileSize", ->
 				suffixes = ["KiB", "MiB", "GiB", "TiB"]
@@ -474,6 +441,84 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "bytesSent", 0
 				@observe "status", (success, extracted) ->
 					exports.context.get("metadataView.currentSubcorpus.filesList").add fileName if success is "success" and extracted isnt "extracted"
+
+	class Corpus extends Batman.Model
+		constructor: (name) ->
+			super
+			@set "name", name
+			@set "subcorpora", new Batman.Set
+		loadSubcorpora: (callback) ->
+			return callback? null, @ if @get "isSubcorporaLoaded"
+			$.ajax
+				url: "/data/subcorporaList", dataType: "jsonp", data: corpus: @get("name"), processedOnly: window.location.pathname is "/topics"
+				success: (response) =>
+					@get("subcorpora").add (response.subcorpora.map (x) => new Subcorpus x, @)...
+					@set "isSubcorporaLoaded", true
+					callback? null, @
+				error: (request) ->
+					console.error request
+					callback? request
+
+	class Subcorpus extends Batman.Model
+		@accessor "isFilesListEmpty", -> @get("filesList.length") is 0
+		@accessor "sortedFilesList", -> @get("filesList.toArray").sort (a, b) -> a.localeCompare b
+		constructor: (name, corpus) ->
+			super
+			@set "name", name
+			@set "corpus", corpus
+			@set "filesList", new Batman.Set
+		loadFilesList: (from, callback) ->
+			return callback? null, @ unless false in (x in [@get("filesListLoadedFrom") .. @get("filesListLoadedTo")] for x in [from, from + 9])
+			@forceLoadFilesList from, callback
+		forceLoadFilesList: (from, callback) ->
+			$.ajax
+				url: "/data/filesList", dataType: "jsonp", data: corpus: @get("corpus.name"), subcorpus: @get("name"), from: from
+				success: (response) =>
+					@get("filesList").add response.files...
+					if response.fileIndices.from >= @get("filesListLoadedFrom") and response.fileIndices.to <= @get("filesListLoadedTo")
+					else unless response.fileIndices.from > @get "filesListLoadedFrom"
+						@set "filesListLoadedFrom", response.fileIndices.from
+						@set "filesListLoadedTo", Math.max(response.fileIndices.to, Math.min(response.fileIndices.from + 29, @get("filesListLoadedTo") ? 0))
+						@get("filesList").remove (@get("filesList.toArray").sort((a, b) -> a.localeCompare b)[30...])...
+					else unless response.fileIndices.to < @get "filesListLoadedTo"
+						@set "filesListLoadedTo", response.fileIndices.to
+						@set "filesListLoadedFrom", Math.min(response.fileIndices.from, Math.max(response.fileIndices.to - 29, @get("filesListLoadedFrom") ? 0))
+						@get("filesList").remove (@get("filesList.toArray").sort((a, b) -> a.localeCompare b)[...-30])...
+					callback? null, @
+					@set "filesListNextAvailable", @get("filesListLoadedTo") + 1 < response.totalFiles
+					@set "filesListPrevAvailable", @get("filesListLoadedFrom") > 0
+				error: (request) ->
+					console.error request
+					callback? request
+		loadStatus: ->
+			@set "loaded", false
+			$.ajax
+				url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: @get("corpus.name"), subcorpus: @get("name")
+				success: ({success, status, hash, error}) =>
+					return console.error error unless success
+					if status isnt "not processed"
+						@set "status", status
+						@subscribeToProcessEvents hash
+					@set "loaded", true
+				error: (request) ->
+					console.error request
+					@set "loaded", true
+		subscribeToProcessEvents: (hash) ->
+			socket.emit "subscribe", hash
+			socket.on hash, (message) =>
+				switch message
+					when "processingTrainTopics"
+						@set "status", "processingTrainTopics"
+						console.log "processingTrainTopics"
+					when "processingInferTopics"
+						@set "status", "processingInferTopics"
+						console.log "processingInferTopics"
+					when "processingStoreProportions"
+						@set "status", "processingStoreProportions"
+						console.log "processingStoreProportions"
+					when "completed"
+						@set "status", "completed"
+						console.log "completed"
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

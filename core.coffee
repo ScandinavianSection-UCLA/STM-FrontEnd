@@ -47,6 +47,8 @@ Corpus = metaDB.model "Corpus", (new mongoose.Schema
 	]
 ), "corpora"
 
+TopicModels = {}
+
 exports.getTopicsList = (callback) ->
 	Topic.find({}).sort(name: 1).exec (err, topics) ->
 		return callback err if err?
@@ -98,17 +100,26 @@ exports.setTopicHidden = (id, flag, callback) ->
 		return callback err if err?
 		callback null, success: true
 
-exports.getCorporaList = (callback) ->
-	#return callback null, ["English", "French", "Spanish", "German"]
-	Corpus.find({}).sort(name: 1).exec (err, corpora) ->
-		return callback err if err?
-		callback null, corpora.map (x) -> x.name
+exports.getCorporaList = ({processedOnly}, callback) ->
+	Corpus
+		.find if processedOnly then {"subcorpora.status": "processed"} else {}
+		.sort name: 1
+		.exec (err, corpora) ->
+			return callback err if err?
+			callback null, corpora.map (x) -> x.name
 
-exports.getSubcorporaList = (corpus, callback) ->
-	#return callback null, corpus: corpus, subcorpora: [1..5].map (x) -> "#{corpus} #{x}"
+exports.getSubcorporaList = ({corpus, processedOnly}, callback) ->
 	Corpus.findOne name: corpus, (err, corpus) ->
 		return callback err if err?
-		callback null, if corpus? then success: true, corpus: corpus, subcorpora: corpus.subcorpora.map((x) -> x.name) else success: false
+		callback null,
+			if corpus?
+				success: true
+				corpus: corpus
+				subcorpora: corpus.subcorpora
+					.filter (x) -> if processedOnly then x.status is "processed" else true
+					.map (x) -> x.name
+			else
+				success: false
 
 exports.insertCorpus = (corpus, callback) ->
 	Corpus.update {name: corpus}, {$setOnInsert: name: corpus, subcorpora: []}, upsert: true, (err, n, res) ->
