@@ -78,7 +78,7 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 				return callback err if err?
 				xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 					return callback err if err?
-					topicXML = doc.filter((x) -> x.$.id is "#{id}")[0]
+					topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
 					getCorpusDB(corpus).getSubcorpus(subcorpus).Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 						return callback err if err?
 						callback null,

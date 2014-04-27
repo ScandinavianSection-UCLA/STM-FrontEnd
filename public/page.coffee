@@ -128,6 +128,14 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					.on "typeahead:opened", => @set "topic_typeahead_open", true
 					.on "typeahead:closed", => @set "topic_typeahead_open", false
 					.on "typeahead:selected", => @set "topic_text", $("#topicInput").typeahead("val")
+				@observe "currentTopic", (topic) ->
+					if topic?
+						topic.onReady (err, topic) =>
+							@drawWordCloud topic
+							@drawPhraseCloud topic
+					else
+						$("#wordcloud").html ""
+						$("#phrasecloud").html ""
 			topicSearch_keydown: (node, e) ->
 				e.preventDefault() if e.which in [13, 27, 38, 40]
 				switch e.which
@@ -149,11 +157,11 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						$("#topicsList a.list-group-item.active")[0].scrollIntoView false unless isScrolledIntoView "#topicsList a.list-group-item.active"
 			topicSearch_input: ->
 				@set "topicsList_activeIndex", 0
-			drawWordCloud: ->
-				wordsMax = Math.max @get("currentTopic").get("words").map((x) -> x.count)...
-				wordsMin = Math.min @get("currentTopic").get("words").map((x) -> x.count)...
+			drawWordCloud: (topic) ->
+				wordsMax = Math.max topic.get("words").map((x) -> x.count)...
+				wordsMin = Math.min topic.get("words").map((x) -> x.count)...
 				WordCloud $("#wordcloud")[0],
-					list: @get("currentTopic").get("words").map (x) ->
+					list: topic.get("words").map (x) ->
 						[x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12]
 					gridSize: 10
 					minRotation: -0.5
@@ -162,11 +170,11 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					ellipticity: 0.5
 					wait: 0
 					abort: -> console.error arguments
-			drawPhraseCloud: ->
-				phrasesMax = Math.max @get("currentTopic").get("phrases").map((x) -> x.count)...
-				phrasesMin = Math.min @get("currentTopic").get("phrases").map((x) -> x.count)...
+			drawPhraseCloud: (topic) ->
+				phrasesMax = Math.max topic.get("phrases").map((x) -> x.count)...
+				phrasesMin = Math.min topic.get("phrases").map((x) -> x.count)...
 				WordCloud $("#phrasecloud")[0],
-					list: @get("currentTopic").get("phrases").map (x) ->
+					list: topic.get("phrases").map (x) ->
 						[x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12]
 					gridSize: 10
 					minRotation: -0.5
@@ -483,23 +491,27 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@set "hidden", hidden
 			@set "isLoaded", false
 			@set "subcorpus", subcorpus
+			@set "records", new Batman.Set
+			@set "words", new Batman.Set
+			@set "phrases", new Batman.Set
 		onReady: (callback) ->
-			return callback null, @ if @get "isLoaded"
+			return setTimeout (=> callback null, @), 0 if @get "isLoaded"
+			# return callback null, @ if @get "isLoaded"
 			$.ajax
 				url: "/data/topicDetails", dataType: "jsonp", data: corpus: @get("subcorpus.corpus.name"), subcorpus: @get("subcorpus.name"), id: @get "id"
 				success: (response) =>
 					@set "id", response.id
 					@set "name", response.name
-					@set "words", response.words
-					@set "phrases", response.phrases
-					@set "records", response.records.map (x) => new Record x, @
+					@get("words").add response.words...
+					@get("phrases").add response.phrases...
+					@get("records").add (response.records.map (x) => new Record x, @)...
 					@set "isLoaded", true
 					callback null, @
 				error: (request) ->
 					console.error request
 					callback request
 		gotoRecord: (node) ->
-			@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text())[0]?.onReady (err, record) =>
+			@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text()).toArray()[0]?.onReady (err, record) =>
 				@set "activeRecord", record
 		showRenameDialog: ->
 			@set "renameTopic_text", @get "name"

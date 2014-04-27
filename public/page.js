@@ -342,6 +342,19 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return _this.set("topic_text", $("#topicInput").typeahead("val"));
           };
         })(this));
+        this.observe("currentTopic", function(topic) {
+          if (topic != null) {
+            return topic.onReady((function(_this) {
+              return function(err, topic) {
+                _this.drawWordCloud(topic);
+                return _this.drawPhraseCloud(topic);
+              };
+            })(this));
+          } else {
+            $("#wordcloud").html("");
+            return $("#phrasecloud").html("");
+          }
+        });
       }
 
       Context.prototype.topicSearch_keydown = function(node, e) {
@@ -385,16 +398,16 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return this.set("topicsList_activeIndex", 0);
       };
 
-      Context.prototype.drawWordCloud = function() {
+      Context.prototype.drawWordCloud = function(topic) {
         var wordsMax, wordsMin;
-        wordsMax = Math.max.apply(Math, this.get("currentTopic").get("words").map(function(x) {
+        wordsMax = Math.max.apply(Math, topic.get("words").map(function(x) {
           return x.count;
         }));
-        wordsMin = Math.min.apply(Math, this.get("currentTopic").get("words").map(function(x) {
+        wordsMin = Math.min.apply(Math, topic.get("words").map(function(x) {
           return x.count;
         }));
         return WordCloud($("#wordcloud")[0], {
-          list: this.get("currentTopic").get("words").map(function(x) {
+          list: topic.get("words").map(function(x) {
             return [x.word, (x.count - wordsMin + 1) / (wordsMax - wordsMin + 1) * 30 + 12];
           }),
           gridSize: 10,
@@ -409,16 +422,16 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         });
       };
 
-      Context.prototype.drawPhraseCloud = function() {
+      Context.prototype.drawPhraseCloud = function(topic) {
         var phrasesMax, phrasesMin;
-        phrasesMax = Math.max.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
+        phrasesMax = Math.max.apply(Math, topic.get("phrases").map(function(x) {
           return x.count;
         }));
-        phrasesMin = Math.min.apply(Math, this.get("currentTopic").get("phrases").map(function(x) {
+        phrasesMin = Math.min.apply(Math, topic.get("phrases").map(function(x) {
           return x.count;
         }));
         return WordCloud($("#phrasecloud")[0], {
-          list: this.get("currentTopic").get("phrases").map(function(x) {
+          list: topic.get("phrases").map(function(x) {
             return [x.phrase, (x.count - phrasesMin + 1) / (phrasesMax - phrasesMin + 1) * 30 + 12];
           }),
           gridSize: 10,
@@ -1191,11 +1204,18 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       this.set("hidden", hidden);
       this.set("isLoaded", false);
       this.set("subcorpus", subcorpus);
+      this.set("records", new Batman.Set);
+      this.set("words", new Batman.Set);
+      this.set("phrases", new Batman.Set);
     }
 
     Topic.prototype.onReady = function(callback) {
       if (this.get("isLoaded")) {
-        return callback(null, this);
+        return setTimeout(((function(_this) {
+          return function() {
+            return callback(null, _this);
+          };
+        })(this)), 0);
       }
       return $.ajax({
         url: "/data/topicDetails",
@@ -1207,11 +1227,12 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         },
         success: (function(_this) {
           return function(response) {
+            var _ref, _ref1, _ref2;
             _this.set("id", response.id);
             _this.set("name", response.name);
-            _this.set("words", response.words);
-            _this.set("phrases", response.phrases);
-            _this.set("records", response.records.map(function(x) {
+            (_ref = _this.get("words")).add.apply(_ref, response.words);
+            (_ref1 = _this.get("phrases")).add.apply(_ref1, response.phrases);
+            (_ref2 = _this.get("records")).add.apply(_ref2, response.records.map(function(x) {
               return new Record(x, _this);
             }));
             _this.set("isLoaded", true);
@@ -1229,7 +1250,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       var _ref;
       return (_ref = this.get("records").filter(function(x) {
         return x.get("article_id") === $(node).children("span").text();
-      })[0]) != null ? _ref.onReady((function(_this) {
+      }).toArray()[0]) != null ? _ref.onReady((function(_this) {
         return function(err, record) {
           return _this.set("activeRecord", record);
         };
