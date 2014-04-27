@@ -359,7 +359,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						return console.error error unless success
 						@set "status", "processingIngestChunks"
 						console.log "processingIngestChunks"
-						@subscribeToProcessEvents hash
+						subcorpus.subscribeToProcessEvents hash
 					error: (request) ->
 						console.error request
 
