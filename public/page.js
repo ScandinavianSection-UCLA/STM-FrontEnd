@@ -896,7 +896,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
               }
               _this.set("status", "processingIngestChunks");
               console.log("processingIngestChunks");
-              return _this.subscribeToProcessEvents(hash);
+              return subcorpus.subscribeToProcessEvents(hash);
             };
           })(this),
           error: function(request) {
