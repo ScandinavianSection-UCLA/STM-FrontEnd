@@ -20,29 +20,49 @@ web.get "/", (req, res) ->
 		res.render "index", topics: topics
 
 web.get "/data/topicsList", (req, res, next) ->
-	core.getTopicsList (err, topics) ->
-		return res.jsonp 500, err if err?
-		res.jsonp topics
+	core.getTopicsList
+		corpus: req.param "corpus"
+		(err, topics) ->
+			return res.jsonp 500, err if err?
+			res.jsonp topics
 
 web.get "/data/topicDetails", (req, res, next) ->
-	core.getTopicDetails req.param("id"), (err, topic) ->
-		return res.jsonp 500, err if err?
-		res.jsonp topic
+	core.getTopicDetails
+		corpus: req.param "corpus"
+		subcorpus: req.param "subcorpus"
+		topic_id: req.param "id"
+		(err, topic) ->
+			return res.jsonp 500, err if err?
+			res.jsonp topic
 
 web.get "/data/article", (req, res, next) ->
-	core.getArticle req.param("article_id"), (err, article) ->
-		return res.jsonp 500, err if err?
-		res.jsonp article
+	core.getArticle
+		corpus: req.param "corpus"
+		subcorpus: req.param "subcorpus"
+		article_id: req.param "article_id"
+		(err, article) ->
+			return res.jsonp 500, err if err?
+			res.jsonp article
 
 web.post "/data/renameTopic", (req, res, next) ->
-	core.renameTopic req.param("id"), req.param("name"), (err, success) ->
-		return res.jsonp 500, err if err?
-		res.jsonp success
+	core.renameTopic
+		corpus: req.param "corpus"
+		subcorpus: req.param "subcorpus"
+		topic_id: req.param "id"
+		new_name: req.param "name"
+		(err, success) ->
+			return res.jsonp 500, err if err?
+			res.jsonp success
 
 web.post "/data/setTopicHidden", (req, res, next) ->
-	core.setTopicHidden req.param("id"), req.param("hidden"), (err, success) ->
-		return res.jsonp 500, err if err?
-		res.jsonp success
+	core.setTopicHidden
+		corpus: req.param "corpus"
+		subcorpus: req.param "subcorpus"
+		topic_id: req.param "id"
+		hidden_flag: req.param "hidden"
+		(err, success) ->
+			return res.jsonp 500, err if err?
+			res.jsonp success
 
 web.get "/data/corporaList", (req, res, next) ->
 	core.getCorporaList

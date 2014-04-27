@@ -49,8 +49,10 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 		class exports.Context extends Batman.Model
 			@accessor "currentCorpus", -> @get("corpora").find((x) => x.get("name") is @get "corpus_text")
 			@accessor "currentSubcorpus", -> @get("currentCorpus.subcorpora")?.find((x) => x.get("name") is @get "subcorpus_text")
+			@accessor "currentTopic", -> @get("currentSubcorpus.topics")?.find((x) => x.get("name") is @get "topic_text")
 			@accessor "corpusIsSelected", -> @get("currentCorpus")?
 			@accessor "subcorpusIsSelected", -> @get("currentSubcorpus")?
+			@accessor "topicIsSelected", -> @get("currentTopic")?
 			# Old
 			@accessor "isCurrentTopicSelected", -> @get("currentTopic")?
 			@accessor "filteredTopics", ->
@@ -90,8 +92,10 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "corpora", new Batman.Set
 				@set "corpus_text", ""
 				@set "subcorpus_text", ""
+				@set "topic_text", ""
 				@set "corpus_placeholder", "Corpus"
 				@set "subcorpus_placeholder", "Subcorpus"
+				@set "topic_placeholder", "Topic"
 				$.ajax
 					url: "/data/corporaList", dataType: "jsonp", data: processedOnly: true
 					success: (response) =>
@@ -115,6 +119,15 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					.on "typeahead:opened", => @set "subcorpus_typeahead_open", true
 					.on "typeahead:closed", => @set "subcorpus_typeahead_open", false
 					.on "typeahead:selected", => @set "subcorpus_text", $("#subcorpusInput").typeahead("val")
+				$ "#topicInput"
+					.typeahead {minLength: 0, highlight: true},
+						source: (query, callback) =>
+							@get("currentSubcorpus")?.loadTopics (err, subcorpus) =>
+								callback subcorpus.get("topics").filter((x) -> x.get("name").toLowerCase().match query.toLowerCase()).toArray()[..10]
+						displayKey: (x) -> x.get "name"
+					.on "typeahead:opened", => @set "topic_typeahead_open", true
+					.on "typeahead:closed", => @set "topic_typeahead_open", false
+					.on "typeahead:selected", => @set "topic_text", $("#topicInput").typeahead("val")
 			topicSearch_keydown: (node, e) ->
 				e.preventDefault() if e.which in [13, 27, 38, 40]
 				switch e.which
@@ -175,90 +188,15 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					@set "corpus_placeholder", ""
 				else if $(elem).attr("id") is "subcorpusInput"
 					@set "subcorpus_placeholder", ""
+				else if $(elem).attr("id") is "topicInput"
+					@set "topic_placeholder", ""
 			text_blurred: (elem) ->
 				if $(elem).attr("id") is "corpusInput"
 					@set "corpus_placeholder", if @get("corpus_text") == "" then "Corpus" else ""
 				else if $(elem).attr("id") is "subcorpusInput"
 					@set "subcorpus_placeholder", if @get("subcorpus_text") == "" then "Subcorpus" else ""
-
-		class Topic extends Batman.Model
-			@accessor "filteredRecords", ->
-				@get("records")?.map (record, idx) =>
-					record: record
-					active: record is @get "activeRecord"
-			@accessor "toggleHidden_text", -> "#{if @get("hidden") then "Unhide" else "Hide"} Topic"
-			constructor: ({id, name, hidden}) ->
-				super
-				@set "id", id
-				@set "name", name
-				@set "hidden", hidden
-				@set "isLoaded", false
-			onReady: (callback) ->
-				return callback null, @ if @get "isLoaded"
-				$.ajax
-					url: "/data/topicDetails", dataType: "jsonp", data: id: @get "id"
-					success: (response) =>
-						@set "id", response.id
-						@set "name", response.name
-						@set "words", response.words
-						@set "phrases", response.phrases
-						@set "records", response.records.map (x) => new Record x
-						@set "isLoaded", true
-						callback null, @
-					error: (request) ->
-						console.error request
-						callback request
-			gotoRecord: (node) ->
-				@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text())[0]?.onReady (err, record) =>
-					@set "activeRecord", record
-			showRenameDialog: ->
-				@set "renameTopic_text", @get "name"
-				$("#renameTopicModal").modal "show"
-			renameTopic: ->
-				$.ajax
-					url: "/data/renameTopic", dataType: "jsonp", type: "POST", data: id: @get("id"), name: @get("renameTopic_text")
-					success: (response) =>
-						@set "name", @get "renameTopic_text"
-						appContext.set "topicsContext.topicSearch_text", @get "name" if appContext.get("topicsContext.currentTopic") is @
-						$("#renameTopicModal").modal "hide"
-					error: (request) ->
-						console.error request
-			toggleHidden: ->
-				$.ajax
-					url: "/data/setTopicHidden", dataType: "jsonp", type: "POST", data: id: @get("id"), hidden: !@get("hidden")
-					success: (response) =>
-						@set "hidden", !@get "hidden"
-					error: (request) ->
-						console.error request
-
-		class Record extends Batman.Model
-			@accessor "proportionPie", ->
-				p = 100 * @get "proportion"
-				p = 99.99 if p > 99.99
-				"""
-					M 18 18
-					L 33 18
-					A 15 15 0 #{if p < 50 then 0 else 1} 0 #{18 + 15 * Math.cos p * Math.PI / 50} #{18 - 15 * Math.sin p * Math.PI / 50}
-					Z
-				"""
-			@accessor "proportionTooltip", -> "Proportion: #{(@get("proportion") * 100).toFixed 2}%"
-			constructor: ({article_id, proportion}) ->
-				super
-				@set "article_id", article_id
-				@set "proportion", proportion
-				@set "isLoaded", false
-			onReady: (callback) ->
-				return callback null, @ if @get "isLoaded"
-				$.ajax
-					url: "/data/article", dataType: "jsonp", data: article_id: @get "article_id"
-					success: (response) =>
-						@set "article_id", response.article_id
-						@set "article", response.article
-						@set "isLoaded", true
-						callback null, @
-					error: (request) ->
-						console.error request
-						callback request
+				else if $(elem).attr("id") is "topicInput"
+					@set "topic_placeholder", if @get("topic_text") == "" then "Topic" else ""
 
 	Curation = new Object
 	do (exports = Curation) ->
@@ -467,6 +405,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@set "name", name
 			@set "corpus", corpus
 			@set "filesList", new Batman.Set
+			@set "topics", new Batman.Set
 		loadFilesList: (from, callback) ->
 			return callback? null, @ unless false in (x in [@get("filesListLoadedFrom") .. @get("filesListLoadedTo")] for x in [from, from + 9])
 			@forceLoadFilesList from, callback
@@ -519,6 +458,98 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					when "completed"
 						@set "status", "completed"
 						console.log "completed"
+		loadTopics: (callback) ->
+			return callback? null, @ if @get "isTopicsLoaded"
+			$.ajax
+				url: "/data/topicsList", dataType: "jsonp", data: corpus: @get("corpus.name")
+				success: (response) =>
+					@get("topics").add (response.map (x) => new Topic x, @)...
+					@set "isTopicsLoaded", true
+					callback? null, @
+				error: (request) ->
+					console.error request
+					callback? request
+
+	class Topic extends Batman.Model
+		@accessor "filteredRecords", ->
+			@get("records")?.map (record, idx) =>
+				record: record
+				active: record is @get "activeRecord"
+		@accessor "toggleHidden_text", -> "#{if @get("hidden") then "Unhide" else "Hide"} Topic"
+		constructor: ({id, name, hidden}, subcorpus) ->
+			super
+			@set "id", id
+			@set "name", name
+			@set "hidden", hidden
+			@set "isLoaded", false
+			@set "subcorpus", subcorpus
+		onReady: (callback) ->
+			return callback null, @ if @get "isLoaded"
+			$.ajax
+				url: "/data/topicDetails", dataType: "jsonp", data: corpus: @get("subcorpus.corpus.name"), subcorpus: @get("subcorpus.name"), id: @get "id"
+				success: (response) =>
+					@set "id", response.id
+					@set "name", response.name
+					@set "words", response.words
+					@set "phrases", response.phrases
+					@set "records", response.records.map (x) => new Record x, @
+					@set "isLoaded", true
+					callback null, @
+				error: (request) ->
+					console.error request
+					callback request
+		gotoRecord: (node) ->
+			@get("records").filter((x) -> x.get("article_id") is $(node).children("span").text())[0]?.onReady (err, record) =>
+				@set "activeRecord", record
+		showRenameDialog: ->
+			@set "renameTopic_text", @get "name"
+			$("#renameTopicModal").modal "show"
+		renameTopic: ->
+			$.ajax
+				url: "/data/renameTopic", dataType: "jsonp", type: "POST", data: corpus: @get("subcorpus.corpus.name"), subcorpus: @get("subcorpus.name"), id: @get("id"), name: @get("renameTopic_text")
+				success: (response) =>
+					@set "name", @get "renameTopic_text"
+					appContext.set "topicsContext.topicSearch_text", @get "name" if appContext.get("topicsContext.currentTopic") is @
+					$("#renameTopicModal").modal "hide"
+				error: (request) ->
+					console.error request
+		toggleHidden: ->
+			$.ajax
+				url: "/data/setTopicHidden", dataType: "jsonp", type: "POST", data: corpus: @get("subcorpus.corpus.name"), subcorpus: @get("subcorpus.name"), id: @get("id"), hidden: !@get("hidden")
+				success: (response) =>
+					@set "hidden", !@get "hidden"
+				error: (request) ->
+					console.error request
+
+	class Record extends Batman.Model
+		@accessor "proportionPie", ->
+			p = 100 * @get "proportion"
+			p = 99.99 if p > 99.99
+			"""
+				M 18 18
+				L 33 18
+				A 15 15 0 #{if p < 50 then 0 else 1} 0 #{18 + 15 * Math.cos p * Math.PI / 50} #{18 - 15 * Math.sin p * Math.PI / 50}
+				Z
+			"""
+		@accessor "proportionTooltip", -> "Proportion: #{(@get("proportion") * 100).toFixed 2}%"
+		constructor: ({article_id, proportion}, topic) ->
+			super
+			@set "article_id", article_id
+			@set "proportion", proportion
+			@set "isLoaded", false
+			@set "topic", topic
+		onReady: (callback) ->
+			return callback null, @ if @get "isLoaded"
+			$.ajax
+				url: "/data/article", dataType: "jsonp", data: corpus: @get("topic.subcorpus.corpus.name"), subcorpus: @get("topic.subcorpus.name"), article_id: @get "article_id"
+				success: (response) =>
+					@set "article_id", response.article_id
+					@set "article", response.article
+					@set "isLoaded", true
+					callback null, @
+				error: (request) ->
+					console.error request
+					callback request
 
 	class STM extends Batman.App
 		@appContext: appContext = new AppContext

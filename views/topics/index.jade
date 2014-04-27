@@ -41,11 +41,12 @@ block content
 							input#subcorpusInput.form-control(type = "text", data-bind = "subcorpus_text", data-bind-placeholder = "subcorpus_placeholder", data-event-focus = "appContext.topicsContext.text_focused", data-event-blur = "appContext.topicsContext.text_blurred", placeholder = "Subcorpus")
 							i.form-control-feedback.fa.fa-check(data-showif = "subcorpusIsSelected", style = "display: none")
 				.col-sm-4
-					.form-group(style = "margin-bottom: 0")
+					.form-group(style = "margin-bottom: 0", data-addclass-has-success = "topicIsSelected", data-addclass-has-feedback = "topicIsSelected")
 						label.control-label.sr-only Topic
 						.col-sm-12
 							.input-group
-								input.form-control(type = "text", placeholder = "Topic")
+								input#topicInput.form-control(type = "text", data-bind = "topic_text", data-bind-placeholder = "topic_placeholder", data-event-focus = "appContext.topicsContext.text_focused", data-event-blur = "appContext.topicsContext.text_blurred", placeholder = "Topic")
+								i.form-control-feedback.fa.fa-check(data-showif = "topicIsSelected", style = "display: none")
 								.input-group-btn
 									button.btn.btn-default.dropdown-toggle(data-toggle = "dropdown", style = "padding-left: 6px; padding-right: 6px")
 										i.fa.fa-fw.fa-ellipsis-v

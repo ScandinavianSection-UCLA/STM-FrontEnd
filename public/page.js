@@ -45,7 +45,7 @@ define("Batman", ["batman"], function(Batman) {
 });
 
 require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typeahead", "dropzone"], function($, Batman, WordCloud, socketIO, async) {
-  var AppContext, Corpus, Curation, Index, STM, Subcorpus, Topics, findInStr, isScrolledIntoView;
+  var AppContext, Corpus, Curation, Index, Record, STM, Subcorpus, Topic, Topics, findInStr, isScrolledIntoView;
   findInStr = function(chars, str, j) {
     var idx, ret;
     if (j == null) {
@@ -99,8 +99,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
   })(Index);
   Topics = new Object;
   (function(exports) {
-    var Record, Topic;
-    exports.Context = (function(_super) {
+    return exports.Context = (function(_super) {
       __extends(Context, _super);
 
       Context.accessor("currentCorpus", function() {
@@ -120,12 +119,25 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         })(this)) : void 0;
       });
 
+      Context.accessor("currentTopic", function() {
+        var _ref;
+        return (_ref = this.get("currentSubcorpus.topics")) != null ? _ref.find((function(_this) {
+          return function(x) {
+            return x.get("name") === _this.get("topic_text");
+          };
+        })(this)) : void 0;
+      });
+
       Context.accessor("corpusIsSelected", function() {
         return this.get("currentCorpus") != null;
       });
 
       Context.accessor("subcorpusIsSelected", function() {
         return this.get("currentSubcorpus") != null;
+      });
+
+      Context.accessor("topicIsSelected", function() {
+        return this.get("currentTopic") != null;
       });
 
       Context.accessor("isCurrentTopicSelected", function() {
@@ -221,8 +233,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         this.set("corpora", new Batman.Set);
         this.set("corpus_text", "");
         this.set("subcorpus_text", "");
+        this.set("topic_text", "");
         this.set("corpus_placeholder", "Corpus");
         this.set("subcorpus_placeholder", "Subcorpus");
+        this.set("topic_placeholder", "Topic");
         $.ajax({
           url: "/data/corporaList",
           dataType: "jsonp",
@@ -296,6 +310,36 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         })(this)).on("typeahead:selected", (function(_this) {
           return function() {
             return _this.set("subcorpus_text", $("#subcorpusInput").typeahead("val"));
+          };
+        })(this));
+        $("#topicInput").typeahead({
+          minLength: 0,
+          highlight: true
+        }, {
+          source: (function(_this) {
+            return function(query, callback) {
+              var _ref;
+              return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
+                return callback(subcorpus.get("topics").filter(function(x) {
+                  return x.get("name").toLowerCase().match(query.toLowerCase());
+                }).toArray().slice(0, 11));
+              }) : void 0;
+            };
+          })(this),
+          displayKey: function(x) {
+            return x.get("name");
+          }
+        }).on("typeahead:opened", (function(_this) {
+          return function() {
+            return _this.set("topic_typeahead_open", true);
+          };
+        })(this)).on("typeahead:closed", (function(_this) {
+          return function() {
+            return _this.set("topic_typeahead_open", false);
+          };
+        })(this)).on("typeahead:selected", (function(_this) {
+          return function() {
+            return _this.set("topic_text", $("#topicInput").typeahead("val"));
           };
         })(this));
       }
@@ -413,6 +457,8 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           return this.set("corpus_placeholder", "");
         } else if ($(elem).attr("id") === "subcorpusInput") {
           return this.set("subcorpus_placeholder", "");
+        } else if ($(elem).attr("id") === "topicInput") {
+          return this.set("topic_placeholder", "");
         }
       };
 
@@ -421,185 +467,12 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           return this.set("corpus_placeholder", this.get("corpus_text") === "" ? "Corpus" : "");
         } else if ($(elem).attr("id") === "subcorpusInput") {
           return this.set("subcorpus_placeholder", this.get("subcorpus_text") === "" ? "Subcorpus" : "");
+        } else if ($(elem).attr("id") === "topicInput") {
+          return this.set("topic_placeholder", this.get("topic_text") === "" ? "Topic" : "");
         }
       };
 
       return Context;
-
-    })(Batman.Model);
-    Topic = (function(_super) {
-      __extends(Topic, _super);
-
-      Topic.accessor("filteredRecords", function() {
-        var _ref;
-        return (_ref = this.get("records")) != null ? _ref.map((function(_this) {
-          return function(record, idx) {
-            return {
-              record: record,
-              active: record === _this.get("activeRecord")
-            };
-          };
-        })(this)) : void 0;
-      });
-
-      Topic.accessor("toggleHidden_text", function() {
-        return "" + (this.get("hidden") ? "Unhide" : "Hide") + " Topic";
-      });
-
-      function Topic(_arg) {
-        var hidden, id, name;
-        id = _arg.id, name = _arg.name, hidden = _arg.hidden;
-        Topic.__super__.constructor.apply(this, arguments);
-        this.set("id", id);
-        this.set("name", name);
-        this.set("hidden", hidden);
-        this.set("isLoaded", false);
-      }
-
-      Topic.prototype.onReady = function(callback) {
-        if (this.get("isLoaded")) {
-          return callback(null, this);
-        }
-        return $.ajax({
-          url: "/data/topicDetails",
-          dataType: "jsonp",
-          data: {
-            id: this.get("id")
-          },
-          success: (function(_this) {
-            return function(response) {
-              _this.set("id", response.id);
-              _this.set("name", response.name);
-              _this.set("words", response.words);
-              _this.set("phrases", response.phrases);
-              _this.set("records", response.records.map(function(x) {
-                return new Record(x);
-              }));
-              _this.set("isLoaded", true);
-              return callback(null, _this);
-            };
-          })(this),
-          error: function(request) {
-            console.error(request);
-            return callback(request);
-          }
-        });
-      };
-
-      Topic.prototype.gotoRecord = function(node) {
-        var _ref;
-        return (_ref = this.get("records").filter(function(x) {
-          return x.get("article_id") === $(node).children("span").text();
-        })[0]) != null ? _ref.onReady((function(_this) {
-          return function(err, record) {
-            return _this.set("activeRecord", record);
-          };
-        })(this)) : void 0;
-      };
-
-      Topic.prototype.showRenameDialog = function() {
-        this.set("renameTopic_text", this.get("name"));
-        return $("#renameTopicModal").modal("show");
-      };
-
-      Topic.prototype.renameTopic = function() {
-        return $.ajax({
-          url: "/data/renameTopic",
-          dataType: "jsonp",
-          type: "POST",
-          data: {
-            id: this.get("id"),
-            name: this.get("renameTopic_text")
-          },
-          success: (function(_this) {
-            return function(response) {
-              _this.set("name", _this.get("renameTopic_text"));
-              if (appContext.get("topicsContext.currentTopic") === _this) {
-                appContext.set("topicsContext.topicSearch_text", _this.get("name"));
-              }
-              return $("#renameTopicModal").modal("hide");
-            };
-          })(this),
-          error: function(request) {
-            return console.error(request);
-          }
-        });
-      };
-
-      Topic.prototype.toggleHidden = function() {
-        return $.ajax({
-          url: "/data/setTopicHidden",
-          dataType: "jsonp",
-          type: "POST",
-          data: {
-            id: this.get("id"),
-            hidden: !this.get("hidden")
-          },
-          success: (function(_this) {
-            return function(response) {
-              return _this.set("hidden", !_this.get("hidden"));
-            };
-          })(this),
-          error: function(request) {
-            return console.error(request);
-          }
-        });
-      };
-
-      return Topic;
-
-    })(Batman.Model);
-    return Record = (function(_super) {
-      __extends(Record, _super);
-
-      Record.accessor("proportionPie", function() {
-        var p;
-        p = 100 * this.get("proportion");
-        if (p > 99.99) {
-          p = 99.99;
-        }
-        return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
-      });
-
-      Record.accessor("proportionTooltip", function() {
-        return "Proportion: " + ((this.get("proportion") * 100).toFixed(2)) + "%";
-      });
-
-      function Record(_arg) {
-        var article_id, proportion;
-        article_id = _arg.article_id, proportion = _arg.proportion;
-        Record.__super__.constructor.apply(this, arguments);
-        this.set("article_id", article_id);
-        this.set("proportion", proportion);
-        this.set("isLoaded", false);
-      }
-
-      Record.prototype.onReady = function(callback) {
-        if (this.get("isLoaded")) {
-          return callback(null, this);
-        }
-        return $.ajax({
-          url: "/data/article",
-          dataType: "jsonp",
-          data: {
-            article_id: this.get("article_id")
-          },
-          success: (function(_this) {
-            return function(response) {
-              _this.set("article_id", response.article_id);
-              _this.set("article", response.article);
-              _this.set("isLoaded", true);
-              return callback(null, _this);
-            };
-          })(this),
-          error: function(request) {
-            console.error(request);
-            return callback(request);
-          }
-        });
-      };
-
-      return Record;
 
     })(Batman.Model);
   })(Topics);
@@ -1141,6 +1014,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       this.set("name", name);
       this.set("corpus", corpus);
       this.set("filesList", new Batman.Set);
+      this.set("topics", new Batman.Set);
     }
 
     Subcorpus.prototype.loadFilesList = function(from, callback) {
@@ -1259,7 +1133,219 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       })(this));
     };
 
+    Subcorpus.prototype.loadTopics = function(callback) {
+      if (this.get("isTopicsLoaded")) {
+        return typeof callback === "function" ? callback(null, this) : void 0;
+      }
+      return $.ajax({
+        url: "/data/topicsList",
+        dataType: "jsonp",
+        data: {
+          corpus: this.get("corpus.name")
+        },
+        success: (function(_this) {
+          return function(response) {
+            var _ref;
+            (_ref = _this.get("topics")).add.apply(_ref, response.map(function(x) {
+              return new Topic(x, _this);
+            }));
+            _this.set("isTopicsLoaded", true);
+            return typeof callback === "function" ? callback(null, _this) : void 0;
+          };
+        })(this),
+        error: function(request) {
+          console.error(request);
+          return typeof callback === "function" ? callback(request) : void 0;
+        }
+      });
+    };
+
     return Subcorpus;
+
+  })(Batman.Model);
+  Topic = (function(_super) {
+    __extends(Topic, _super);
+
+    Topic.accessor("filteredRecords", function() {
+      var _ref;
+      return (_ref = this.get("records")) != null ? _ref.map((function(_this) {
+        return function(record, idx) {
+          return {
+            record: record,
+            active: record === _this.get("activeRecord")
+          };
+        };
+      })(this)) : void 0;
+    });
+
+    Topic.accessor("toggleHidden_text", function() {
+      return "" + (this.get("hidden") ? "Unhide" : "Hide") + " Topic";
+    });
+
+    function Topic(_arg, subcorpus) {
+      var hidden, id, name;
+      id = _arg.id, name = _arg.name, hidden = _arg.hidden;
+      Topic.__super__.constructor.apply(this, arguments);
+      this.set("id", id);
+      this.set("name", name);
+      this.set("hidden", hidden);
+      this.set("isLoaded", false);
+      this.set("subcorpus", subcorpus);
+    }
+
+    Topic.prototype.onReady = function(callback) {
+      if (this.get("isLoaded")) {
+        return callback(null, this);
+      }
+      return $.ajax({
+        url: "/data/topicDetails",
+        dataType: "jsonp",
+        data: {
+          corpus: this.get("subcorpus.corpus.name"),
+          subcorpus: this.get("subcorpus.name"),
+          id: this.get("id")
+        },
+        success: (function(_this) {
+          return function(response) {
+            _this.set("id", response.id);
+            _this.set("name", response.name);
+            _this.set("words", response.words);
+            _this.set("phrases", response.phrases);
+            _this.set("records", response.records.map(function(x) {
+              return new Record(x, _this);
+            }));
+            _this.set("isLoaded", true);
+            return callback(null, _this);
+          };
+        })(this),
+        error: function(request) {
+          console.error(request);
+          return callback(request);
+        }
+      });
+    };
+
+    Topic.prototype.gotoRecord = function(node) {
+      var _ref;
+      return (_ref = this.get("records").filter(function(x) {
+        return x.get("article_id") === $(node).children("span").text();
+      })[0]) != null ? _ref.onReady((function(_this) {
+        return function(err, record) {
+          return _this.set("activeRecord", record);
+        };
+      })(this)) : void 0;
+    };
+
+    Topic.prototype.showRenameDialog = function() {
+      this.set("renameTopic_text", this.get("name"));
+      return $("#renameTopicModal").modal("show");
+    };
+
+    Topic.prototype.renameTopic = function() {
+      return $.ajax({
+        url: "/data/renameTopic",
+        dataType: "jsonp",
+        type: "POST",
+        data: {
+          corpus: this.get("subcorpus.corpus.name"),
+          subcorpus: this.get("subcorpus.name"),
+          id: this.get("id"),
+          name: this.get("renameTopic_text")
+        },
+        success: (function(_this) {
+          return function(response) {
+            _this.set("name", _this.get("renameTopic_text"));
+            if (appContext.get("topicsContext.currentTopic") === _this) {
+              appContext.set("topicsContext.topicSearch_text", _this.get("name"));
+            }
+            return $("#renameTopicModal").modal("hide");
+          };
+        })(this),
+        error: function(request) {
+          return console.error(request);
+        }
+      });
+    };
+
+    Topic.prototype.toggleHidden = function() {
+      return $.ajax({
+        url: "/data/setTopicHidden",
+        dataType: "jsonp",
+        type: "POST",
+        data: {
+          corpus: this.get("subcorpus.corpus.name"),
+          subcorpus: this.get("subcorpus.name"),
+          id: this.get("id"),
+          hidden: !this.get("hidden")
+        },
+        success: (function(_this) {
+          return function(response) {
+            return _this.set("hidden", !_this.get("hidden"));
+          };
+        })(this),
+        error: function(request) {
+          return console.error(request);
+        }
+      });
+    };
+
+    return Topic;
+
+  })(Batman.Model);
+  Record = (function(_super) {
+    __extends(Record, _super);
+
+    Record.accessor("proportionPie", function() {
+      var p;
+      p = 100 * this.get("proportion");
+      if (p > 99.99) {
+        p = 99.99;
+      }
+      return "M 18 18\nL 33 18\nA 15 15 0 " + (p < 50 ? 0 : 1) + " 0 " + (18 + 15 * Math.cos(p * Math.PI / 50)) + " " + (18 - 15 * Math.sin(p * Math.PI / 50)) + "\nZ";
+    });
+
+    Record.accessor("proportionTooltip", function() {
+      return "Proportion: " + ((this.get("proportion") * 100).toFixed(2)) + "%";
+    });
+
+    function Record(_arg, topic) {
+      var article_id, proportion;
+      article_id = _arg.article_id, proportion = _arg.proportion;
+      Record.__super__.constructor.apply(this, arguments);
+      this.set("article_id", article_id);
+      this.set("proportion", proportion);
+      this.set("isLoaded", false);
+      this.set("topic", topic);
+    }
+
+    Record.prototype.onReady = function(callback) {
+      if (this.get("isLoaded")) {
+        return callback(null, this);
+      }
+      return $.ajax({
+        url: "/data/article",
+        dataType: "jsonp",
+        data: {
+          corpus: this.get("topic.subcorpus.corpus.name"),
+          subcorpus: this.get("topic.subcorpus.name"),
+          article_id: this.get("article_id")
+        },
+        success: (function(_this) {
+          return function(response) {
+            _this.set("article_id", response.article_id);
+            _this.set("article", response.article);
+            _this.set("isLoaded", true);
+            return callback(null, _this);
+          };
+        })(this),
+        error: function(request) {
+          console.error(request);
+          return callback(request);
+        }
+      });
+    };
+
+    return Record;
 
   })(Batman.Model);
   STM = (function(_super) {
