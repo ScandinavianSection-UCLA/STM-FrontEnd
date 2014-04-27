@@ -59,14 +59,14 @@ web.post "/data/setTopicHidden", (req, res, next) ->
 		corpus: req.param "corpus"
 		subcorpus: req.param "subcorpus"
 		topic_id: req.param "id"
-		hidden_flag: req.param "hidden"
+		hidden_flag: req.param("hidden") is "true"
 		(err, success) ->
 			return res.jsonp 500, err if err?
 			res.jsonp success
 
 web.get "/data/corporaList", (req, res, next) ->
 	core.getCorporaList
-		processedOnly: req.param "processedOnly"
+		processedOnly: req.param("processedOnly") is "true"
 		(err, corpora) ->
 			return res.jsonp 500, err if err?
 			res.jsonp corpora
@@ -74,7 +74,7 @@ web.get "/data/corporaList", (req, res, next) ->
 web.get "/data/subcorporaList", (req, res, next) ->
 	core.getSubcorporaList
 		corpus: req.param "corpus"
-		processedOnly: req.param "processedOnly"
+		processedOnly: req.param("processedOnly") is "true"
 		(err, subcorpora) ->
 			return res.jsonp 500, err if err?
 			res.jsonp subcorpora
