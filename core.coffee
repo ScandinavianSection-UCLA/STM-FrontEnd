@@ -37,65 +37,75 @@ Corpus = metaDB.model "Corpus", (new mongoose.Schema
 
 corpusDBs = {}
 
-getCorpusDB = (corpus) ->
-	unless corpus in corpusDBs
-		corpusDB = mongoose.createConnection "/tmp/mongodb-27017.sock/stm_#{corpus}"
-		corpusDBs[corpus] = thisCorpus =
-			connection: corpusDB
-			Topic: corpusDB.model "Topic", new mongoose.Schema
-				id: type: Number
-				name: String
-				hidden: Boolean
-			subcorpora: {}
-			getSubcorpus: (subcorpus) ->
-				unless subcorpus in thisCorpus.subcorpora
-					thisCorpus.subcorpora[subcorpus] =
-						Record: thisCorpus.connection.model "SubCorpus_#{subcorpus}", new mongoose.Schema
-							article_id: String
-							topic: type: mongoose.Schema.ObjectId, ref: "Topic"
-							proportion: Number
-				thisCorpus.subcorpora[subcorpus]
-	corpusDBs[corpus]
+getCorpusDB = (corpus, callback) ->
+	Corpus.findOne name: corpus, (err, doc) ->
+		return callback err if err?
+		return callback "Corpora does not exist" unless doc?
+		unless corpus in corpusDBs
+			corpusDB = mongoose.createConnection "/tmp/mongodb-27017.sock/stm_#{doc._id.toString()}"
+			corpusDBs[corpus] = thisCorpus =
+				connection: corpusDB
+				Topic: corpusDB.model "Topic", new mongoose.Schema
+					id: type: Number
+					name: String
+					hidden: Boolean
+				subcorpora: {}
+				getSubcorpus: (subcorpus, callback) ->
+					Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
+						return callback err if err?
+						return callback "Corpora/Subcorpora does not exist" unless doc?.subcorpora.length > 0
+						unless subcorpus in thisCorpus.subcorpora
+							thisCorpus.subcorpora[subcorpus] =
+								Record: thisCorpus.connection.model "Subcorpus_#{doc.subcorpora[0]._id.toString()}", new mongoose.Schema
+									article_id: String
+									topic: type: mongoose.Schema.ObjectId, ref: "Topic"
+									proportion: Number
+						callback null, thisCorpus.subcorpora[subcorpus]
+		callback null, corpusDBs[corpus]
 
 exports.getTopicsList = ({corpus}, callback) ->
-	getCorpusDB(corpus).Topic
-		.find {}
-		.sort name: 1
-		.exec (err, topics) ->
-			return callback err if err?
-			callback null, topics.map (topic) ->
-				name: topic.name
-				id: topic.id
-				hidden: topic.hidden ? false
+	getCorpusDB corpus, (err, {Topic}) ->
+		Topic
+			.find {}
+			.sort name: 1
+			.exec (err, topics) ->
+				return callback err if err?
+				callback null, topics.map (topic) ->
+					name: topic.name
+					id: topic.id
+					hidden: topic.hidden ? false
 
 exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		getCorpusDB(corpus).Topic.findOne id: topic_id, (err, topic) ->
-			return callback err if err?
-			fs.readFile "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml", encoding: "utf8", (err, doc) ->
+		getCorpusDB corpus (err, {Topic}) ->
+			Topic.findOne id: topic_id, (err, topic) ->
 				return callback err if err?
-				xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
+				fs.readFile "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml", encoding: "utf8", (err, doc) ->
 					return callback err if err?
-					topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
-					getCorpusDB(corpus).getSubcorpus(subcorpus).Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
+					xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 						return callback err if err?
-						callback null,
-							id: topic.id
-							name: topic.name
-							hidden: topic.hidden ? false
-							words: topicXML.word.map (x) ->
-								word: x._
-								weight: Number x.$.weight
-								count: Number x.$.count
-							phrases: topicXML.phrase.map (x) ->
-								phrase: x._
-								weight: Number x.$.weight
-								count: Number x.$.count
-							records: records.map (x) ->
-								article_id: x.article_id
-								proportion: x.proportion
+						topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
+						getCorpusDB corpus (err, {getSubcorpus}) ->
+							getSubcorpus subcorpus, (err, Record) ->
+								Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
+									return callback err if err?
+									callback null,
+										id: topic.id
+										name: topic.name
+										hidden: topic.hidden ? false
+										words: topicXML.word.map (x) ->
+											word: x._
+											weight: Number x.$.weight
+											count: Number x.$.count
+										phrases: topicXML.phrase.map (x) ->
+											phrase: x._
+											weight: Number x.$.weight
+											count: Number x.$.count
+										records: records.map (x) ->
+											article_id: x.article_id
+											proportion: x.proportion
 
 exports.getArticle = ({corpus, subcorpus, article_id}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
@@ -277,8 +287,8 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 			storeProportions = (callback) ->
 				child_process.exec "coffee TopicSaturation-Importer/importer.coffee
 					#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/measuring.txt
-					#{corpus}
-					#{subcorpus}"
+					#{doc._id.toString()}
+					#{doc.subcorpora[0]._id.toString()}"
 				, (err, stdout, stderr) ->
 					console.log "--- StoreProportions ---"
 					console.error stderr.toString("utf8").redBG
