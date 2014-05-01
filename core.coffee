@@ -41,6 +41,7 @@ getCorpusDB = (corpus, callback) ->
 	Corpus.findOne name: corpus, (err, doc) ->
 		return callback err if err?
 		return callback "Corpora does not exist" unless doc?
+		callback null, corpusDBs[corpus] if corpus in corpusDBs
 		unless corpus in corpusDBs
 			corpusDB = mongoose.createConnection "/tmp/mongodb-27017.sock/stm_#{doc._id.toString()}"
 			corpusDBs[corpus] = thisCorpus =
@@ -51,6 +52,7 @@ getCorpusDB = (corpus, callback) ->
 					hidden: Boolean
 				subcorpora: {}
 				getSubcorpus: (subcorpus, callback) ->
+					callback null, thisCorpus.subcorpora[subcorpus] if subcorpus in thisCorpus.subcorpora
 					Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 						return callback err if err?
 						return callback "Corpora/Subcorpora does not exist" unless doc?.subcorpora.length > 0
@@ -60,8 +62,8 @@ getCorpusDB = (corpus, callback) ->
 									article_id: String
 									topic: type: mongoose.Schema.ObjectId, ref: "Topic"
 									proportion: Number
-						callback null, thisCorpus.subcorpora[subcorpus]
-		callback null, corpusDBs[corpus]
+							callback null, thisCorpus.subcorpora[subcorpus]
+				callback null, corpusDBs[corpus]
 
 exports.getTopicsList = ({corpus}, callback) ->
 	getCorpusDB corpus, (err, {Topic}) ->
