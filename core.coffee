@@ -63,7 +63,7 @@ getCorpusDB = (corpus, callback) ->
 									topic: type: mongoose.Schema.ObjectId, ref: "Topic"
 									proportion: Number
 							callback null, thisCorpus.subcorpora[subcorpus]
-				callback null, corpusDBs[corpus]
+			callback null, corpusDBs[corpus]
 
 exports.getTopicsList = ({corpus}, callback) ->
 	getCorpusDB corpus, (err, {Topic}) ->
