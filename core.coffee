@@ -121,17 +121,19 @@ exports.renameTopic = ({corpus, subcorpus, topic_id, new_name}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		Topic.findOneAndUpdate {id: topic_id}, name: new_name, (err, doc) ->
-			return callback err if err?
-			callback null, success: true
+		getCorpusDB corpus, (err, {Topic}) ->
+			Topic.findOneAndUpdate {id: topic_id}, name: new_name, (err, doc) ->
+				return callback err if err?
+				callback null, success: true
 
 exports.setTopicHidden = ({corpus, subcorpus, topic_id, hidden_flag}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		Topic.findOneAndUpdate {id: topic_id}, hidden: hidden_flag, (err, doc) ->
-			return callback err if err?
-			callback null, success: true
+		getCorpusDB corpus, (err, {Topic}) ->
+			Topic.findOneAndUpdate {id: topic_id}, hidden: hidden_flag, (err, doc) ->
+				return callback err if err?
+				callback null, success: true
 
 exports.getCorporaList = ({processedOnly}, callback) ->
 	Corpus

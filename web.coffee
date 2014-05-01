@@ -15,9 +15,7 @@ web.configure ->
 	web.use web.router
 
 web.get "/", (req, res) ->
-	core.getTopics (err, topics) ->
-		return res.send 500, error: err if err?
-		res.render "index", topics: topics
+	res.redirect "/topics"
 
 web.get "/data/topicsList", (req, res, next) ->
 	core.getTopicsList
