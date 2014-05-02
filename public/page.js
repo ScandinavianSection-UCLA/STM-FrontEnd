@@ -202,37 +202,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 
       function Context() {
         Context.__super__.constructor.apply(this, arguments);
-        this.set("topicSearch_text", "");
-        this.set("topicsList_activeIndex", 0);
-        this.set("topics", []);
-        $.ajax({
-          url: "/data/topicsList",
-          dataType: "jsonp",
-          data: {
-            corpus: this.get("currentCorpus.name")
-          },
-          success: (function(_this) {
-            return function(response) {
-              return _this.set("topics", response.map(function(x) {
-                return new Topic(x);
-              }));
-            };
-          })(this),
-          error: function(request) {
-            return console.error(request);
-          }
-        });
-        $("#topicSearch").popover({
-          html: true,
-          animation: false,
-          placement: "bottom",
-          trigger: "focus",
-          content: function() {
-            return $("#topicsList");
-          }
-        }).on("hide.bs.popover", function() {
-          return $("#hidden-content").append($("#topicsList"));
-        });
         this.set("corpora", new Batman.Set);
         this.set("corpus_text", "");
         this.set("subcorpus_text", "");

@@ -75,20 +75,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "anyFilteredTopics_hidden", -> @get("filteredTopics_hidden").length > 0
 			constructor: ->
 				super
-				@set "topicSearch_text", ""
-				@set "topicsList_activeIndex", 0
-				@set "topics", []
-				$.ajax
-					url: "/data/topicsList", dataType: "jsonp", data: corpus: @get "currentCorpus.name"
-					success: (response) =>
-						@set "topics", response.map (x) => new Topic x
-					error: (request) ->
-						console.error request
-				$("#topicSearch")
-					.popover
-						html: true, animation: false, placement: "bottom", trigger: "focus", content: -> $("#topicsList")
-					.on "hide.bs.popover", -> $("#hidden-content").append $("#topicsList")
-				# New ...
 				@set "corpora", new Batman.Set
 				@set "corpus_text", ""
 				@set "subcorpus_text", ""
