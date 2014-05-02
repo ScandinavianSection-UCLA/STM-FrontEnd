@@ -93,7 +93,8 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 						topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
 						getCorpusDB corpus, (err, {getSubcorpus} = {}) ->
 							return callback err if err? or !getSubcorpus?
-							getSubcorpus subcorpus, (err, Record) ->
+							getSubcorpus subcorpus, (err, {Record} = {}) ->
+								return callback err if err? or !Record?
 								Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 									return callback err if err?
 									callback null,
