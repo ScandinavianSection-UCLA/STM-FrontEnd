@@ -66,7 +66,7 @@ getCorpusDB = (corpus, callback) ->
 			callback null, corpusDBs[corpus]
 
 exports.getTopicsList = ({corpus}, callback) ->
-	getCorpusDB corpus, (err, {Topic}) ->
+	getCorpusDB corpus, (err, {Topic} = {}) ->
 		Topic
 			.find {}
 			.sort name: 1
