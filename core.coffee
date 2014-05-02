@@ -82,7 +82,7 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		getCorpusDB corpus (err, {Topic} = {}) ->
+		getCorpusDB corpus, (err, {Topic} = {}) ->
 			return callback err if err? or !Topic?
 			Topic.findOne id: topic_id, (err, topic) ->
 				return callback err if err?
@@ -91,7 +91,7 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 					xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 						return callback err if err?
 						topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
-						getCorpusDB corpus (err, {getSubcorpus} = {}) ->
+						getCorpusDB corpus, (err, {getSubcorpus} = {}) ->
 							return callback err if err? or !getSubcorpus?
 							getSubcorpus subcorpus, (err, Record) ->
 								Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
