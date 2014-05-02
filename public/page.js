@@ -208,6 +208,9 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         $.ajax({
           url: "/data/topicsList",
           dataType: "jsonp",
+          data: {
+            corpus: this.get("currentCorpus.name")
+          },
           success: (function(_this) {
             return function(response) {
               return _this.set("topics", response.map(function(x) {

@@ -41,7 +41,7 @@ getCorpusDB = (corpus, callback) ->
 	Corpus.findOne name: corpus, (err, doc) ->
 		return callback err if err?
 		return callback "Corpora does not exist" unless doc?
-		callback null, corpusDBs[corpus] if corpus in corpusDBs
+		return callback null, corpusDBs[corpus] if corpus in corpusDBs
 		unless corpus in corpusDBs
 			corpusDB = mongoose.createConnection "/tmp/mongodb-27017.sock/stm_#{doc._id.toString()}"
 			corpusDBs[corpus] = thisCorpus =
@@ -52,7 +52,7 @@ getCorpusDB = (corpus, callback) ->
 					hidden: Boolean
 				subcorpora: {}
 				getSubcorpus: (subcorpus, callback) ->
-					callback null, thisCorpus.subcorpora[subcorpus] if subcorpus in thisCorpus.subcorpora
+					return callback null, thisCorpus.subcorpora[subcorpus] if subcorpus in thisCorpus.subcorpora
 					Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 						return callback err if err?
 						return callback "Corpora/Subcorpora does not exist" unless doc?.subcorpora.length > 0
@@ -67,6 +67,7 @@ getCorpusDB = (corpus, callback) ->
 
 exports.getTopicsList = ({corpus}, callback) ->
 	getCorpusDB corpus, (err, {Topic} = {}) ->
+		return callback err if err? or !Topic?
 		Topic
 			.find {}
 			.sort name: 1
@@ -81,7 +82,8 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		getCorpusDB corpus (err, {Topic}) ->
+		getCorpusDB corpus (err, {Topic} = {}) ->
+			return callback err if err? or !Topic?
 			Topic.findOne id: topic_id, (err, topic) ->
 				return callback err if err?
 				fs.readFile "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml", encoding: "utf8", (err, doc) ->
@@ -89,7 +91,8 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 					xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
 						return callback err if err?
 						topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
-						getCorpusDB corpus (err, {getSubcorpus}) ->
+						getCorpusDB corpus (err, {getSubcorpus} = {}) ->
+							return callback err if err? or !getSubcorpus?
 							getSubcorpus subcorpus, (err, Record) ->
 								Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
 									return callback err if err?
@@ -123,7 +126,8 @@ exports.renameTopic = ({corpus, subcorpus, topic_id, new_name}, callback) ->
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		getCorpusDB corpus, (err, {Topic}) ->
+		getCorpusDB corpus, (err, {Topic} = {}) ->
+			return callback err if err? or !Topic?
 			Topic.findOneAndUpdate {id: topic_id}, name: new_name, (err, doc) ->
 				return callback err if err?
 				callback null, success: true
@@ -132,7 +136,8 @@ exports.setTopicHidden = ({corpus, subcorpus, topic_id, hidden_flag}, callback) 
 	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
-		getCorpusDB corpus, (err, {Topic}) ->
+		getCorpusDB corpus, (err, {Topic} = {}) ->
+			return callback err if err? or !Topic?
 			Topic.findOneAndUpdate {id: topic_id}, hidden: hidden_flag, (err, doc) ->
 				return callback err if err?
 				callback null, success: true

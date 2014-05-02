@@ -79,7 +79,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				@set "topicsList_activeIndex", 0
 				@set "topics", []
 				$.ajax
-					url: "/data/topicsList", dataType: "jsonp"
+					url: "/data/topicsList", dataType: "jsonp", data: corpus: @get "currentCorpus.name"
 					success: (response) =>
 						@set "topics", response.map (x) => new Topic x
 					error: (request) ->
