@@ -53,26 +53,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 			@accessor "corpusIsSelected", -> @get("currentCorpus")?
 			@accessor "subcorpusIsSelected", -> @get("currentSubcorpus")?
 			@accessor "topicIsSelected", -> @get("currentTopic")?
-			# Old
-			@accessor "isCurrentTopicSelected", -> @get("currentTopic")?
-			@accessor "filteredTopics", ->
-				@get("topics")
-					.sort (a, b) -> a.get("name").localeCompare b.get("name")
-					.sort (a, b) -> (if a.get("hidden") then 1 else 0) - (if b.get("hidden") then 1 else 0)
-					.map (topic) =>
-						topic: topic
-						indices: findInStr @get("topicSearch_text").toLowerCase(), topic.get("name").toLowerCase()
-					.filter (x) -> x.indices?
-					.map (topic, idx) =>
-						topic: topic.topic
-						indices: topic.indices
-						active: idx is @get("topicsList_activeIndex")
-						html: (for c, i in topic.topic.get("name")
-							if i in topic.indices then "<strong>#{c}</strong>" else c
-						).join ""
-			@accessor "filteredTopics_unhidden", -> @get("filteredTopics").filter (x) -> !x.topic.get("hidden")
-			@accessor "filteredTopics_hidden", -> @get("filteredTopics").filter (x) -> x.topic.get("hidden")
-			@accessor "anyFilteredTopics_hidden", -> @get("filteredTopics_hidden").length > 0
 			constructor: ->
 				super
 				@set "corpora", new Batman.Set

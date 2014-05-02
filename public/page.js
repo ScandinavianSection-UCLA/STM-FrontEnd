@@ -140,66 +140,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return this.get("currentTopic") != null;
       });
 
-      Context.accessor("isCurrentTopicSelected", function() {
-        return this.get("currentTopic") != null;
-      });
-
-      Context.accessor("filteredTopics", function() {
-        return this.get("topics").sort(function(a, b) {
-          return a.get("name").localeCompare(b.get("name"));
-        }).sort(function(a, b) {
-          return (a.get("hidden") ? 1 : 0) - (b.get("hidden") ? 1 : 0);
-        }).map((function(_this) {
-          return function(topic) {
-            return {
-              topic: topic,
-              indices: findInStr(_this.get("topicSearch_text").toLowerCase(), topic.get("name").toLowerCase())
-            };
-          };
-        })(this)).filter(function(x) {
-          return x.indices != null;
-        }).map((function(_this) {
-          return function(topic, idx) {
-            var c, i;
-            return {
-              topic: topic.topic,
-              indices: topic.indices,
-              active: idx === _this.get("topicsList_activeIndex"),
-              html: ((function() {
-                var _i, _len, _ref, _results;
-                _ref = topic.topic.get("name");
-                _results = [];
-                for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-                  c = _ref[i];
-                  if (__indexOf.call(topic.indices, i) >= 0) {
-                    _results.push("<strong>" + c + "</strong>");
-                  } else {
-                    _results.push(c);
-                  }
-                }
-                return _results;
-              })()).join("")
-            };
-          };
-        })(this));
-      });
-
-      Context.accessor("filteredTopics_unhidden", function() {
-        return this.get("filteredTopics").filter(function(x) {
-          return !x.topic.get("hidden");
-        });
-      });
-
-      Context.accessor("filteredTopics_hidden", function() {
-        return this.get("filteredTopics").filter(function(x) {
-          return x.topic.get("hidden");
-        });
-      });
-
-      Context.accessor("anyFilteredTopics_hidden", function() {
-        return this.get("filteredTopics_hidden").length > 0;
-      });
-
       function Context() {
         Context.__super__.constructor.apply(this, arguments);
         this.set("corpora", new Batman.Set);
