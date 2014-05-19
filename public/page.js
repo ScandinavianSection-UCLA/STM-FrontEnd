@@ -801,14 +801,12 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           },
           success: (function(_this) {
             return function(_arg) {
-              var error, hash, success, _ref;
+              var error, hash, success;
               success = _arg.success, hash = _arg.hash, error = _arg.error;
               if (!success) {
                 return console.error(error);
               }
-              if ((_ref = exports.context) != null) {
-                _ref.set("metadataView.currentSubcorpus.status", "processingIngestChunks");
-              }
+              subcorpus.set("status", "processingIngestChunks");
               console.log("processingIngestChunks");
               return subcorpus.subscribeToProcessEvents(hash);
             };
@@ -1039,6 +1037,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
     };
 
     Subcorpus.prototype.subscribeToProcessEvents = function(hash) {
+      console.log("Subscribing to hash " + hash);
       socket.emit("subscribe", hash);
       return socket.on(hash, (function(_this) {
         return function(message) {
