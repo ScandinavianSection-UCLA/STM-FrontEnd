@@ -1022,7 +1022,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             if (!success) {
               return console.error(error);
             }
-            if (status !== "not processed") {
+            if (status !== "not processed" && status !== "completed") {
               _this.set("status", status);
               _this.subscribeToProcessEvents(hash);
             }

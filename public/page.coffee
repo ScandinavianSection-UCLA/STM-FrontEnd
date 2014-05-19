@@ -409,7 +409,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 				url: "/data/subcorpusStatus", dataType: "jsonp", type: "GET", data: corpus: @get("corpus.name"), subcorpus: @get("name")
 				success: ({success, status, hash, error}) =>
 					return console.error error unless success
-					if status isnt "not processed"
+					if status not in ["not processed", "completed"]
 						@set "status", status
 						@subscribeToProcessEvents hash
 					@set "loaded", true
