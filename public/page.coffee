@@ -323,7 +323,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					url: "/data/startTopicModeling", dataType: "jsonp", type: "POST", data: corpus: corpus.get("name"), subcorpus: subcorpus.get("name"), num_topics: 50
 					success: ({success, hash, error}) =>
 						return console.error error unless success
-						exports.context?.set "metadataView.currentSubcorpus.status", "processingIngestChunks"
+						subcorpus.set "status", "processingIngestChunks"
 						console.log "processingIngestChunks"
 						subcorpus.subscribeToProcessEvents hash
 					error: (request) ->
@@ -417,6 +417,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					console.error request
 					@set "loaded", true
 		subscribeToProcessEvents: (hash) ->
+			console.log "Subscribing to hash #{hash}"
 			socket.emit "subscribe", hash
 			socket.on hash, (message) =>
 				switch message
