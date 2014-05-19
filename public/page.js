@@ -801,12 +801,14 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           },
           success: (function(_this) {
             return function(_arg) {
-              var error, hash, success;
+              var error, hash, success, _ref;
               success = _arg.success, hash = _arg.hash, error = _arg.error;
               if (!success) {
                 return console.error(error);
               }
-              _this.set("status", "processingIngestChunks");
+              if ((_ref = exports.context) != null) {
+                _ref.set("metadataView.currentSubcorpus.status", "processingIngestChunks");
+              }
               console.log("processingIngestChunks");
               return subcorpus.subscribeToProcessEvents(hash);
             };
