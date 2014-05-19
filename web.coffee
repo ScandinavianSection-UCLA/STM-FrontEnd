@@ -115,15 +115,19 @@ web.post "/data/startTopicModeling", (req, res, next) ->
 			res.jsonp success: true, status: "processingIngestChunks", hash: response.statusEmitter.hash
 			console.log "Hash: #{response.statusEmitter.hash}"
 			response.statusEmitter.on "processedIngestChunks", ->
+				console.log io.sockets.clients(response.statusEmitter.hash).length
 				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedIngestChunks"
 				console.log "Hash: #{response.statusEmitter.hash}, Status: processedIngestChunks"
 			response.statusEmitter.on "processedTrainTopics", ->
+				console.log io.sockets.clients(response.statusEmitter.hash).length
 				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedTrainTopics"
 				console.log "Hash: #{response.statusEmitter.hash}, Status: processedTrainTopics"
 			response.statusEmitter.on "processedInferTopics", ->
+				console.log io.sockets.clients(response.statusEmitter.hash).length
 				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedInferTopics"
 				console.log "Hash: #{response.statusEmitter.hash}, Status: processedInferTopics"
 			response.statusEmitter.on "processedStoreProportions", ->
+				console.log io.sockets.clients(response.statusEmitter.hash).length
 				io.sockets.in(response.statusEmitter.hash).emit response.statusEmitter.hash, "processedStoreProportions"
 				console.log "Hash: #{response.statusEmitter.hash}, Status: processedStoreProportions"
 		else
@@ -150,6 +154,7 @@ io.configure ->
 
 io.sockets.on "connection", (socket) ->
 	socket.on "subscribe", (hash) ->
+		console.log "Subscriber joined hash #{hash}"
 		socket.join hash
 
 server.listen (port = process.env.PORT ? 5080), -> console.log "Listening on port #{port}"
