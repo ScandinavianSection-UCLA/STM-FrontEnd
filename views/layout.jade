@@ -15,5 +15,10 @@ html
 		nav.navbar.navbar-default.navbar-fixed-top(role = "navigation")
 			.container
 				.navbar-header
-					a.navbar-brand(href = (thisPage == "index" ? "#" : "/")) STM, Scandinavian Section, UCLA
+					a.navbar-brand(href = (thisPage == "topics" ? "#" : "/")) STM, Scandinavian Section, UCLA
+				ul.nav.navbar-nav
+					li(class = (thisPage == "topics" ? "active" : ""))
+						a(href = (thisPage == "topics" ? "#" : "/topics")) Topics
+					li(class = (thisPage == "curation" ? "active" : ""))
+						a(href = (thisPage == "curation" ? "#" : "/curation")) Curation
 		block content
