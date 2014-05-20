@@ -88,7 +88,9 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 				return callback err if err?
 				fs.readFile "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/topicreport.xml", encoding: "utf8", (err, doc) ->
 					return callback err if err?
-					xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
+					xml2js.parseString doc, (err, doc) ->
+						doc = doc?.topics?.topic
+						return callback "Topics Report badly formatted." unless doc?
 						return callback err if err?
 						topicXML = doc.filter((x) -> x.$.id is "#{topic_id}")[0]
 						getCorpusDB corpus, (err, {getSubcorpus} = {}) ->
