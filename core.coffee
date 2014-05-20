@@ -112,7 +112,7 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 											weight: Number x.$.weight
 											count: Number x.$.count
 										records: records.map (x) ->
-											article_id: x.article_id
+											article_id: decodeURIComponent x.article_id
 											proportion: x.proportion
 
 exports.getArticle = ({corpus, subcorpus, article_id}, callback) ->
