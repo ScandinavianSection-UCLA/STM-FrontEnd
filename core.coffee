@@ -79,7 +79,7 @@ exports.getTopicsList = ({corpus}, callback) ->
 					hidden: topic.hidden ? false
 
 exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
 		getCorpusDB corpus, (err, {Topic} = {}) ->
@@ -116,7 +116,7 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 											proportion: x.proportion
 
 exports.getArticle = ({corpus, subcorpus, article_id}, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
 		fs.readFile "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files/#{article_id}", encoding: "utf8", (err, doc) ->
@@ -126,7 +126,7 @@ exports.getArticle = ({corpus, subcorpus, article_id}, callback) ->
 				article: doc
 
 exports.renameTopic = ({corpus, subcorpus, topic_id, new_name}, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
 		getCorpusDB corpus, (err, {Topic} = {}) ->
@@ -136,7 +136,7 @@ exports.renameTopic = ({corpus, subcorpus, topic_id, new_name}, callback) ->
 				callback null, success: true
 
 exports.setTopicHidden = ({corpus, subcorpus, topic_id, hidden_flag}, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus, status: "processed"}, (err, doc) ->
 		return callback err if err?
 		return callback null, success: false, error: "Corpora/Subcorpora does not exist or isn't processed" unless doc?.subcorpora.length > 0
 		getCorpusDB corpus, (err, {Topic} = {}) ->
@@ -177,7 +177,7 @@ exports.insertSubcorpus = (corpus, subcorpus, callback) ->
 		callback null, success: corpus?
 
 exports.addFile = (tempFile, corpus, subcorpus, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus, status: $nin: ["processing", "processed"]}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus, status: $nin: ["processing", "processed"]}, (err, doc) ->
 		return callback err if err?
 		if doc?.subcorpora.length > 0
 			child_process.exec "file #{tempFile.path}", (err, stdout, stderr) ->
@@ -239,7 +239,7 @@ exports.addFile = (tempFile, corpus, subcorpus, callback) ->
 				callback null, success: false, error: "Corpora/Subcorpora does not exist, is being, or is already processed."
 
 exports.getFilesList = (corpus, subcorpus, from, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus}, (err, doc) ->
 		return callback err if err?
 		if doc?.subcorpora.length > 0
 			fs.readdir "#{globalOptions.corporaDir}/#{doc.subcorpora[0]._id.toString()}/files", (err, files) ->
@@ -255,7 +255,7 @@ exports.getFilesList = (corpus, subcorpus, from, callback) ->
 
 exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 	exports.processTopicModeling.statusEmitters ?= {}
-	Corpus.findOneAndUpdate {name: corpus, subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, {$set: "subcorpora.$.status": "processing"}, {subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, (err, doc) ->
+	Corpus.findOneAndUpdate {name: corpus, subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, {$set: "subcorpora.$.status": "processing"}, {select: subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, (err, doc) ->
 		return callback err if err?
 		if doc?.subcorpora.length > 0
 			ingestChunks = (callback) ->
@@ -331,7 +331,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 			callback null, success: false, error: "Corpora/Subcorpora does not exist or is already being processed."
 
 exports.getSubcorpusStatus = (corpus, subcorpus, callback) ->
-	Corpus.findOne {name: corpus}, {subcorpora: $elemMatch: name: subcorpus}, (err, doc) ->
+	Corpus.findOne {name: corpus}, {select: subcorpora: $elemMatch: name: subcorpus}, (err, doc) ->
 		return callback err if err?
 		if doc?.subcorpora.length > 0
 			unless doc.subcorpora[0].status
@@ -342,25 +342,3 @@ exports.getSubcorpusStatus = (corpus, subcorpus, callback) ->
 				callback null, success: true, status: "completed"
 		else
 			callback null, success: false, error: "Corpora/Subcorpora does not exist."
-
-# Deprecated
-exports.getTopics = (callback) ->
-	fs.readFile "/home/gotemb/topic1/1888topicphrasereport.xml", encoding: "utf8", (err, doc) ->
-		xml2js.parseString doc, (err, {topics: {topic: doc}}) ->
-			Topic.find {}, (err, topics) ->
-				async.map topics, (topic, callback) ->
-					Record.find(topic: topic._id).sort(proportion: -1).limit(30).exec (err, records) ->
-						callback err,
-							topic: topic.toJSON()
-							records: records.map (x) -> x.toJSON()
-							words:
-								doc.filter((x) -> topic.id is Number x.$.id)[0].word.map (x) ->
-									word: x._
-									weight: Number x.$.weight
-									count: Number x.$.count
-							phrases:
-								doc.filter((x) -> topic.id is Number x.$.id)[0].phrase.map (x) ->
-									phrase: x._
-									weight: Number x.$.weight
-									count: Number x.$.count
-				, callback
