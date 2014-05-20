@@ -103,11 +103,11 @@ exports.getTopicDetails = ({corpus, subcorpus, topic_id}, callback) ->
 										id: topic.id
 										name: topic.name
 										hidden: topic.hidden ? false
-										words: topicXML.word.map (x) ->
+										words: (topicXML.word ? []).map (x) ->
 											word: x._
 											weight: Number x.$.weight
 											count: Number x.$.count
-										phrases: topicXML.phrase.map (x) ->
+										phrases: (topicXML.phrase ? []).map (x) ->
 											phrase: x._
 											weight: Number x.$.weight
 											count: Number x.$.count
@@ -255,7 +255,7 @@ exports.getFilesList = (corpus, subcorpus, from, callback) ->
 
 exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 	exports.processTopicModeling.statusEmitters ?= {}
-	Corpus.findOneAndUpdate {name: corpus, subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, {$set: "subcorpora.$.status": "processing"}, {select: subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, (err, doc) ->
+	Corpus.findOneAndUpdate {name: corpus, subcorpora: $elemMatch: name: subcorpus, status: $ne: "processing"}, {$set: "subcorpora.$.status": "processing"}, {select: subcorpora: $elemMatch: name: subcorpus}, (err, doc) ->
 		return callback err if err?
 		if doc?.subcorpora.length > 0
 			ingestChunks = (callback) ->
