@@ -99,9 +99,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						topic.onReady (err, topic) =>
 							@drawWordCloud topic
 							@drawPhraseCloud topic
-							records = topic.get "records.toArray"
-							topic.get("records").fire "itemsWereRemoved", records
-							topic.get("records").fire "itemsWereAdded", records
+							topic.get("records").add()
 					else
 						$("#wordcloud").html ""
 						$("#phrasecloud").html ""
