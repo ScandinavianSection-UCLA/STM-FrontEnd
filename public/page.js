@@ -259,12 +259,14 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return topic.onReady((function(_this) {
               return function(err, topic) {
                 _this.drawWordCloud(topic);
-                return _this.drawPhraseCloud(topic);
+                _this.drawPhraseCloud(topic);
+                return _this.set("records", topic.filteredRecords);
               };
             })(this));
           } else {
             $("#wordcloud").html("");
-            return $("#phrasecloud").html("");
+            $("#phrasecloud").html("");
+            return this.set("records", []);
           }
         });
       }

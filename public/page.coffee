@@ -99,9 +99,11 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						topic.onReady (err, topic) =>
 							@drawWordCloud topic
 							@drawPhraseCloud topic
+							@set "records", topic.filteredRecords
 					else
 						$("#wordcloud").html ""
 						$("#phrasecloud").html ""
+						@set "records", []
 			topicSearch_keydown: (node, e) ->
 				e.preventDefault() if e.which in [13, 27, 38, 40]
 				switch e.which

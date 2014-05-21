@@ -81,12 +81,12 @@ block content
 						h3.panel-title Top-ranked Phrases
 					.panel-body
 						#phrasecloud(style = "height: 220px; position: relative")
-			.col-md-6(data-context = "currentTopic")
+			.col-md-6
 				#relatedArticles.panel.panel-default
 					.panel-heading
 						h3.panel-title Related Articles
 					.list-group
-						a.list-group-item(href = "#", data-foreach-record = "filteredRecords", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
+						a.list-group-item(href = "#", data-foreach-record = "records", data-addclass-active = "record.active", data-event-click = "appContext.topicsContext.currentTopic.gotoRecord")
 							span(data-bind = "record.record.article_id")
 							svg(height = 36, width = 36, data-toggle = "tooltip", data-bind-title = "record.record.proportionTooltip", data-placement = "left", style = "white-space: nowrap")
 								path(data-bind-d = "record.record.proportionPie")
