@@ -258,9 +258,12 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           return function(topic) {
             if (topic != null) {
               return topic.onReady(function(err, topic) {
+                var records;
                 _this.drawWordCloud(topic);
                 _this.drawPhraseCloud(topic);
-                return _this.set("records", topic.get("filteredRecords"));
+                records = topic.get("filteredRecords.toArray");
+                topic.get("filteredRecords").fire("itemsWereRemoved", records);
+                return topic.get("filteredRecords").fire("itemsWereAdded", records);
               });
             } else {
               $("#wordcloud").html("");
@@ -336,10 +339,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           return x.get("id") === Number($(node).data("id"));
         })[0]) != null ? _ref2.get("name") : void 0) != null ? _ref1 : "");
         return this.set("topicsList_activeIndex", 0);
-      };
-
-      Context.prototype.gotoRecord = function(node) {
-        return this.get("currentTopic").gotoRecord(node);
       };
 
       Context.prototype.text_focused = function(elem) {

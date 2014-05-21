@@ -99,7 +99,9 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						topic.onReady (err, topic) =>
 							@drawWordCloud topic
 							@drawPhraseCloud topic
-							@set "records", topic.get "filteredRecords"
+							records = topic.get "filteredRecords.toArray"
+							topic.get("filteredRecords").fire "itemsWereRemoved", records
+							topic.get("filteredRecords").fire "itemsWereAdded", records
 					else
 						$("#wordcloud").html ""
 						$("#phrasecloud").html ""
@@ -137,8 +139,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					@drawPhraseCloud()
 				@set "topicSearch_text", @get("topics").filter((x) -> x.get("id") is Number $(node).data "id")[0]?.get("name") ? ""
 				@set "topicsList_activeIndex", 0
-			gotoRecord: (node) ->
-				@get("currentTopic").gotoRecord node
 			# New ...
 			text_focused: (elem) ->
 				if $(elem).attr("id") is "corpusInput"
