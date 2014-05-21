@@ -231,7 +231,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
           highlight: true
         }].concat(__slice.call([
           {
-            name: "Topics",
+            name: "visible_top",
             source: (function(_this) {
               return function(query, callback) {
                 var _ref;
@@ -244,12 +244,9 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             })(this),
             displayKey: function(x) {
               return x.get("name");
-            },
-            templates: {
-              header: "Topics"
             }
           }, {
-            name: "Hidden Topics",
+            name: "hidden_topics",
             source: (function(_this) {
               return function(query, callback) {
                 var _ref;
@@ -262,9 +259,6 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             })(this),
             displayKey: function(x) {
               return x.get("name");
-            },
-            templates: {
-              header: "Hidden Topics"
             }
           }
         ]))).on("typeahead:opened", (function(_this) {
