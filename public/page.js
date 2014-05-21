@@ -260,7 +260,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
               return topic.onReady(function(err, topic) {
                 _this.drawWordCloud(topic);
                 _this.drawPhraseCloud(topic);
-                return _this.set("records", topic.filteredRecords);
+                return _this.set("records", topic.get("filteredRecords"));
               });
             } else {
               $("#wordcloud").html("");

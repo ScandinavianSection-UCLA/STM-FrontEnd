@@ -99,7 +99,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						topic.onReady (err, topic) =>
 							@drawWordCloud topic
 							@drawPhraseCloud topic
-							@set "records", topic.filteredRecords
+							@set "records", topic.get "filteredRecords"
 					else
 						$("#wordcloud").html ""
 						$("#phrasecloud").html ""
