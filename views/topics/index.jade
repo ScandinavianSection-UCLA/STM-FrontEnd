@@ -51,9 +51,9 @@ block content
 									button.btn.btn-default.dropdown-toggle(data-toggle = "dropdown", style = "padding-left: 6px; padding-right: 6px")
 										i.fa.fa-fw.fa-ellipsis-v
 									ul.dropdown-menu
-										li
+										li(data-event-click = "appContext.topicsContext.currentTopic.renameTopic")
 											a(href = "#") Rename
-										li
+										li(data-event-click = "appContext.topicsContext.currentTopic.toggleHidden")
 											a(href = "#") Hide Topic
 		.row(data-showif = "topicIsSelected", style = "display: none")
 			.col-md-6
