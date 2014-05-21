@@ -94,7 +94,7 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					.on "typeahead:opened", => @set "topic_typeahead_open", true
 					.on "typeahead:closed", => @set "topic_typeahead_open", false
 					.on "typeahead:selected", => @set "topic_text", $("#topicInput").typeahead("val")
-				@observe "currentTopic", (topic) ->
+				@observe "currentTopic", (topic) =>
 					if topic?
 						topic.onReady (err, topic) =>
 							@drawWordCloud topic
@@ -104,27 +104,6 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 						$("#wordcloud").html ""
 						$("#phrasecloud").html ""
 						@set "records", []
-			topicSearch_keydown: (node, e) ->
-				e.preventDefault() if e.which in [13, 27, 38, 40]
-				switch e.which
-					when 13
-						$("#topicSearch").blur()
-						@get("filteredTopics")[@get "topicsList_activeIndex"]?.topic?.onReady (err, topic) =>
-							@set "currentTopic", topic
-							@drawWordCloud()
-							@drawPhraseCloud()
-						@set "topicSearch_text", @get("filteredTopics")[@get "topicsList_activeIndex"]?.topic?.get("name") ? ""
-						@set "topicsList_activeIndex", 0
-					when 27
-						$("#topicSearch").blur()
-					when 38
-						@set "topicsList_activeIndex", ((fl = @get("filteredTopics").length) + @get("topicsList_activeIndex") - 1) % fl
-						$("#topicsList a.list-group-item.active")[0].scrollIntoView true unless isScrolledIntoView "#topicsList a.list-group-item.active"
-					when 40
-						@set "topicsList_activeIndex", (@get("topicsList_activeIndex") + 1) % @get("filteredTopics").length
-						$("#topicsList a.list-group-item.active")[0].scrollIntoView false unless isScrolledIntoView "#topicsList a.list-group-item.active"
-			topicSearch_input: ->
-				@set "topicsList_activeIndex", 0
 			drawWordCloud: (topic) ->
 				wordsMax = Math.max topic.get("words").map((x) -> x.count)...
 				wordsMin = Math.min topic.get("words").map((x) -> x.count)...

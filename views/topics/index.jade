@@ -55,20 +55,6 @@ block content
 											a(href = "#") Rename
 										li
 											a(href = "#") Hide Topic
-		.row(style = "display: none")
-			.col-md-4.col-md-offset-4
-				nav.navbar.navbar-default
-					form.navbar-form
-						.input-group
-							input#topicSearch.form-control(type = "text", style = "width: 100%", placeholder = "Topic…", data-bind = "topicSearch_text", data-event-keydown = "appContext.topicsContext.topicSearch_keydown", data-event-input = "appContext.topicsContext.topicSearch_input", autocomplete = "off")
-							.input-group-btn
-								button.btn.btn-default.dropdown-toggle(data-toggle = "dropdown", style = "padding-left: 6px; padding-right: 6px", data-bind-disabled = "topicIsSelected | not", disabled = "disabled")
-									i.fa.fa-fw.fa-ellipsis-v
-								ul.dropdown-menu
-									li
-										a(href = "#", data-event-click = "appContext.topicsContext.currentTopic.showRenameDialog") Rename
-									li
-										a(href = "#", data-bind = "currentTopic.toggleHidden_text", data-event-click = "appContext.topicsContext.currentTopic.toggleHidden") Hide Topic
 		.row(data-showif = "topicIsSelected", style = "display: none")
 			.col-md-6
 				.panel.panel-default

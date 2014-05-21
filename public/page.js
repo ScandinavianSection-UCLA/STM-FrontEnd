@@ -254,63 +254,22 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return _this.set("topic_text", $("#topicInput").typeahead("val"));
           };
         })(this));
-        this.observe("currentTopic", function(topic) {
-          if (topic != null) {
-            return topic.onReady((function(_this) {
-              return function(err, topic) {
+        this.observe("currentTopic", (function(_this) {
+          return function(topic) {
+            if (topic != null) {
+              return topic.onReady(function(err, topic) {
                 _this.drawWordCloud(topic);
                 _this.drawPhraseCloud(topic);
                 return _this.set("records", topic.filteredRecords);
-              };
-            })(this));
-          } else {
-            $("#wordcloud").html("");
-            $("#phrasecloud").html("");
-            return this.set("records", []);
-          }
-        });
+              });
+            } else {
+              $("#wordcloud").html("");
+              $("#phrasecloud").html("");
+              return _this.set("records", []);
+            }
+          };
+        })(this));
       }
-
-      Context.prototype.topicSearch_keydown = function(node, e) {
-        var fl, _ref, _ref1, _ref2, _ref3, _ref4, _ref5;
-        if ((_ref = e.which) === 13 || _ref === 27 || _ref === 38 || _ref === 40) {
-          e.preventDefault();
-        }
-        switch (e.which) {
-          case 13:
-            $("#topicSearch").blur();
-            if ((_ref1 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null) {
-              if ((_ref2 = _ref1.topic) != null) {
-                _ref2.onReady((function(_this) {
-                  return function(err, topic) {
-                    _this.set("currentTopic", topic);
-                    _this.drawWordCloud();
-                    return _this.drawPhraseCloud();
-                  };
-                })(this));
-              }
-            }
-            this.set("topicSearch_text", (_ref3 = (_ref4 = this.get("filteredTopics")[this.get("topicsList_activeIndex")]) != null ? (_ref5 = _ref4.topic) != null ? _ref5.get("name") : void 0 : void 0) != null ? _ref3 : "");
-            return this.set("topicsList_activeIndex", 0);
-          case 27:
-            return $("#topicSearch").blur();
-          case 38:
-            this.set("topicsList_activeIndex", ((fl = this.get("filteredTopics").length) + this.get("topicsList_activeIndex") - 1) % fl);
-            if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
-              return $("#topicsList a.list-group-item.active")[0].scrollIntoView(true);
-            }
-            break;
-          case 40:
-            this.set("topicsList_activeIndex", (this.get("topicsList_activeIndex") + 1) % this.get("filteredTopics").length);
-            if (!isScrolledIntoView("#topicsList a.list-group-item.active")) {
-              return $("#topicsList a.list-group-item.active")[0].scrollIntoView(false);
-            }
-        }
-      };
-
-      Context.prototype.topicSearch_input = function() {
-        return this.set("topicsList_activeIndex", 0);
-      };
 
       Context.prototype.drawWordCloud = function(topic) {
         var wordsMax, wordsMin;
