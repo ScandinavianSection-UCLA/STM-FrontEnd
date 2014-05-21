@@ -227,37 +227,21 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         $("#topicInput").typeahead({
           minLength: 0,
           highlight: true
-        }, [
-          {
-            source: (function(_this) {
-              return function(query, callback) {
-                var _ref;
-                return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
-                  return callback(subcorpus.get("topics").filter(function(x) {
-                    return !x.get("hidden") && x.get("name").toLowerCase().match(query.toLowerCase());
-                  }).toArray().slice(0, 11));
-                }) : void 0;
-              };
-            })(this),
-            displayKey: function(x) {
-              return x.get("name");
-            }
-          }, {
-            source: (function(_this) {
-              return function(query, callback) {
-                var _ref;
-                return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
-                  return callback(subcorpus.get("topics").filter(function(x) {
-                    return x.get("hidden") && x.get("name").toLowerCase().match(query.toLowerCase());
-                  }).toArray().slice(0, 11));
-                }) : void 0;
-              };
-            })(this),
-            displayKey: function(x) {
-              return x.get("name");
-            }
+        }, {
+          source: (function(_this) {
+            return function(query, callback) {
+              var _ref;
+              return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
+                return callback(subcorpus.get("topics").filter(function(x) {
+                  return !x.get("hidden") && x.get("name").toLowerCase().match(query.toLowerCase());
+                }).toArray().slice(0, 11));
+              }) : void 0;
+            };
+          })(this),
+          displayKey: function(x) {
+            return x.get("name");
           }
-        ]).on("typeahead:opened", (function(_this) {
+        }).on("typeahead:opened", (function(_this) {
           return function() {
             return _this.set("topic_typeahead_open", true);
           };
