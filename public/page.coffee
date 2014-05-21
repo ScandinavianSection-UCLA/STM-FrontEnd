@@ -137,6 +137,8 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					@drawPhraseCloud()
 				@set "topicSearch_text", @get("topics").filter((x) -> x.get("id") is Number $(node).data "id")[0]?.get("name") ? ""
 				@set "topicsList_activeIndex", 0
+			gotoRecord: (node) ->
+				@get("currentTopic").gotoRecord node
 			# New ...
 			text_focused: (elem) ->
 				if $(elem).attr("id") is "corpusInput"

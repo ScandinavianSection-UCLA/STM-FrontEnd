@@ -338,6 +338,10 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
         return this.set("topicsList_activeIndex", 0);
       };
 
+      Context.prototype.gotoRecord = function(node) {
+        return this.get("currentTopic").gotoRecord(node);
+      };
+
       Context.prototype.text_focused = function(elem) {
         if ($(elem).attr("id") === "corpusInput") {
           return this.set("corpus_placeholder", "");
