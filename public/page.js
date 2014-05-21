@@ -2,6 +2,7 @@
 var appContext, socket,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  __slice = [].slice,
   __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
 require.config({
@@ -141,6 +142,7 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
       });
 
       function Context() {
+        var _ref;
         Context.__super__.constructor.apply(this, arguments);
         this.set("corpora", new Batman.Set);
         this.set("corpus_text", "");
@@ -224,24 +226,48 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
             return _this.set("subcorpus_text", $("#subcorpusInput").typeahead("val"));
           };
         })(this));
-        $("#topicInput").typeahead({
+        (_ref = $("#topicInput")).typeahead.apply(_ref, [{
           minLength: 0,
           highlight: true
-        }, {
-          source: (function(_this) {
-            return function(query, callback) {
-              var _ref;
-              return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
-                return callback(subcorpus.get("topics").filter(function(x) {
-                  return x.get("name").toLowerCase().match(query.toLowerCase());
-                }).toArray().slice(0, 11));
-              }) : void 0;
-            };
-          })(this),
-          displayKey: function(x) {
-            return x.get("name");
+        }].concat(__slice.call([
+          {
+            name: "Topics",
+            source: (function(_this) {
+              return function(query, callback) {
+                var _ref;
+                return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
+                  return callback(subcorpus.get("topics").filter(function(x) {
+                    return !x.get("hidden") && x.get("name").toLowerCase().match(query.toLowerCase());
+                  }).toArray().slice(0, 11));
+                }) : void 0;
+              };
+            })(this),
+            displayKey: function(x) {
+              return x.get("name");
+            },
+            templates: {
+              header: "Topics"
+            }
+          }, {
+            name: "Hidden Topics",
+            source: (function(_this) {
+              return function(query, callback) {
+                var _ref;
+                return (_ref = _this.get("currentSubcorpus")) != null ? _ref.loadTopics(function(err, subcorpus) {
+                  return callback(subcorpus.get("topics").filter(function(x) {
+                    return x.get("hidden") && x.get("name").toLowerCase().match(query.toLowerCase());
+                  }).toArray().slice(0, 11));
+                }) : void 0;
+              };
+            })(this),
+            displayKey: function(x) {
+              return x.get("name");
+            },
+            templates: {
+              header: "Hidden Topics"
+            }
           }
-        }).on("typeahead:opened", (function(_this) {
+        ]))).on("typeahead:opened", (function(_this) {
           return function() {
             return _this.set("topic_typeahead_open", true);
           };
