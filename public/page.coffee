@@ -86,18 +86,17 @@ require ["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
 					.on "typeahead:closed", => @set "subcorpus_typeahead_open", false
 					.on "typeahead:selected", => @set "subcorpus_text", $("#subcorpusInput").typeahead("val")
 				$ "#topicInput"
-					.typeahead {minLength: 0, highlight: true},
-						name: "visible_top"
+					.typeahead {minLength: 0, highlight: true}, [
 						source: (query, callback) =>
 							@get("currentSubcorpus")?.loadTopics (err, subcorpus) =>
 								callback subcorpus.get("topics").filter((x) -> !x.get("hidden") and x.get("name").toLowerCase().match query.toLowerCase()).toArray()[..10]
 						displayKey: (x) -> x.get "name"
 					,
-						name: "hidden_topics"
 						source: (query, callback) =>
 							@get("currentSubcorpus")?.loadTopics (err, subcorpus) =>
 								callback subcorpus.get("topics").filter((x) -> x.get("hidden") and x.get("name").toLowerCase().match query.toLowerCase()).toArray()[..10]
 						displayKey: (x) -> x.get "name"
+					]
 					.on "typeahead:opened", => @set "topic_typeahead_open", true
 					.on "typeahead:closed", => @set "topic_typeahead_open", false
 					.on "typeahead:selected", => @set "topic_text", $("#topicInput").typeahead("val")
