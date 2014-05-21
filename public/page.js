@@ -261,9 +261,9 @@ require(["jquery", "Batman", "wordcloud", "socketIO", "async", "bootstrap", "typ
                 var records;
                 _this.drawWordCloud(topic);
                 _this.drawPhraseCloud(topic);
-                records = topic.get("filteredRecords.toArray");
-                topic.get("filteredRecords").fire("itemsWereRemoved", records);
-                return topic.get("filteredRecords").fire("itemsWereAdded", records);
+                records = topic.get("records.toArray");
+                topic.get("records").fire("itemsWereRemoved", records);
+                return topic.get("records").fire("itemsWereAdded", records);
               });
             } else {
               $("#wordcloud").html("");
