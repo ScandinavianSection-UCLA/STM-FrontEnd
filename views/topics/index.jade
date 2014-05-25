@@ -54,7 +54,7 @@ block content
 										li(data-event-click = "appContext.topicsContext.currentTopic.showRenameDialog")
 											a(href = "#") Rename
 										li(data-event-click = "appContext.topicsContext.currentTopic.toggleHidden")
-											a(href = "#") Hide Topic
+											a(href = "#" data-bind = "currentTopic.toggleHidden_text")
 		.row(data-showif = "topicIsSelected", style = "display: none")
 			.col-md-6
 				.panel.panel-default
