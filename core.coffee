@@ -324,8 +324,7 @@ exports.processTopicModeling = (corpus, subcorpus, num_topics, callback) ->
 						storeProportions (err) ->
 							# return console.error "Error in StoreProportions: #{err}".redBG if err?
 							emitter.emit emitter.status = "completed"
-
-							Corpus.findOneAndUpdate {name: corpus, subcorpora: $elemMatch: name: subcorpus, status: "processing"}, {$set: "subcorpora.$.status": "processed"}, {subcorpora: $elemMatch: name: subcorpus, status: "processing"}, (err, doc) ->
+							Corpus.findOneAndUpdate {name: corpus, subcorpora: $elemMatch: name: subcorpus, status: "processing"}, {$set: "subcorpora.$.status": "processed"}, {subcorpora: $elemMatch: name: subcorpus}, (err, doc) ->
 								delete exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()]
 		else
 			callback null, success: false, error: "Corpora/Subcorpora does not exist or is already being processed."
