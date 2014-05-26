@@ -336,7 +336,7 @@ exports.getSubcorpusStatus = (corpus, subcorpus, callback) ->
 			unless doc.subcorpora[0].status
 				callback null, success: true, status: "not processed"
 			else if doc.subcorpora[0].status is "processing"
-				callback null, success: true, status: exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()].status, hash: exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()]
+				callback null, success: true, status: exports.processTopicModeling.statusEmitters?[doc.subcorpora[0]._id.toString()].status, hash: exports.processTopicModeling.statusEmitters[doc.subcorpora[0]._id.toString()]
 			else if doc.subcorpora[0].status is "processed"
 				callback null, success: true, status: "completed"
 		else
