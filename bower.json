@@ -5,7 +5,7 @@
     "requirejs": "~2.1.10",
     "bootstrap": "~3.1.0",
     "typeahead.js": "~0.10.1",
-    "dropzone": "~3.8.4",
+    "dropzone": "3.8.4",
     "async": "~0.2.10"
   }
 }
