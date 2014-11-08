@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
-React = require "React"
+MainNav = require "./main-nav"
+React = require "react"
 
 module.exports = React.createClass
   propTypes:
@@ -10,10 +11,13 @@ module.exports = React.createClass
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-        <title>{this.props.title}</title>
-        <script src="/bundles/#{this.props.bundle}" />
+        <title>{@props.title}</title>
+        <script src="/bundles/#{@props.bundle}" />
+        <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="/static/page.css" />
       </head>
       <body>
-        {this.props.children}
+        <MainNav activeView={@props.bundle} />
+        {@props.children}
       </body>
     </html>

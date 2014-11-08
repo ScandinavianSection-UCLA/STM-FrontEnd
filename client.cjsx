@@ -3,6 +3,9 @@ React = require "react"
 RootView = require "root-view"
 Page = require "./views/page"
 
+window.$ = window.jQuery = require "jquery"
+Bootstrap = require "bootstrap"
+
 docReady ->
   page =
     <Page title={process.env.PAGE_TITLE} bundle={process.env.BUNDLE_ID}>

@@ -7,7 +7,7 @@ express = require "express"
 http = require "http"
 React = require "react"
 rootViewsRouter = require "./routers/root-views-router"
-serveStatic = require "serve-static"
+staticRouter = require "./routers/static-router"
 socketIO = require "socket.io"
 
 router = express()
@@ -15,9 +15,9 @@ router = express()
 router.use compression()
 router.use bodyParser.json()
 router.use bodyParser.urlencoded extended: true
-router.use serveStatic "#{__dirname}/public"
-router.use rootViewsRouter
+router.use "/static", staticRouter
 router.use "/bundles", bundlesRouter
+router.use rootViewsRouter
 
 server = http.createServer router
 
