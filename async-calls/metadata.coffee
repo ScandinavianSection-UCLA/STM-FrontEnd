@@ -13,12 +13,12 @@ metadata =
       callback corpus?
 
   insertCorpus: (name, type, callback) ->
-    db.Corpus.update { name: corpus, type: type },
-      { $setOnInsert: name: corpus, type: type },
+    db.Corpus.update { name: name, type: type },
+      { $setOnInsert: name: name, type: type },
       { upsert: true },
       (err, n, res) ->
         return console.error err if err?
-        callback null, success: !res.updatedExisting
+        callback !res.updatedExisting
 
 module.exports = asyncCaller
   mountPath: "/async-calls/metadata"

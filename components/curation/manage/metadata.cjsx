@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
 metadata = require("../../../async-calls/metadata").calls
+nextTick = require "next-tick"
 React = require "react"
 Typeahead = require "../../typeahead"
 
@@ -24,8 +25,16 @@ module.exports = React.createClass
     metadata.getCorpora "subcorpus", (subcorpora) =>
       @setState existingSubcorpora: subcorpora
 
+  validateCorpus: ->
+    @setState validatingCorpus: true
+    metadata.validateCorpus @props.corpusName, @props.corpusType, (result) =>
+      @setState
+        validatingCorpus: false
+        corpusValid: result
+
   handleCorpusTypeChanged: (type) ->
     @props.onCorpusTypeChange type
+    nextTick @validateCorpus
 
   renderTypeButtons: ->
     corpusClass = "btn"
@@ -36,7 +45,7 @@ module.exports = React.createClass
     else if @props.corpusType is "subcorpus"
       corpusClass += " btn-default"
       subcorpusClass += " btn-primary"    
-    <div className="btn-group btn-group-justified" style={marginBottom: 10}>
+    <div className="btn-group btn-group-justified" style={marginBottom: 15}>
       <div className="btn-group">
         <button
           type="button"
@@ -56,22 +65,78 @@ module.exports = React.createClass
     </div>
 
   handleInputFocused: ->
-    @setState corpusNameFocused: true, validatingCorpus: false
+    @setState
+      corpusNameFocused: true
+      validatingCorpus: false
 
   handleInputBlured: ->
-    @setState corpusNameFocused: false, validatingCorpus: true
-    metadata.validateCorpus @props.corpusName, @props.corpusType, (valid) =>
-      @setState validatingCorpus: false, corpusValid: valid
+    @setState corpusNameFocused: false
+    nextTick @validateCorpus
+
+  handleInsertCorpus: ->
+    newCorpus =
+      name: @props.corpusName
+      type: @props.corpusType
+    metadata.insertCorpus newCorpus.name, newCorpus.type, (result) =>
+      if result
+        update = corpusValid: true
+        if newCorpus.type is "corpus"
+          update.existingCorpora =
+            @state.existingCorpora.concat [newCorpus.name]
+        else if newCorpus.type is "subcorpus"
+          update.existingSubcorpora =
+            @state.existingSubcorpora.concat [newCorpus.name]
+        @setState update
+
+  renderNonTypeaheadInput: ->
+    placeholder =
+      if @props.corpusType is "corpus" then "Corpus"
+      else if @props.corpusType is "subcorpus" then "Subcorpus"
+    divClassName = "form-group"
+    accessory = null
+    if @props.corpusName is ""
+      # no op
+    else if @state.validatingCorpus
+      divClassName += " has-feedback"
+      accessory =
+        <i
+          className="form-control-feedback fa fa-circle-o-notch fa-spin"
+          style={lineHeight: "34px", opacity: 0.5}
+        />
+    else if @state.corpusValid
+      divClassName += " has-success has-feedback"
+      accessory =
+        <i
+          className="form-control-feedback fa fa-check"
+          style={lineHeight: "34px"}
+        />
+    else
+      divClassName += " input-group"
+      accessory =
+        <span className="input-group-btn">
+          <button
+            className="btn btn-primary"
+            type="button"
+            onClick={@handleInsertCorpus}>
+            <i className="fa fa-plus" style={lineHeight: "20px"} />
+          </button>
+        </span>
+    <div className={divClassName} style={marginBottom: 0}>
+      <input
+        type="text"
+        className="form-control"
+        value={@props.corpusName}
+        onChange={@props.onCorpusNameChange}
+        onFocus={@handleInputFocused}
+        placeholder={placeholder}
+      />
+      {accessory}
+    </div>
 
   renderNameBox: ->
-    placeholder = null
-    suggestions = null
-    if @props.corpusType is "corpus"
-      placeholder = "Corpus"
-      suggestions = @state.existingCorpora
-    else if @props.corpusType is "subcorpus"
-      placeholder = "Subcorpus"
-      suggestions = @state.existingSubcorpora
+    suggestions =
+      if @props.corpusType is "corpus" then @state.existingCorpora
+      else if @props.corpusType is "subcorpus" then @state.existingSubcorpora
     if @state.corpusNameFocused
       <Typeahead
         value={@props.corpusName}
@@ -81,16 +146,7 @@ module.exports = React.createClass
         suggestions={suggestions}
       />
     else
-      <div>
-        <input
-          type="text"
-          className="form-control"
-          value={@props.corpusName}
-          onChange={@props.onCorpusNameChange}
-          onFocus={@handleInputFocused}
-          placeholder={placeholder}
-        />
-      </div>
+      @renderNonTypeaheadInput()
 
   render: ->
     <div className="panel panel-default">
@@ -102,15 +158,3 @@ module.exports = React.createClass
         {@renderNameBox()}
       </div>
     </div>
-
-###
-        <div
-          className="form-group has-success has-feedback"
-          style={marginBottom: 0}>
-          <input type="text" className="form-control" />
-          <i
-            className="form-control-feedback fa fa-check"
-            style={lineHeight: "34px"}
-          />
-        </div>
-###
