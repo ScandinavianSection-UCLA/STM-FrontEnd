@@ -1,7 +1,7 @@
 docReady = require "doc-ready"
 React = require "react"
 RootView = require "root-view"
-Page = require "./views/page"
+Page = require "./components/page"
 
 window.$ = window.jQuery = require "jquery"
 Bootstrap = require "bootstrap"

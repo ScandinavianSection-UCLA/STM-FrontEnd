@@ -12,14 +12,15 @@ getBundle = (bundle) ->
   return bundles[bundle] if bundles[bundle]?
   b = browserify
     entries: ["./client"]
-    extensions: [".cjsx"]
+    extensions: [".cjsx", ".coffee"]
   b.transform coffeeReactify
   b.transform aliasify.configure
     aliases:
-      "root-view": "../views/#{bundle}"
+      "root-view": "../components/#{bundle}"
+      "../db": "nop"
     configDir: __dirname
     appliesTo:
-      includeExtensions: [".cjsx"]
+      includeExtensions: [".cjsx", ".coffee"]
   b.transform envify
     BUNDLE_ID: bundle
     PAGE_TITLE: bundleConstants[bundle].title

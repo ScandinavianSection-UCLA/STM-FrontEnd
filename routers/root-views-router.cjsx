@@ -1,9 +1,9 @@
 # @cjsx React.DOM
 
 bundleConstants = require "../bundle-constants"
-Curation = require "../views/curation"
+Curation = require "../components/curation"
 express = require "express"
-Page = require "../views/page"
+Page = require "../components/page"
 React = require "react"
 
 router = express.Router()
