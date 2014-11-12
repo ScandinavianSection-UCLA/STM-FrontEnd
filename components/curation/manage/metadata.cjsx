@@ -2,6 +2,7 @@
 
 metadata = require("../../../async-calls/metadata").calls
 nextTick = require "next-tick"
+nop = require "nop"
 React = require "react"
 Typeahead = require "../../typeahead"
 
@@ -9,32 +10,39 @@ module.exports = React.createClass
   propTypes:
     corpusType: React.PropTypes.oneOf(["corpus", "subcorpus"]).isRequired
     corpusName: React.PropTypes.string
+    corpusValid: React.PropTypes.bool
     onCorpusTypeChange: React.PropTypes.func.isRequired
     onCorpusNameChange: React.PropTypes.func.isRequired
+    onCorpusValidityChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
+    corpusName: @props.corpusName
     corpusNameFocused: false
     existingCorpora: []
     existingSubcorpora: []
     validatingCorpus: false
-    corpusValid: false
 
   componentDidMount: ->
     metadata.getCorpora "corpus", (corpora) =>
       @setState existingCorpora: corpora
     metadata.getCorpora "subcorpus", (subcorpora) =>
       @setState existingSubcorpora: subcorpora
+    @validateCorpus @props
 
-  validateCorpus: ->
+  componentWillReceiveProps: (props) ->
+    @validateCorpus props if (
+      @props.corpusName isnt props.corpusName or
+      @props.corpusType isnt props.corpusType
+    )
+
+  validateCorpus: (props) ->
     @setState validatingCorpus: true
-    metadata.validateCorpus @props.corpusName, @props.corpusType, (result) =>
-      @setState
-        validatingCorpus: false
-        corpusValid: result
+    metadata.validateCorpus props.corpusName, props.corpusType, (result) =>
+      @setState validatingCorpus: false
+      @props.onCorpusValidityChange result
 
   handleCorpusTypeChanged: (type) ->
     @props.onCorpusTypeChange type
-    nextTick @validateCorpus
 
   renderTypeButtons: ->
     corpusClass = "btn"
@@ -69,9 +77,9 @@ module.exports = React.createClass
       corpusNameFocused: true
       validatingCorpus: false
 
-  handleInputBlured: ->
+  handleTypeaheadBlured: ->
     @setState corpusNameFocused: false
-    nextTick @validateCorpus
+    nextTick => @props.onCorpusNameChange @state.corpusName
 
   handleInsertCorpus: ->
     newCorpus =
@@ -79,14 +87,15 @@ module.exports = React.createClass
       type: @props.corpusType
     metadata.insertCorpus newCorpus.name, newCorpus.type, (result) =>
       if result
-        update = corpusValid: true
+        @props.onCorpusValidityChange true
         if newCorpus.type is "corpus"
-          update.existingCorpora =
-            @state.existingCorpora.concat [newCorpus.name]
+          @setState
+            existingCorpora:
+              @state.existingCorpora.concat [newCorpus.name]
         else if newCorpus.type is "subcorpus"
-          update.existingSubcorpora =
-            @state.existingSubcorpora.concat [newCorpus.name]
-        @setState update
+          @setState
+            existingSubcorpora:
+              @state.existingSubcorpora.concat [newCorpus.name]
 
   renderNonTypeaheadInput: ->
     placeholder =
@@ -103,7 +112,7 @@ module.exports = React.createClass
           className="form-control-feedback fa fa-circle-o-notch fa-spin"
           style={lineHeight: "34px", opacity: 0.5}
         />
-    else if @state.corpusValid
+    else if @props.corpusValid
       divClassName += " has-success has-feedback"
       accessory =
         <i
@@ -125,13 +134,16 @@ module.exports = React.createClass
       <input
         type="text"
         className="form-control"
-        value={@props.corpusName}
-        onChange={@props.onCorpusNameChange}
+        value={@state.corpusName}
+        onChange={nop}
         onFocus={@handleInputFocused}
         placeholder={placeholder}
       />
       {accessory}
     </div>
+
+  handleInputChanged : (value) ->
+    @setState corpusName: value
 
   renderNameBox: ->
     suggestions =
@@ -139,9 +151,9 @@ module.exports = React.createClass
       else if @props.corpusType is "subcorpus" then @state.existingSubcorpora
     if @state.corpusNameFocused
       <Typeahead
-        value={@props.corpusName}
-        onChange={@props.onCorpusNameChange}
-        onBlur={@handleInputBlured}
+        value={@state.corpusName}
+        onChange={@handleInputChanged}
+        onBlur={@handleTypeaheadBlured}
         autoFocus={true}
         suggestions={suggestions}
       />

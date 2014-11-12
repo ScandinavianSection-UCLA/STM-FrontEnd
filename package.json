@@ -20,6 +20,7 @@
     "coffee-reactify": "~2.0.0",
     "compression": "~1.2.0",
     "doc-ready": "git://github.com/desandro/doc-ready",
+    "dropzone": "^3.8.4",
     "envify": "~3.1.0",
     "express": "~4.10.1",
     "font-awesome": "^4.2.0",
