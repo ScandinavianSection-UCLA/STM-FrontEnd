@@ -78,7 +78,7 @@ module.exports = React.createClass
         @setState selectedSuggestion:
           (@state.selectedSuggestion + 1) %% @getItems().length
     else if event.keyCode is 13 # enter key
-      @selectedSuggestion @state.selectedSuggestion
+      @suggestionSelected @state.selectedSuggestion
       @refs.input.getDOMNode().blur()
     else
       handled = false

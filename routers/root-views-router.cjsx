@@ -1,6 +1,6 @@
 # @cjsx React.DOM
 
-bundleConstants = require "../bundle-constants"
+bundleConstants = require("../constants").bundles
 Curation = require "../components/curation"
 express = require "express"
 Page = require "../components/page"

@@ -1,10 +1,11 @@
 docReady = require "doc-ready"
+Page = require "./components/page"
 React = require "react"
 RootView = require "root-view"
-Page = require "./components/page"
 
 window.$ = window.jQuery = require "jquery"
 Bootstrap = require "bootstrap"
+dropzone = require "dropzone/downloads/dropzone.min"
 
 docReady ->
   page =

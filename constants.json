@@ -1,0 +1,8 @@
+{
+  "bundles": {
+    "curation": {
+      "title": "Curation"
+    }
+  },
+  "dataPath": "./data"
+}

@@ -1,5 +1,6 @@
 # @cjsx React.DOM
 
+Files = require "./manage/files"
 Metadata = require "./manage/metadata"
 React = require "react"
 
@@ -10,7 +11,9 @@ module.exports = React.createClass
     corpusValid: false
 
   handleCorpusTypeChanged: (value) ->
-    @setState corpusType: value
+    @setState
+      corpusType: value
+      corpusValid: false
 
   handleCorpusNameChanged: (value) ->
     @setState corpusName: value
@@ -19,6 +22,9 @@ module.exports = React.createClass
     @setState corpusValid: value
 
   render: ->
+    files =
+      if @state.corpusValid
+        <Files corpusName={@state.corpusName} corpusType={@state.corpusType} />
     <div className="col-sm-6 col-sm-offset-3">
       <Metadata
         corpusType={@state.corpusType}
@@ -28,4 +34,5 @@ module.exports = React.createClass
         onCorpusNameChange={@handleCorpusNameChanged}
         onCorpusValidityChange={@handleCorpusValidityChanged}
       />
+      {files}
     </div>

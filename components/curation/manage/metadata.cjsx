@@ -22,13 +22,6 @@ module.exports = React.createClass
     existingSubcorpora: []
     validatingCorpus: false
 
-  componentDidMount: ->
-    metadata.getCorpora "corpus", (corpora) =>
-      @setState existingCorpora: corpora
-    metadata.getCorpora "subcorpus", (subcorpora) =>
-      @setState existingSubcorpora: subcorpora
-    @validateCorpus @props
-
   componentWillReceiveProps: (props) ->
     @validateCorpus props if (
       @props.corpusName isnt props.corpusName or
@@ -170,3 +163,10 @@ module.exports = React.createClass
         {@renderNameBox()}
       </div>
     </div>
+
+  componentDidMount: ->
+    metadata.getCorpora "corpus", (corpora) =>
+      @setState existingCorpora: corpora
+    metadata.getCorpora "subcorpus", (subcorpora) =>
+      @setState existingSubcorpora: subcorpora
+    @validateCorpus @props

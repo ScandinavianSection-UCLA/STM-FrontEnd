@@ -1,6 +1,6 @@
 aliasify = require "aliasify"
 browserify = require "browserify"
-bundleConstants = require "../bundle-constants"
+bundleConstants = require("../constants").bundles
 coffeeReactify = require "coffee-reactify"
 envify = require "envify/custom"
 express = require "express"
