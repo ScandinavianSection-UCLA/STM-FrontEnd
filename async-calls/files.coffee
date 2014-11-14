@@ -8,8 +8,7 @@ files =
     db.Corpus.findOne name: name, type: type, (err, corpus) ->
       return console.error err if err?
       return callback 0 unless corpus?
-      corpusID = corpus._id
-      fs.readdir "#{dataPath}/files/#{corpusID}", (err, files) ->
+      fs.readdir "#{dataPath}/files/#{corpus._id}", (err, files) ->
         files = [] if err?
         callback files.length
 

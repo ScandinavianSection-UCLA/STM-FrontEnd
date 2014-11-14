@@ -3,6 +3,7 @@
 files = require("../../../async-calls/files").calls
 React = require "react"
 socket = require "../../../socket"
+UploadProgress = require "./files/upload-progress"
 
 module.exports = React.createClass
   propTypes:
@@ -12,6 +13,12 @@ module.exports = React.createClass
   getInitialState: ->
     pendingUploads: []
     numFiles: null
+
+  componentWillReceiveProps: (newProps) ->
+    @setState
+      pendingUploads: []
+      numFiles: null
+    @updateNumFiles()
 
   renderDropzone: ->
     style =
@@ -25,6 +32,15 @@ module.exports = React.createClass
       <div ref="dropzonePreviews" style={display: "none"} />
     </div>
 
+  renderUploads: ->
+    if @state.pendingUploads.length > 0
+      uploads =
+        for upload, i in @state.pendingUploads
+          <UploadProgress upload={upload} key={i} />
+      <ul className="list-group">
+        {uploads}
+      </ul>
+
   render: ->
     title = "Add Files"
     if @state.numFiles?
@@ -37,27 +53,31 @@ module.exports = React.createClass
         <h3 className="panel-title">{title}</h3>
       </div>
       {@renderDropzone()}
+      {@renderUploads()}
     </div>
 
   newUploadStarted: (file, xhr, formData) ->
-    @setState pendingUploads: @state.pendingUploads.concat
-      file: file
-      corpusName: @props.corpusName
-      corpusType: @props.corpusType
-      bytesSent: 0
-      bytesExtracted: 0
-      status: "uploading"
+    if @isMounted()
+      @setState pendingUploads: @state.pendingUploads.concat
+        file: file
+        bytesSent: 0
+        bytesExtracted: 0
+        status: "uploading"
+    formData.append "corpusName", @props.corpusName
+    formData.append "corpusType", @props.corpusType
 
   uploadProgressChanged: (file, percentDone, bytesDone) ->
+    return unless @isMounted()
     upload = @state.pendingUploads.filter((x) -> x.file is file)[0]
     return unless upload?
     upload.bytesSent = bytesDone
     @setState pendingUploads: @state.pendingUploads
 
-  handleSocketMessage: (upload) -> (message, result) ->
+  handleSocketMessage: (upload) -> ({message, bytesDone}) =>
+    return unless @isMounted()
     switch message
       when "progress"
-        upload.bytesExtracted = result.bytesDone
+        upload.bytesExtracted = bytesDone
       when "extracted"
         upload.status = "extracted"
       when "done"
@@ -66,12 +86,14 @@ module.exports = React.createClass
     @setState pendingUploads: @state.pendingUploads
 
   uploadCompleted: (file, res) ->
+    return unless @isMounted()
     upload = @state.pendingUploads.filter((x) -> x.file is file)[0]
     return unless upload?
     upload.status = res.status
     switch res.status
       when "extracting"
-        socket.emit "files/subscribe", res.hash, @handleSocketMessage upload
+        socket.emit "files/subscribe", res.hash
+        socket.on "files/#{res.hash}", @handleSocketMessage upload
       when "done"
         @updateNumFiles()
     @setState pendingUploads: @state.pendingUploads
@@ -81,13 +103,14 @@ module.exports = React.createClass
       url: "/files/upload"
       parallelUploads: 5
       sending: @newUploadStarted
-      uploadProgress: @uploadProgressChanged
+      uploadprogress: @uploadProgressChanged
       success: @uploadCompleted
       createImageThumbnails: false
       previewsContainer: @refs.dropzonePreviews.getDOMNode()
 
   updateNumFiles: ->
     files.getNumFilesInCorpus @props.corpusName, @props.corpusType, (num) =>
+      return unless @isMounted()
       @setState numFiles: num
 
   componentDidMount: ->
