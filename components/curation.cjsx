@@ -1,5 +1,6 @@
 # @cjsx React.DOM
 
+Analyze = require "./curation/analyze"
 Manage = require "./curation/manage"
 React = require "react"
 Tabs = require "./curation/tabs"
@@ -12,8 +13,9 @@ module.exports = React.createClass
     @setState activeTab: activeTab
 
   renderChild: ->
-    if @state.activeTab is "manage"
-      <Manage />
+    switch @state.activeTab
+      when "manage" then <Manage />
+      when "analyze" then <Analyze />
 
   render: ->
     <div className="container">

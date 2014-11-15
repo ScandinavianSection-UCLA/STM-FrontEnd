@@ -7,8 +7,10 @@ UploadProgress = require "./files/upload-progress"
 
 module.exports = React.createClass
   propTypes:
-    corpusName: React.PropTypes.string.isRequired
-    corpusType: React.PropTypes.oneOf(["corpus", "subcorpus"]).isRequired
+    corpus: React.PropTypes.shape(
+      name: React.PropTypes.string.isRequired
+      type: React.PropTypes.oneOf(["corpus", "subcorpus"]).isRequired
+    ).isRequired
 
   getInitialState: ->
     pendingUploads: []
@@ -45,9 +47,9 @@ module.exports = React.createClass
     title = "Add Files"
     if @state.numFiles?
       title +=
-        if @state.numFiles is 0 then " (empty #{@props.corpusType})"
-        else if @state.numFiles is 1 then " (1 file in #{@props.corpusType})"
-        else " (#{@state.numFiles} files in #{@props.corpusType})"
+        if @state.numFiles is 0 then " (empty #{@props.corpus.type})"
+        else if @state.numFiles is 1 then " (1 file in #{@props.corpus.type})"
+        else " (#{@state.numFiles} files in #{@props.corpus.type})"
     <div className="panel panel-default">
       <div className="panel-heading">
         <h3 className="panel-title">{title}</h3>
@@ -63,8 +65,8 @@ module.exports = React.createClass
         bytesSent: 0
         bytesExtracted: 0
         status: "uploading"
-    formData.append "corpusName", @props.corpusName
-    formData.append "corpusType", @props.corpusType
+    formData.append "corpusName", @props.corpus.name
+    formData.append "corpusType", @props.corpus.type
 
   uploadProgressChanged: (file, percentDone, bytesDone) ->
     return unless @isMounted()
@@ -109,7 +111,7 @@ module.exports = React.createClass
       previewsContainer: @refs.dropzonePreviews.getDOMNode()
 
   updateNumFiles: ->
-    files.getNumFilesInCorpus @props.corpusName, @props.corpusType, (num) =>
+    files.getNumFilesInCorpus @props.corpus.name, @props.corpus.type, (num) =>
       return unless @isMounted()
       @setState numFiles: num
 

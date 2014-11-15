@@ -1,7 +1,7 @@
 # @cjsx React.DOM
 
-Files = require "./manage/files"
-Metadata = require "./manage/metadata"
+Inference = require "./create/inference"
+SelectCorpus = require "./create/select-corpus"
 React = require "react"
 
 module.exports = React.createClass
@@ -12,13 +12,11 @@ module.exports = React.createClass
     @setState corpus: corpus
 
   render: ->
-    files =
-      if @state.corpus?
-        <Files corpus={@state.corpus} />
-    <div className="col-sm-6 col-sm-offset-3">
-      <Metadata
+    inference = <Inference /> if @state.corpus?
+    <div>
+      <SelectCorpus
         corpus={@state.corpus}
         onCorpusChange={@handleCorpusChanged}
       />
-      {files}
+      {inference}
     </div>

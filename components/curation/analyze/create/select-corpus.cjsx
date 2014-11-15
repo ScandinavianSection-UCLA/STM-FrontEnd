@@ -1,10 +1,10 @@
 # @cjsx React.DOM
 
-metadata = require("../../../async-calls/metadata").calls
+metadata = require("../../../../async-calls/metadata").calls
 nextTick = require "next-tick"
 nop = require "nop"
 React = require "react"
-Typeahead = require "../../typeahead"
+Typeahead = require "../../../typeahead"
 
 module.exports = React.createClass
   propTypes:
@@ -43,7 +43,7 @@ module.exports = React.createClass
       when "corpus"
         corpusClass += "btn btn-primary"
       when "subcorpus"
-        subcorpusClass += "btn btn-primary"  
+        subcorpusClass += "btn btn-primary"
     <div className="btn-group btn-group-justified" style={marginBottom: 15}>
       <div className="btn-group">
         <button
@@ -73,22 +73,6 @@ module.exports = React.createClass
     @props.onCorpusChange null
     nextTick => @validateCorpus()
 
-  handleInsertCorpus: ->
-    newCorpus =
-      name: @state.corpusName
-      type: @state.corpusType
-    metadata.insertCorpus newCorpus.name, newCorpus.type, (result) =>
-      if result
-        @props.onCorpusChange newCorpus
-        if newCorpus.type is "corpus"
-          @setState
-            existingCorpora:
-              @state.existingCorpora.concat newCorpus.name
-        else if newCorpus.type is "subcorpus"
-          @setState
-            existingSubcorpora:
-              @state.existingSubcorpora.concat newCorpus.name
-
   renderNonTypeaheadInput: ->
     placeholder =
       if @state.corpusType is "corpus" then "Corpus"
@@ -112,16 +96,12 @@ module.exports = React.createClass
           style={lineHeight: "34px"}
         />
     else
-      divClassName += " input-group"
+      divClassName += " has-error has-feedback"
       accessory =
-        <span className="input-group-btn">
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={@handleInsertCorpus}>
-            <i className="fa fa-plus" style={lineHeight: "20px"} />
-          </button>
-        </span>
+        <i
+          className="form-control-feedback fa fa-times"
+          style={lineHeight: "34px"}
+        />
     <div className={divClassName} style={marginBottom: 0}>
       <input
         type="text"
@@ -155,7 +135,7 @@ module.exports = React.createClass
   render: ->
     <div className="panel panel-default">
       <div className="panel-heading">
-        <h3 className="panel-title">Metadata</h3>
+        <h3 className="panel-title">Select Corpus</h3>
       </div>
       <div className="panel-body">
         {@renderTypeButtons()}
