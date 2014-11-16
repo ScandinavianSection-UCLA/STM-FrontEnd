@@ -7,3 +7,11 @@ exports.Corpus = metaDB.model "Corpus",
     name: String
     type: String
   ), "corpora"
+
+exports.IngestedCorpus = metaDB.model "IngestedCorpus",
+  new mongoose.Schema(
+    name: String
+    corpus: type: mongoose.Schema.ObjectId, ref: "Corpus"
+    dependsOn: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
+    status: String
+  ), "ingested-corpora"

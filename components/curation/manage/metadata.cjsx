@@ -1,6 +1,6 @@
 # @cjsx React.DOM
 
-metadata = require("../../../async-calls/metadata").calls
+corpusCalls = require("../../../async-calls/corpus").calls
 nextTick = require "next-tick"
 nop = require "nop"
 React = require "react"
@@ -24,7 +24,8 @@ module.exports = React.createClass
 
   validateCorpus: ->
     @setState validatingCorpus: true
-    metadata.validateCorpus @state.corpusName, @state.corpusType, (result) =>
+    corpusCalls.validate @state.corpusName, @state.corpusType, (result) =>
+      return unless @state.validatingCorpus
       @setState validatingCorpus: false
       if result
         @props.onCorpusChange
@@ -33,34 +34,33 @@ module.exports = React.createClass
 
   handleCorpusTypeChanged: (type) ->
     @setState corpusType: type
-    @props.onCorpusChange null
-    nextTick => @validateCorpus()
+    if @props.corpus?.type isnt type
+      @props.onCorpusChange null
+      nextTick => @validateCorpus()
 
   renderTypeButtons: ->
-    corpusClass = "btn btn-default"
-    subcorpusClass = "btn btn-default"
+    corpusClass = "col-sm-6 btn btn-default"
+    subcorpusClass = "col-sm-6 btn btn-default"
     switch @state.corpusType
       when "corpus"
-        corpusClass += "btn btn-primary"
+        corpusClass += " active"
       when "subcorpus"
-        subcorpusClass += "btn btn-primary"  
-    <div className="btn-group btn-group-justified" style={marginBottom: 15}>
-      <div className="btn-group">
-        <button
-          type="button"
-          className={corpusClass}
-          onClick={@handleCorpusTypeChanged.bind @, "corpus"}>
-          Corpus
-        </button>
-      </div>
-      <div className="btn-group">
-        <button
-          type="button"
-          className={subcorpusClass}
-          onClick={@handleCorpusTypeChanged.bind @, "subcorpus"}>
-          Subcorpus
-        </button>
-      </div>
+        subcorpusClass += " active"
+    <div
+      className="btn-group col-sm-12"
+      style={marginBottom: 15, paddingLeft: 0, paddingRight: 0}>
+      <button
+        type="button"
+        className={corpusClass}
+        onClick={@handleCorpusTypeChanged.bind @, "corpus"}>
+        Corpus
+      </button>
+      <button
+        type="button"
+        className={subcorpusClass}
+        onClick={@handleCorpusTypeChanged.bind @, "subcorpus"}>
+        Subcorpus
+      </button>
     </div>
 
   handleInputFocused: ->
@@ -70,14 +70,15 @@ module.exports = React.createClass
 
   handleTypeaheadBlured: ->
     @setState corpusNameFocused: false
-    @props.onCorpusChange null
-    nextTick => @validateCorpus()
+    if @props.corpus?.name isnt @state.corpusName
+      @props.onCorpusChange null
+      nextTick => @validateCorpus()
 
   handleInsertCorpus: ->
     newCorpus =
       name: @state.corpusName
       type: @state.corpusType
-    metadata.insertCorpus newCorpus.name, newCorpus.type, (result) =>
+    corpusCalls.insert newCorpus.name, newCorpus.type, (result) =>
       if result
         @props.onCorpusChange newCorpus
         if newCorpus.type is "corpus"
@@ -159,13 +160,14 @@ module.exports = React.createClass
       </div>
       <div className="panel-body">
         {@renderTypeButtons()}
+        <div className="clearfix" />
         {@renderNameBox()}
       </div>
     </div>
 
   componentDidMount: ->
-    metadata.getCorpora "corpus", (corpora) =>
+    corpusCalls.getCorpora "corpus", (corpora) =>
       @setState existingCorpora: corpora
-    metadata.getCorpora "subcorpus", (subcorpora) =>
+    corpusCalls.getCorpora "subcorpus", (subcorpora) =>
       @setState existingSubcorpora: subcorpora
-    @validateCorpus
+    @validateCorpus()

@@ -1,6 +1,6 @@
 # @cjsx React.DOM
 
-files = require("../../../async-calls/files").calls
+filesCalls = require("../../../async-calls/files").calls
 React = require "react"
 socket = require "../../../socket"
 UploadProgress = require "./files/upload-progress"
@@ -111,9 +111,10 @@ module.exports = React.createClass
       previewsContainer: @refs.dropzonePreviews.getDOMNode()
 
   updateNumFiles: ->
-    files.getNumFilesInCorpus @props.corpus.name, @props.corpus.type, (num) =>
-      return unless @isMounted()
-      @setState numFiles: num
+    filesCalls.getNumFilesInCorpus @props.corpus.name,
+      @props.corpus.type, (num) =>
+        return unless @isMounted()
+        @setState numFiles: num
 
   componentDidMount: ->
     @registerDropzone()

@@ -21,6 +21,7 @@
     "coffee-react": "~2.0.0",
     "coffee-reactify": "~2.0.0",
     "compression": "~1.2.0",
+    "deep-equal": "^0.2.1",
     "doc-ready": "git://github.com/desandro/doc-ready",
     "dropzone": "^3.8.4",
     "envify": "~3.1.0",

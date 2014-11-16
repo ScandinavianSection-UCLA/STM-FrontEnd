@@ -3,8 +3,9 @@ require "coffee-react/register"
 bodyParser = require "body-parser"
 bundlesRouter = require "./routers/bundles-router"
 compression = require "compression"
-metadataCalls = require "./async-calls/metadata"
+corpusCalls = require "./async-calls/corpus"
 express = require "express"
+ingestedCorpusCalls = require "./async-calls/ingested-corpus"
 filesCalls = require "./async-calls/files"
 filesIO = require "./io/files-io"
 filesRouter = require "./routers/files-router"
@@ -21,8 +22,9 @@ router.use compression()
 router.use rootViewsRouter
 router.use "/static", staticRouter
 router.use "/bundles", bundlesRouter
-router.use metadataCalls.router express: express, bodyParser: bodyParser
+router.use corpusCalls.router express: express, bodyParser: bodyParser
 router.use filesCalls.router express: express, bodyParser: bodyParser
+router.use ingestedCorpusCalls.router express: express, bodyParser: bodyParser
 router.use "/files", filesRouter
 
 server = http.createServer router
