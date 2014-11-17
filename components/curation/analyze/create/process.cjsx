@@ -3,9 +3,11 @@
 deepEqual = require "deep-equal"
 ingestedCorpusCalls = require("../../../../async-calls/ingested-corpus").calls
 nextTick = require "next-tick"
+processCorpusCalls = require("../../../../async-calls/process-corpus").calls
 React = require "react"
 
 module.exports = React.createClass
+  displayName: "Process"
   propTypes:
     corpus: React.PropTypes.shape(
       name: React.PropTypes.string.isRequired
@@ -108,11 +110,18 @@ module.exports = React.createClass
       {accessory}
     </div>
 
+  handleProcessClicked: ->
+    processCorpusCalls.process @props.saveAs, @props.corpus,
+      @props.inference.dependsOn, (result) ->
+        @props.onProcessStart() if result
+
   render: ->
     buttonClassName = "btn btn-primary btn-lg col-sm-4 col-sm-offset-4"
     button =
       if @props.saveAs?
-        <button className={buttonClassName} disabled>Process</button>
+        <button className={buttonClassName} onClick={@handleProcessClicked}>
+          Process
+        </button>
       else
         <button className={buttonClassName} disabled>Process</button>
     <div className="panel panel-default">

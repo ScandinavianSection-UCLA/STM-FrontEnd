@@ -8,6 +8,7 @@ navItems = [
 ]
 
 module.exports = React.createClass
+  displayName: "MainNav"
   propTypes:
     activeView:
       React.PropTypes.oneOf(navItems.map (x) -> x.toLowerCase()).isRequired

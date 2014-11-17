@@ -4,6 +4,7 @@ MainNav = require "./main-nav"
 React = require "react"
 
 module.exports = React.createClass
+  displayName: "Page"
   propTypes:
     title: React.PropTypes.string
     bundle: React.PropTypes.string

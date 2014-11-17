@@ -14,7 +14,7 @@ ingestedCorpus =
     query.status = "done" if onlyCompleted
     db.IngestedCorpus.findOne query, (err, ingestedCorpus) ->
       return console.error err if err?
-      callback corpus?
+      callback ingestedCorpus?
 
   insert: (name, corpus, dependsOnName, callback) ->
     getDependsOn = (callback) ->
@@ -35,7 +35,8 @@ ingestedCorpus =
         else if dependsOnName?
           return callback false
         db.IngestedCorpus.update { name: name },
-          { $setOnInsert: newIngestedCorpus }, (err, n, res) ->
+          { $setOnInsert: newIngestedCorpus }, { upsert: true },
+          (err, n, res) ->
             return console.error err if err?
             callback !res.updatedExisting
 
@@ -44,6 +45,11 @@ ingestedCorpus =
       (err, n, res) ->
         return console.error err if err?
         callback res.updatedExisting
+
+  getStatus: (name, callback) ->
+    db.IngestedCorpus.findOne name: name, (err, ingestedCorpus) ->
+      return console.error err if err?
+      callback ingestedCorpus?.status
 
 module.exports = asyncCaller
   mountPath: "/async-calls/ingested-corpus"

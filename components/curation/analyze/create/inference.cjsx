@@ -8,6 +8,7 @@ React = require "react"
 Typeahead = require "../../../typeahead"
 
 module.exports = React.createClass
+  displayName: "Inference"
   propTypes:
     corpus: React.PropTypes.shape(
       name: React.PropTypes.string.isRequired

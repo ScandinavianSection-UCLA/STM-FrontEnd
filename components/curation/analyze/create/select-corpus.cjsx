@@ -7,6 +7,7 @@ React = require "react"
 Typeahead = require "../../../typeahead"
 
 module.exports = React.createClass
+  displayName: "SelectCorpus"
   propTypes:
     corpus: React.PropTypes.shape(
       name: React.PropTypes.string.isRequired

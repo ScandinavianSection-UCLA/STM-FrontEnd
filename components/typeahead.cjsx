@@ -3,6 +3,7 @@
 React = require "react"
 
 module.exports = React.createClass
+  displayName: "Typeahead"
   propTypes:
     value: React.PropTypes.string
     onChange: React.PropTypes.func.isRequired

@@ -5,6 +5,7 @@ Metadata = require "./manage/metadata"
 React = require "react"
 
 module.exports = React.createClass
+  displayName: "Manage"
   getInitialState: ->
     corpus: null
 

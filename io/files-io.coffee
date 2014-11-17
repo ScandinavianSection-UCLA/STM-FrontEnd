@@ -3,8 +3,8 @@ extend = require "extend"
 
 filesIO = (socket, next) ->
   socket.on "files/subscribe", (hash) ->
-    filesIO.on hash, (result) ->
-      socket.emit "files/#{hash}", result
+    filesIO.on hash, (message) ->
+      socket.emit "files/#{hash}", message
   next()
 
 extend filesIO, new events.EventEmitter()

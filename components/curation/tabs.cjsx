@@ -7,6 +7,7 @@ navTabs =
   analyze: "Topic Modeling"
 
 module.exports = React.createClass
+  displayName: "Tabs"
   propTypes:
     activeTab: React.PropTypes.oneOf(Object.keys navTabs).isRequired
     onTabChange: React.PropTypes.func.isRequired

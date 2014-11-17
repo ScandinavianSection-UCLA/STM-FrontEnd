@@ -11,6 +11,7 @@ filesIO = require "./io/files-io"
 filesRouter = require "./routers/files-router"
 http = require "http"
 nop = require "nop"
+processCorpusCalls = require "./async-calls/process-corpus"
 React = require "react"
 rootViewsRouter = require "./routers/root-views-router"
 staticRouter = require "./routers/static-router"
@@ -26,6 +27,7 @@ router.use corpusCalls.router express: express, bodyParser: bodyParser
 router.use filesCalls.router express: express, bodyParser: bodyParser
 router.use ingestedCorpusCalls.router express: express, bodyParser: bodyParser
 router.use "/files", filesRouter
+router.use processCorpusCalls.router express: express, bodyParser: bodyParser
 
 server = http.createServer router
 

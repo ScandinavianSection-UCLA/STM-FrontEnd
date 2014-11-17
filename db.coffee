@@ -14,4 +14,4 @@ exports.IngestedCorpus = metaDB.model "IngestedCorpus",
     corpus: type: mongoose.Schema.ObjectId, ref: "Corpus"
     dependsOn: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
     status: String
-  ), "ingested-corpora"
+  ), "ingestedCorpora"

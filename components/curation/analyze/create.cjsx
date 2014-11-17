@@ -6,6 +6,7 @@ SelectCorpus = require "./create/select-corpus"
 React = require "react"
 
 module.exports = React.createClass
+  displayName: "Create"
   getInitialState: ->
     corpus: null
     inference: null

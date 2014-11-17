@@ -3,6 +3,7 @@
 React = require "react"
 
 module.exports = React.createClass
+  displayName: "UploadProgress"
   propTypes:
     upload: React.PropTypes.shape(
       file: React.PropTypes.object.isRequired

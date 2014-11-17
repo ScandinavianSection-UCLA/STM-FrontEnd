@@ -6,6 +6,7 @@ socket = require "../../../socket"
 UploadProgress = require "./files/upload-progress"
 
 module.exports = React.createClass
+  displayName: "Files"
   propTypes:
     corpus: React.PropTypes.shape(
       name: React.PropTypes.string.isRequired

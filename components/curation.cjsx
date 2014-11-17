@@ -6,6 +6,7 @@ React = require "react"
 Tabs = require "./curation/tabs"
 
 module.exports = React.createClass
+  displayName: "Curation"
   getInitialState: ->
     activeTab: "manage"
 
