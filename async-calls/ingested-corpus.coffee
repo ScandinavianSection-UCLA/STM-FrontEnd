@@ -1,3 +1,4 @@
+async = require "async"
 asyncCaller = require "../async-caller"
 db = require "../db"
 
@@ -41,15 +42,65 @@ ingestedCorpus =
             callback !res.updatedExisting
 
   updateStatus: (name, status, callback) ->
-    db.IngestedCorpus.update { name: name }, { status: "done" },
+    db.IngestedCorpus.update { name: name }, { status: status },
       (err, n, res) ->
         return console.error err if err?
         callback res.updatedExisting
 
-  getStatus: (name, callback) ->
+  getDetails: (name, callback) ->
+    db.IngestedCorpus
+      .findOne(name: name)
+      .populate("corpus dependsOn")
+      .exec (err, ingestedCorpus) ->
+        return console.error err if err?
+        callback
+          corpus:
+            name: ingestedCorpus?.corpus.name
+            type: ingestedCorpus?.corpus.type
+          dependsOn: ingestedCorpus?.dependsOn?.name
+          status: ingestedCorpus?.status
+
+  getTMStatus: (name, numTopics, callback) ->
+    db.IngestedCorpus
+      .findOne(name: name)
+      .populate("dependsOn")
+      .exec (err, ingestedCorpus) ->
+        return console.error err if err?
+        icInferencer = ingestedCorpus.dependsOn ? ingestedCorpus
+        async.parallel [
+          (callback) -> db.Inferencer.findOne
+            ingestedCorpus: icInferencer._id
+            numTopics: numTopics
+            callback
+          (callback) -> db.TopicsInferred.findOne
+            ingestedCorpus: ingestedCorpus._id
+            numTopics: numTopics
+            callback
+        ], (err, [inferencer, topicsInferred] = []) ->
+          return console.error err if err?
+          callback
+            inferencer: inferencer?.status
+            topicsInferred: topicsInferred?.status
+
+  updateInferencer: (name, numTopics, obj, callback) ->
     db.IngestedCorpus.findOne name: name, (err, ingestedCorpus) ->
       return console.error err if err?
-      callback ingestedCorpus?.status
+      query =
+        ingestedCorpus: ingestedCorpus._id
+        numTopics: numTopics
+      db.Inferencer.update query, obj, upsert: true, (err, n, res) ->
+        return console.error err if err?
+        callback()
+
+  updateTopicsInferredStatus: (name, numTopics, obj, callback) ->
+    db.IngestedCorpus.findOne name: name, (err, ingestedCorpus) ->
+      return console.error err if err?
+      query =
+        ingestedCorpus: ingestedCorpus._id
+        numTopics: numTopics
+      db.TopicsInferred.update query, obj, upsert: true, (err, n, res) ->
+        return console.error err if err?
+        callback()
 
 module.exports = asyncCaller
   mountPath: "/async-calls/ingested-corpus"

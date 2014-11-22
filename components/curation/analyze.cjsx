@@ -8,6 +8,7 @@ module.exports = React.createClass
   displayName: "Analyze"
   getInitialState: ->
     ingestPill: null
+    initialIngestedCorpus: null
 
   handleIngestPillChanged: (pill) ->
     @setState ingestPill: pill
@@ -29,13 +30,18 @@ module.exports = React.createClass
       {existingPill}
     </ul>
 
+  handleSwitchToExisting: (icName) ->
+    @setState
+      ingestPill: "existing"
+      initialIngestedCorpus: icName
+
   render: ->
     childView =
       switch @state.ingestPill
         when "create"
-          <Create />
+          <Create onSwitchToExisting={@handleSwitchToExisting} />
         when "existing"
-          <Existing />
+          <Existing initialIngestedCorpus={@state.initialIngestedCorpus} />
     <div className="col-sm-6 col-sm-offset-3">
       {@renderPills()}
       {childView}

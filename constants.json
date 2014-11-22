@@ -4,5 +4,6 @@
       "title": "Curation"
     }
   },
-  "dataPath": "./data"
+  "dataPath": "./data",
+  "malletPath": "~/Documents/STM/Mallet/bin/mallet"
 }

@@ -26,7 +26,7 @@ module.exports = React.createClass
   validateCorpus: ->
     @setState validatingCorpus: true
     corpusCalls.validate @state.corpusName, @state.corpusType, (result) =>
-      return unless @state.validatingCorpus
+      return unless @state.validatingCorpus and @isMounted()
       @setState validatingCorpus: false
       if result
         @props.onCorpusChange
@@ -148,7 +148,9 @@ module.exports = React.createClass
 
   componentDidMount: ->
     corpusCalls.getCorpora "corpus", (corpora) =>
+      return unless @isMounted()
       @setState existingCorpora: corpora
     corpusCalls.getCorpora "subcorpus", (subcorpora) =>
+      return unless @isMounted()
       @setState existingSubcorpora: subcorpora
     @validateCorpus()

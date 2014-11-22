@@ -1,8 +1,8 @@
 asyncCaller = require "../async-caller"
 db = require "../db"
 ingestCorpus = require "../bll/ingest-corpus"
-ingestIO = require "../io/ingest-io"
 ingestedCorpusCalls = require("./ingested-corpus").calls
+ingestIO = require "../io/ingest-io"
 md5 = require "MD5"
 
 processCorpus =
@@ -15,5 +15,5 @@ processCorpus =
       callback true
 
 module.exports = asyncCaller
-  mounthPath: "/async-calls/process-corpus"
+  mountPath: "/async-calls/process-corpus"
   calls: processCorpus

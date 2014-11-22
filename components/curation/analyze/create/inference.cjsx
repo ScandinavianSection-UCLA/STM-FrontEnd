@@ -38,7 +38,7 @@ module.exports = React.createClass
   validateDependsOn: ->
     @setState validatingDependsOn: true
     ingestedCorpusCalls.validate @state.dependsOn, true, (result) =>
-      return unless @state.validatingDependsOn
+      return unless @state.validatingDependsOn and @isMounted()
       @setState validatingDependsOn: false
       if result
         @props.onInferenceChange
@@ -165,5 +165,6 @@ module.exports = React.createClass
 
   componentDidMount: ->
     ingestedCorpusCalls.getIngestedCorpora true, (ingestedCorpora) =>
+      return unless @isMounted()
       @setState existingIngestedCorpora: ingestedCorpora
     @validateDependsOn()

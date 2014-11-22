@@ -6,30 +6,56 @@ filesIO = require "../io/files-io"
 fs = require "node-fs"
 md5 = require "MD5"
 os = require "os"
+queue = require "queue"
+replaceStream = require "replacestream"
 
-moveWithDuplicates = (sourceFile, targetFile, callback) ->
+childProcessQ = queue concurrency: 10
+
+isFileText = (filePath, theCallback) ->
+  childProcessQ.push (cb) ->
+    callback = (res) ->
+      theCallback res
+      cb()
+    childProcess.exec "file #{filePath}", (err, stdout, stderr) ->
+      if err?
+        console.error "#{err}: #{stdout.toString "utf8"}"
+        return callback false
+      regex = /text/i
+      callback stdout.toString("utf8").toLowerCase().match(regex)?
+  childProcessQ.start()
+
+testAndMoveWithDuplicates = (sourceFile, targetFile, callback) ->
   rec = (i) ->
     tf =
       if i is 0 then targetFile
       else "#{targetFile} (#{i})"
     fs.stat tf, (err, stat) ->
-      if err? then fs.rename sourceFile, tf, callback
-      else rec i + 1
-  rec 0
+      if err?
+        fs.createReadStream sourceFile, encoding: "utf8"
+          .pipe replaceStream /[&"'<>]+/g, " "
+          .pipe fs.createWriteStream tf, encoding: "utf8"
+          .on "finish", callback
+      else
+        rec i + 1
+  isFileText sourceFile, (result) ->
+    if result then rec 0
+    else fs.unlink sourceFile, -> callback "Not a text file"
 
 flattenAndMove = (sourceDir, targetDir, callback) ->
   iterator = (file, callback) ->
     sourcePath = "#{sourceDir}/#{file}"
     targetPath = "#{targetDir}/#{file}"
     fs.stat sourcePath, (err, stat) ->
-      return console.error err if err?
+      if err?
+        console.error err
+        return callback err
       if stat.isDirectory()
-        flattenAndMove sourcePath, targetDir, callback
+        flattenAndMove sourcePath, targetDir, -> callback()
       else
-        moveWithDuplicates sourcePath, targetPath, callback
+        testAndMoveWithDuplicates sourcePath, targetPath, -> callback()
   fs.readdir sourceDir, (err, files) ->
-    return console.error err if err?
-    async.each files, iterator, callback
+    console.error err if err?
+    async.each files, iterator, -> callback()
 
 isFileArchive = (filePath, callback) ->
   childProcess.exec "file #{filePath}", (err, stdout, stderr) ->
@@ -56,7 +82,7 @@ extractArchive = (archivePath, extractDir, callback) ->
 
 handleArchive = (file, corpusFilesDir, callback) ->
   hash = md5 "#{file.path}/#{Math.random()}"
-  tmpDir = "#{os.tmpdir()}/#{hash}"
+  tmpDir = "#{os.tmpdir()}#{hash}"
   callback status: "extracting", hash: hash
   extractArchive file.path, tmpDir, (update) ->
     filesIO.emit hash, update
@@ -67,10 +93,8 @@ handleArchive = (file, corpusFilesDir, callback) ->
       ], -> filesIO.emit hash, message: "done"
 
 handleSingleFile = (file, corpusFilesDir, callback) ->
-  moveWithDuplicates file.path, "#{corpusFilesDir}/#{file.originalname}",
-    (err) ->
-      return console.error err if err?
-      callback status: "done"
+  testAndMoveWithDuplicates file.path, "#{corpusFilesDir}/#{file.originalname}",
+    (err) -> callback status: unless err? then "done" else "failure"
 
 module.exports = ({file, corpusName, corpusType}, callback) ->
   db.Corpus.findOne name: corpusName, type: corpusType, (err, corpus) ->

@@ -1,9 +1,12 @@
 # @cjsx React.DOM
 
+extend = require "extend"
 ingestedCorpusCalls = require("../../../../async-calls/ingested-corpus").calls
+md5 = require "MD5"
 nextTick = require "next-tick"
 nop = require "nop"
 React = require "react"
+socket = require "../../../../socket"
 Typeahead = require "../../../typeahead"
 
 module.exports = React.createClass
@@ -11,6 +14,11 @@ module.exports = React.createClass
   propTypes:
     ingestedCorpus: React.PropTypes.shape(
       name: React.PropTypes.string.isRequired
+      corpus: React.PropTypes.shape(
+        name: React.PropTypes.string.isRequired
+        type: React.PropTypes.oneOf(["corpus", "subcorpus"]).isRequired
+      )
+      dependsOn: React.PropTypes.string
       status:
         React.PropTypes.oneOf(["unknown", "processing", "done"]).isRequired
     )
@@ -25,14 +33,28 @@ module.exports = React.createClass
   validateIngestedCorpus: ->
     @setState validatingIngestedCorpus: true
     ingestedCorpusCalls.validate @state.icName, false, (result) =>
-      return unless @state.validatingIngestedCorpus
+      return unless @state.validatingIngestedCorpus and @isMounted()
       return @setState validatingIngestedCorpus: false unless result
-      ingestedCorpusCalls.getStatus @state.icName, (status) =>
-        return unless @state.validatingIngestedCorpus
+      ingestedCorpusCalls.getDetails @state.icName, (details) =>
+        return unless @state.validatingIngestedCorpus and @isMounted()
         @setState validatingIngestedCorpus: false
         @props.onIngestedCorpusChange
           name: @state.icName
-          status: status
+          corpus: details.corpus
+          dependsOn: details.dependsOn
+          status: details.status
+        @listenToChanges() if details.status is "processing"
+
+  listenToChanges: ->
+    hash = md5 @props.ingestedCorpus?.name
+    ingestedCorpus = @props.ingestedCorpus
+    socket.emit "ingest/subscribe", hash
+    socket.on "ingest/#{hash}", ({message}) =>
+      return unless @isMounted() and @props.ingestedCorpus is ingestedCorpus
+      if message is "done"
+        ingestedCorpus = extend true, ingestedCorpus
+        ingestedCorpus.status = "done"
+        @props.onIngestedCorpusChange ingestedCorpus
 
   handleInputFocused: ->
     @setState
@@ -98,17 +120,60 @@ module.exports = React.createClass
     else
       @renderNonTypeaheadInput()
 
+  renderStatus: ->
+    switch @props.ingestedCorpus.status
+      when "processing"
+        <div
+          className="progress progress-striped active"
+          style={marginBottom: 0}
+          >
+          <div
+            className="progress-bar progress-bar-default"
+            style={width: "100%"}
+            >
+            Processing Corpus
+          </div>
+        </div>
+      when "done"
+        corpus = @props.ingestedCorpus.corpus
+        infer =
+          if @props.ingestedCorpus.dependsOn?
+            <span>
+              Inferring topics from 
+              <strong>{@props.ingestedCorpus.dependsOn}</strong>.
+            </span>
+          else
+            <span>
+              Inferring topics on self.
+            </span>
+        <div>
+          <span>
+            Ingested from {corpus.type} <strong>{corpus.name}</strong>. 
+          </span>
+          {infer}
+        </div>
+
   render: ->
+    panelBody =
+      if @props.ingestedCorpus? and not @state.validatingIngestedCorpus
+        <div className="panel-body">
+          {@renderNameBox()}
+          <hr style={marginBottom: 15, marginTop: 15} />
+          {@renderStatus()}
+        </div>
+      else
+        <div className="panel-body">
+          {@renderNameBox()}
+        </div>
     <div className="panel panel-default">
       <div className="panel-heading">
         <h3 className="panel-title">Ingested Corpus</h3>
       </div>
-      <div className="panel-body">
-        {@renderNameBox()}
-      </div>
+      {panelBody}
     </div>
 
   componentDidMount: ->
     ingestedCorpusCalls.getIngestedCorpora false, (ingestedCorpora) =>
+      return unless @isMounted()
       @setState existingIngestedCorpora: ingestedCorpora
     @validateIngestedCorpus()

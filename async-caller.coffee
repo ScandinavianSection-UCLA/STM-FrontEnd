@@ -22,7 +22,6 @@ makeRouter = (calls, mountPath) -> ({express, bodyParser}) ->
         res.json result: Array.prototype.slice.call arguments
 
 module.exports = ({calls, mountPath}) ->
-  mountPath ?= "/async-calls"
   router: makeRouter calls, mountPath
   calls:
     if typeof window isnt "undefined"

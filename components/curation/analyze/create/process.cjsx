@@ -40,7 +40,7 @@ module.exports = React.createClass
   validateSaveAs: ->
     @setState validatingSaveAs: true
     ingestedCorpusCalls.validate @state.saveAs, false, (result) =>
-      return unless @state.validatingSaveAs
+      return unless @state.validatingSaveAs and @isMounted()
       @setState validatingSaveAs: false
       @props.onSaveAsChange @state.saveAs unless result
 
@@ -112,13 +112,13 @@ module.exports = React.createClass
 
   handleProcessClicked: ->
     processCorpusCalls.process @props.saveAs, @props.corpus,
-      @props.inference.dependsOn, (result) ->
+      @props.inference.dependsOn, (result) =>
         @props.onProcessStart() if result
 
   render: ->
     buttonClassName = "btn btn-primary btn-lg col-sm-4 col-sm-offset-4"
     button =
-      if @props.saveAs?
+      if @props.saveAs? and not @state.saveAsFocused
         <button className={buttonClassName} onClick={@handleProcessClicked}>
           Process
         </button>

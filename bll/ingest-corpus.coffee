@@ -1,18 +1,20 @@
 childProcess = require "child_process"
-dataPath = require("../constants").dataPath
 db = require "../db"
 fs = require "node-fs"
 
+{dataPath, malletPath} = require "../constants"
+
 runProcess = (input, output, pipeFrom, callback) ->
   childProcess.exec d = """
-    mallet import-dir
+    #{malletPath} import-dir
       --input #{input}
       --output #{output}
-      #{"--use-pipe-from #{pipeFrom}" if pipeFrom?}
+      #{if pipeFrom? then "--use-pipe-from #{pipeFrom}" else ""}
       --token-regex '\\p{L}[\\p{L}\\p{P}]*\\p{L}'
       --keep-sequence
       --remove-stopwords
   """.replace(/[\n\r]+/g, " "), (err, stdout, stderr) ->
+    console.log d
     return console.error err if err?
     callback()
 

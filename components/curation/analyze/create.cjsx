@@ -7,6 +7,9 @@ React = require "react"
 
 module.exports = React.createClass
   displayName: "Create"
+  propTypes:
+    onSwitchToExisting: React.PropTypes.func.isRequired
+
   getInitialState: ->
     corpus: null
     inference: null
@@ -26,6 +29,9 @@ module.exports = React.createClass
   handleSaveAsChanged: (saveAs) ->
     @setState saveAs: saveAs
 
+  handleProcesStarted: ->
+    @props.onSwitchToExisting @state.saveAs
+
   render: ->
     inference =
       if @state.corpus?
@@ -41,7 +47,7 @@ module.exports = React.createClass
           inference={@state.inference}
           saveAs={@state.saveAs}
           onSaveAsChange={@handleSaveAsChanged}
-          onProcessStart={console.log}
+          onProcessStart={@handleProcesStarted}
         />
     <div>
       <SelectCorpus

@@ -15,3 +15,36 @@ exports.IngestedCorpus = metaDB.model "IngestedCorpus",
     dependsOn: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
     status: String
   ), "ingestedCorpora"
+
+exports.Inferencer = metaDB.model "Inferencer",
+  new mongoose.Schema(
+    ingestedCorpus: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
+    numTopics: Number
+    topicReport: type: mongoose.Schema.ObjectId, ref: "TopicReport"
+    status: String
+  ), "inferencers"
+
+exports.TopicsInferred = metaDB.model "TopicsInferred",
+  new mongoose.Schema(
+    ingestedCorpus: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
+    numTopics: Number
+    status: String
+  ), "topicsInferred"
+
+exports.TopicReport = metaDB.model "TopicReport",
+  new mongoose.Schema(
+    topics: [
+      id: Number
+      totalTokens: Number
+      words: [
+        word: String
+        weight: Number
+        count: Number
+      ]
+      phrases: [
+        phrase: String
+        weight: Number
+        count: Number
+      ]
+    ]
+  ), "topicReports"
