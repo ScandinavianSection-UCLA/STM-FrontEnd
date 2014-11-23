@@ -21,10 +21,13 @@ staticRouter = require "./routers/static-router"
 socketIO = require "socket.io"
 topicModelingCalls = require "./async-calls/topic-modeling"
 
+{simulateBadLatency} = require "./constants"
+
 router = express()
 
-router.use (req, res, next) ->
-  setTimeout next, Math.random() * 1000 + 200
+if simulateBadLatency
+  router.use (req, res, next) ->
+    setTimeout next, Math.random() * 1000 + 200
 
 router.use compression()
 router.use rootViewsRouter
@@ -40,9 +43,6 @@ router.use topicModelingCalls.router express: express, bodyParser: bodyParser
 server = http.createServer router
 
 io = socketIO server
-
-io.use (socket, next) ->
-  setTimeout next, Math.random() * 1000 + 200
 
 io.use filesIO
 io.use ingestIO

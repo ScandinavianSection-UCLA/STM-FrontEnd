@@ -70,11 +70,10 @@ module.exports = React.createClass
 
   handleKeyDown: (event) ->
     handled = true
-    if event.keyCode is 38 # up arrow
-      if @state.selectedSuggestion?
-        @setState selectedSuggestion:
-          (@state.selectedSuggestion - 1) %% @getItems().length
-    else if event.keyCode is 40 # down arrow
+    if event.keyCode is 38 and @state.selectedSuggestion? # up arrow
+      @setState selectedSuggestion:
+        (@state.selectedSuggestion - 1) %% @getItems().length
+    else if event.keyCode is 40 and @state.selectedSuggestion? # down arrow
       if @state.selectedSuggestion?
         @setState selectedSuggestion:
           (@state.selectedSuggestion + 1) %% @getItems().length
@@ -85,7 +84,7 @@ module.exports = React.createClass
     else
       handled = false
     if handled
-      event.stopPropagation()
+      event.preventDefault()
 
   renderInput: ->
     <input
