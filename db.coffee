@@ -20,31 +20,38 @@ exports.Inferencer = metaDB.model "Inferencer",
   new mongoose.Schema(
     ingestedCorpus: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
     numTopics: Number
-    topicReport: type: mongoose.Schema.ObjectId, ref: "TopicReport"
     status: String
   ), "inferencers"
 
 exports.TopicsInferred = metaDB.model "TopicsInferred",
   new mongoose.Schema(
     ingestedCorpus: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
-    numTopics: Number
+    inferencer: type: mongoose.Schema.ObjectId, ref: "Inferencer"
     status: String
   ), "topicsInferred"
 
-exports.TopicReport = metaDB.model "TopicReport",
+exports.Topic = metaDB.model "Topic",
   new mongoose.Schema(
-    topics: [
-      id: Number
-      totalTokens: Number
-      words: [
-        word: String
-        weight: Number
-        count: Number
-      ]
-      phrases: [
-        phrase: String
-        weight: Number
-        count: Number
-      ]
+    inferencer: type: mongoose.Schema.ObjectId, ref: "Inferencer"
+    id: Number
+    name: String
+    totalTokens: Number
+    words: [
+      word: String
+      weight: Number
+      count: Number
     ]
-  ), "topicReports"
+    phrases: [
+      phrase: String
+      weight: Number
+      count: Number
+    ]
+  ), "topics"
+
+exports.SaturationRecord = metaDB.model "SaturationRecord",
+  new mongoose.Schema(
+    topicsInferred: type: mongoose.Schema.ObjectId, ref: "TopicsInferred"
+    articleID: String
+    topic: type: mongoose.Schema.ObjectId, ref: "Topic"
+    proportion: Number
+  ), "saturationRecords"

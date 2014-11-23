@@ -6,6 +6,7 @@ bundlesRouter = require "./routers/bundles-router"
 compression = require "compression"
 corpusCalls = require "./async-calls/corpus"
 express = require "express"
+inferTopicSaturationIO = require "./io/infer-topic-saturation-io"
 ingestedCorpusCalls = require "./async-calls/ingested-corpus"
 ingestIO = require "./io/ingest-io"
 filesCalls = require "./async-calls/files"
@@ -46,6 +47,7 @@ io.use (socket, next) ->
 io.use filesIO
 io.use ingestIO
 io.use buildInferencerIO
+io.use inferTopicSaturationIO
 
 io.on "connection", nop
 

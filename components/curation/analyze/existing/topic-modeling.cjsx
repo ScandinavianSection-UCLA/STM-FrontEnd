@@ -143,17 +143,11 @@ module.exports = React.createClass
         @setState topicsInferredStatus: status
 
   handleProcessButtonClicked: ->
-    topicModelingCalls.process @props.ingestedCorpus.name, @props.numTopics,
-      (statuses) =>
-        @setState
-          inferencerStatus:
-            statuses.inferencer ? @state.inferencerStatus
-          topicsInferredStatus:
-            statuses.topicsInferred ? @state.topicsInferredStatus
+    topicModelingCalls.process @props.ingestedCorpus.name, @props.numTopics
 
   renderProcessButton: ->
     return unless @props.numTopics?
-    unless @state.gettingTMStatus or @state.inferencerStatus?
+    unless @state.gettingTMStatus or @state.topicsInferredStatus?
       <button
         className="btn btn-primary col-sm-4 col-sm-offset-4"
         onClick={@handleProcessButtonClicked}>
@@ -162,7 +156,7 @@ module.exports = React.createClass
 
   renderProgress: ->
     return unless @props.numTopics?
-    return if @state.gettingTMStatus or not @state.inferencerStatus?
+    return if @state.gettingTMStatus or not @state.topicsInferredStatus?
     icName = @props.ingestedCorpus.name
     inferencerFor = @props.ingestedCorpus.dependsOn ? icName
     inferencerClassName = "list-group-item"
