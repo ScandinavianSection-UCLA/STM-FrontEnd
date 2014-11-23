@@ -84,8 +84,6 @@ inferTopicSaturation = (name, numTopics, callback) ->
       fs.mkdir measuringDir, "0777", true, (err) ->
         return console.error err if err?
         runProcess inferencerFilename, input, output, ->
-          saveMeasuring output, name, numTopics, ->
-            console.log "Done"
-            callback()
+          saveMeasuring output, name, numTopics, callback
 
 module.exports = inferTopicSaturation

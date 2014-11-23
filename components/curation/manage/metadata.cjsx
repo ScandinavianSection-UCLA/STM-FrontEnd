@@ -20,6 +20,7 @@ module.exports = React.createClass
     corpusType: @props.corpus?.type ? "corpus"
     corpusNameFocused: false
     validatingCorpus: false
+    waitingForInsertCorpus: false
     existingCorpora: []
     existingSubcorpora: []
 
@@ -76,10 +77,12 @@ module.exports = React.createClass
       nextTick => @validateCorpus()
 
   handleInsertCorpus: ->
+    @setState waitingForInsertCorpus: true
     newCorpus =
       name: @state.corpusName
       type: @state.corpusType
     corpusCalls.insert newCorpus.name, newCorpus.type, (result) =>
+      return unless @isMounted()
       if result
         @props.onCorpusChange newCorpus
         if newCorpus.type is "corpus"
@@ -90,6 +93,7 @@ module.exports = React.createClass
           @setState
             existingSubcorpora:
               @state.existingSubcorpora.concat newCorpus.name
+      @setState waitingForInsertCorpus: false
 
   renderNonTypeaheadInput: ->
     placeholder =
@@ -115,14 +119,21 @@ module.exports = React.createClass
         />
     else
       divClassName += " input-group"
+      accessoryButton =
+        if @state.waitingForInsertCorpus
+          <button className="btn btn-primary" disabled>
+            <i
+              className="fa fa-circle-o-notch fa-spin fa-fw"
+              style={lineHeight: "inherit"}
+            />
+          </button>
+        else
+          <button className="btn btn-primary" onClick={@handleInsertCorpus}>
+            <i className="fa fa-plus fa-fw" style={lineHeight: "inherit"} />
+          </button>
       accessory =
         <span className="input-group-btn">
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={@handleInsertCorpus}>
-            <i className="fa fa-plus" style={lineHeight: "20px"} />
-          </button>
+          {accessoryButton}
         </span>
     <div className={divClassName} style={marginBottom: 0}>
       <input

@@ -123,16 +123,12 @@ module.exports = React.createClass
   renderStatus: ->
     switch @props.ingestedCorpus.status
       when "processing"
-        <div
-          className="progress progress-striped active"
-          style={marginBottom: 0}
-          >
-          <div
-            className="progress-bar progress-bar-default"
-            style={width: "100%"}
-            >
-            Processing Corpus
-          </div>
+        <div className="text-primary">
+          <i
+            className="fa fa-spin fa-circle-o-notch pull-right"
+            style={lineHeight: "inherit"}
+          />
+          Processing Corpus
         </div>
       when "done"
         corpus = @props.ingestedCorpus.corpus

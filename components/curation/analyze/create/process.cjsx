@@ -28,6 +28,7 @@ module.exports = React.createClass
     saveAs: "#{props.corpus.name} (#{props.corpus.type})"
     saveAsFocused: false
     validatingSaveAs: false
+    waitingForProcess: false
 
   componentWillReceiveProps: (props) ->
     unless deepEqual(
@@ -111,16 +112,30 @@ module.exports = React.createClass
     </div>
 
   handleProcessClicked: ->
+    @setState waitingForProcess: true
     processCorpusCalls.process @props.saveAs, @props.corpus,
       @props.inference.dependsOn, (result) =>
+        return unless @isMounted()
         @props.onProcessStart() if result
+        @setState waitingForProcess: true
 
   render: ->
-    buttonClassName = "btn btn-primary btn-lg col-sm-4 col-sm-offset-4"
+    buttonClassName = "btn btn-primary col-sm-4 col-sm-offset-4"
     button =
-      if @props.saveAs? and not @state.saveAsFocused
+      if (
+        @props.saveAs? and
+        not @state.saveAsFocused and
+        not @state.waitingForProcess
+      )
         <button className={buttonClassName} onClick={@handleProcessClicked}>
           Process
+        </button>
+      else if @state.waitingForProcess
+        <button className={buttonClassName} disabled>
+          <i
+            className="fa fa-circle-o-notch fa-spin fa-fw"
+            style={lineHeight: "inherit"}
+          />
         </button>
       else
         <button className={buttonClassName} disabled>Process</button>

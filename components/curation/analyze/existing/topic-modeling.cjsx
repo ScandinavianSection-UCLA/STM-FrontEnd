@@ -27,6 +27,7 @@ module.exports = React.createClass
     numTopics: props.numTopics?.toString() ? ""
     numTopicsFocused: false
     gettingTMStatus: false
+    waitingForProcess: false
 
   componentWillReceiveProps: (props) ->
     unless deepEqual @props.ingestedCorpus, props.ingestedCorpus
@@ -134,25 +135,38 @@ module.exports = React.createClass
     unless @state.inferencerStatus is "done"
       socket.emit "build-inferencer/subscribe", inferencerHash
       socket.on "build-inferencer/#{inferencerHash}", (status) =>
-        return unless deepEqual @props, props
+        return unless deepEqual(@props, props) and @isMounted()
         @setState inferencerStatus: status
     unless @state.topicsInferredStatus is "done"
       socket.emit "infer-topic-saturation/subscribe", topicsInferredHash
       socket.on "infer-topic-saturation/#{topicsInferredHash}", (status) =>
-        return unless deepEqual @props, props
-        @setState topicsInferredStatus: status
+        return unless deepEqual(@props, props) and @isMounted()
+        @setState
+          topicsInferredStatus: status
+          waitingForProcess: false
 
   handleProcessButtonClicked: ->
+    @setState waitingForProcess: true
     topicModelingCalls.process @props.ingestedCorpus.name, @props.numTopics
 
   renderProcessButton: ->
     return unless @props.numTopics?
     unless @state.gettingTMStatus or @state.topicsInferredStatus?
-      <button
-        className="btn btn-primary col-sm-4 col-sm-offset-4"
-        onClick={@handleProcessButtonClicked}>
-        Process
-      </button>
+      unless @state.waitingForProcess
+        <button
+          className="btn btn-primary col-sm-4 col-sm-offset-4"
+          onClick={@handleProcessButtonClicked}>
+          Process
+        </button>
+      else
+        <button
+          className="btn btn-primary col-sm-4 col-sm-offset-4"
+          disabled>
+          <i
+            className="fa fa-circle-o-notch fa-spin fa-fw"
+            style={lineHeight: "inherit"}
+          />
+        </button>
 
   renderProgress: ->
     return unless @props.numTopics?
