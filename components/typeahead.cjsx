@@ -1,5 +1,6 @@
 # @cjsx React.DOM
 
+nextTick = require "next-tick"
 React = require "react"
 
 module.exports = React.createClass
@@ -66,7 +67,7 @@ module.exports = React.createClass
     @props.onChange event.target.value
 
   handleBlured: ->
-    @props.onBlur?()
+    nextTick => @props.onBlur?()
 
   handleKeyDown: (event) ->
     handled = true

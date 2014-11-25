@@ -14,16 +14,16 @@ module.exports = React.createClass
     onLocationChange: React.PropTypes.func.isRequired
 
   handleTypeClicked: ->
-    onLocationChange
+    @props.onLocationChange
       type: @props.location.type
 
   handleICCLicked: ->
-    onLocationChange
+    @props.onLocationChange
       type: @props.location.type
       ingestedCorpus: @props.location.ingestedCorpus
 
   handleNumClicked: ->
-    onLocationChange
+    @props.onLocationChange
       type: @props.location.type
       ingestedCorpus: @props.location.ingestedCorpus
       numTopics: @props.location.numTopics
@@ -80,9 +80,7 @@ module.exports = React.createClass
           {loc.entity}
         </li>
     <ol className="breadcrumb">
-      <li>
-        <a href="#"><i className="fa fa-home" /></a>
-      </li>
+      {homeLI}
       {typeLI}
       {icLI}
       {numLI}

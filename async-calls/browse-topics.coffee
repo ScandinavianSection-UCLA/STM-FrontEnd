@@ -17,20 +17,21 @@ browseTopics =
     @getIngestedCorpora (names) ->
       callback name in names
 
-  validateNumTopicsForIC: (numTopics, name, callback) ->
+  getNumTopicsForIC: (name, callback) ->
     async.waterfall [
       (callback) ->
         db.IngestedCorpus.findOne name: name, callback
       (ic, callback) ->
-        callback ic._id
+        callback null, ic._id
       (icID, callback) ->
-        db.Inferencer.findOne
-          ingestedCorpus: icID
-          numTopics: numTopics
-          callback
-    ], (err, inferencer) ->
+        db.Inferencer.distinct "numTopics", ingestedCorpus: icID, callback
+    ], (err, numTopics) ->
       return console.error err if err?
-      callback inferencer?
+      callback numTopics
+
+  validateNumTopicsForIC: (name, numTopic, callback) ->
+    @getNumTopicsForIC name, (numTopics) ->
+      callback numTopic in numTopics
 
 module.exports = asyncCaller
   mountPath: "/async-calls/browse-topics"

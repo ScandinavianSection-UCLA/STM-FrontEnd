@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
 browseTopics = require("../../../async-calls/browse-topics").calls
+extend = require "extend"
 nextTick = require "next-tick"
 nop = require "nop"
 React = require "react"
@@ -16,14 +17,36 @@ module.exports = React.createClass
     onLocationChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
-    icName: @props.location.ingestedCorpus ? ""
+    extend @getDefaultState(@props),
+      existingICInferencers: []
+      existingIC: []
+      existingNumTopics: []
+
+  getDefaultState: (props) ->
+    icName: props.location.ingestedCorpus ? ""
     icNameFocused: false
     validatingICName: false
     numTopics: ""
     numTopicsFocused: false
     validatingNumTopics: false
-    existingICInferencers: []
-    existingIC: []
+
+  componentWillReceiveProps: (props) ->
+    unless (
+      @props.location.type is props.location.type and
+      @props.location.ingestedCorpus is props.location.ingestedCorpus
+    )
+      if @skipResetState
+        delete @skipResetState
+      else
+        @setState @getDefaultState props
+      nextTick => @fetchExistingNumTopics()
+
+  fetchExistingNumTopics: ->
+    @setState existingNumTopics: []
+    ic = @props.location.ingestedCorpus
+    if @props.location.type is "topic" and ic?
+      browseTopics.getNumTopicsForIC ic, (numTopics) =>
+        @setState existingNumTopics: numTopics.map (x) -> x.toString()
 
   handleTypeChanged: (type) ->
     if @props.location.type isnt type
@@ -67,6 +90,7 @@ module.exports = React.createClass
         return unless @state.validatingICName and @isMounted()
         @setState validatingICName: false
         if result
+          @skipResetState = true
           @props.onLocationChange
             type: @props.location.type
             ingestedCorpus: @state.icName
@@ -161,15 +185,107 @@ module.exports = React.createClass
     else
       @renderICNameNonTypeaheadInput()
 
+  validateNumTopics: ->
+    return unless @state.numTopics.match(/^\d+$/)?
+    numTopics = Number @state.numTopics
+    @setState validatingNumTopics: true
+    nextTick =>
+      unless @state.numTopics.match(/^\d+$/)?
+        return @setState validatingNumTopics: false
+      numTopics = Number @state.numTopics
+      browseTopics.validateNumTopicsForIC @state.icName, numTopics, (result) =>
+        return unless @state.validatingNumTopics and @isMounted()
+        @setState validatingNumTopics: false
+        if result
+          @props.onLocationChange
+            type: @props.location.type
+            ingestedCorpus: @state.icName
+            numTopics: Number numTopics
+
+  handleNumTopicsFocused: ->
+    @setState
+      numTopicsFocused: true
+      validatingNumTopics: false
+
+  handleNumTopicsTypeaheadBlured: ->
+    @setState numTopicsFocused: false
+    if @props.location.numTopics isnt Number(@state.numTopics)
+      @props.onLocationChange
+        type: @props.location.type
+        ingestedCorpus: @props.location.ingestedCorpus
+      @validateNumTopics()
+
+  renderNumTopicsNonTypeaheadInput: ->
+    divClassName = "form-group"
+    accessory = null
+    if @state.numTopics is ""
+      # no op
+    else if @state.validatingNumTopics
+      divClassName += " has-feedback"
+      accessory =
+        <i
+          className="form-control-feedback fa fa-circle-o-notch fa-spin"
+          style={lineHeight: "34px", opacity: 0.5}
+        />
+    else if @props.location.numTopics?
+      divClassName += " has-success has-feedback"
+      accessory =
+        <i
+          className="form-control-feedback fa fa-check"
+          style={lineHeight: "34px"}
+        />
+    else
+      divClassName += " has-error has-feedback"
+      accessory =
+        <i
+          className="form-control-feedback fa fa-times"
+          style={lineHeight: "34px"}
+        />
+    <div className={divClassName} style={marginBottom: 0}>
+      <label className="col-sm-4 control-label">Number of Topics</label>
+      <div className="col-sm-8">
+        <input
+          type="text"
+          className="form-control col-sm-8"
+          value={@state.numTopics}
+          onChange={nop}
+          onFocus={@handleNumTopicsFocused}
+        />
+        {accessory}
+      </div>
+    </div>
+
+  handleNumTopicsInputChanged : (value) ->
+    @setState numTopics: value
+
   renderNumTopics: ->
+    return unless @props.location.ingestedCorpus?
+    if @state.numTopicsFocused
+      <div className="form-group" style={marginBottom: 0}>
+        <label className="col-sm-4 control-label">Number of Topics</label>
+        <div className="col-sm-8">
+          <Typeahead
+            value={@state.numTopics}
+            className="col-sm-8"
+            onChange={@handleNumTopicsInputChanged}
+            onBlur={@handleNumTopicsTypeaheadBlured}
+            autoFocus={true}
+            suggestions={@state.existingNumTopics}
+          />
+        </div>
+      </div>
+    else
+      @renderNumTopicsNonTypeaheadInput()
 
   render: ->
-    <div>
-      <div className="col-sm-6 col-sm-offset-3">
-        {@renderTypeButtons()}
-        <div className="form-horizontal">
-          {@renderICName()}
-          {@renderNumTopics()}
+    <div className="col-sm-6 col-sm-offset-3">
+      <div className="panel panel-default">
+        <div className="panel-body">
+          {@renderTypeButtons()}
+          <div className="form-horizontal clearfix">
+            {@renderICName()}
+            {@renderNumTopics()}
+          </div>
         </div>
       </div>
     </div>
@@ -179,3 +295,4 @@ module.exports = React.createClass
       return unless @isMounted()
       @setState existingICInferencers: ingestedCorpora
     @validateICName()
+    @fetchExistingNumTopics()

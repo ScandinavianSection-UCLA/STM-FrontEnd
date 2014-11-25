@@ -1,8 +1,8 @@
 # @cjsx React.DOM
 
 Breadcrumb = require "./browse/breadcrumb"
-ExploreInferencer = require "./topics/explore-inferencer"
-ExploreIngestedCorpus = require "./topics/explore-ingested-corpus"
+ExploreInferencer = require "./browse/explore-inferencer"
+ExploreIngestedCorpus = require "./browse/explore-ingested-corpus"
 MakeSelection = require "./browse/make-selection"
 React = require "react"
 
