@@ -1,10 +1,13 @@
 {
   "bundles": {
     "curation": {
-      "title": "Curation"
+      "title": "Curation · STM, Scandinavian Section, UCLA"
+    },
+    "topics": {
+      "title": "Topics · STM, Scandinavian Section, UCLA"
     }
   },
   "dataPath": "./data",
   "malletPath": "~/Documents/STM/Mallet/bin/mallet",
-  "simulateBadLatency": false
+  "simulateBadLatency": true
 }

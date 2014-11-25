@@ -1,6 +1,7 @@
 require "coffee-react/register"
 
 bodyParser = require "body-parser"
+browseTopicsCalls = require "./async-calls/browse-topics"
 buildInferencerIO = require "./io/build-inferencer-io"
 bundlesRouter = require "./routers/bundles-router"
 compression = require "compression"
@@ -39,6 +40,7 @@ router.use ingestedCorpusCalls.router express: express, bodyParser: bodyParser
 router.use "/files", filesRouter
 router.use processCorpusCalls.router express: express, bodyParser: bodyParser
 router.use topicModelingCalls.router express: express, bodyParser: bodyParser
+router.use browseTopicsCalls.router express: express, bodyParser: bodyParser
 
 server = http.createServer router
 

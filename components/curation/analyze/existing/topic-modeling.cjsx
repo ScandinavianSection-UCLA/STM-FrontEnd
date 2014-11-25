@@ -32,27 +32,28 @@ module.exports = React.createClass
   componentWillReceiveProps: (props) ->
     unless deepEqual @props.ingestedCorpus, props.ingestedCorpus
       @setState @getDefaultState props
-      nextTick => @getTMStatus()
+      @getTMStatus()
 
   getTMStatus: ->
     @setState gettingTMStatus: true
-    if @state.numTopics.match(/^\d+$/)?
-      numTopics = Number @state.numTopics
-      ingestedCorpusCalls.getTMStatus @props.ingestedCorpus.name, numTopics,
-        (statuses) =>
-          return unless @state.gettingTMStatus and @isMounted()
-          @setState
-            inferencerStatus: statuses.inferencer ? null
-            topicsInferredStatus: statuses.topicsInferred ? null
-            gettingTMStatus: false
-          @props.onNumTopicsChange numTopics
-          @listenToChanges()
-    else
-      @setState
-        inferencerStatus: null
-        topicsInferredStatus: null
-        gettingTMStatus: false
-      @props.onNumTopicsChange null
+    nextTick =>
+      if @state.numTopics.match(/^\d+$/)?
+        numTopics = Number @state.numTopics
+        ingestedCorpusCalls.getTMStatus @props.ingestedCorpus.name, numTopics,
+          (statuses) =>
+            return unless @state.gettingTMStatus and @isMounted()
+            @setState
+              inferencerStatus: statuses.inferencer ? null
+              topicsInferredStatus: statuses.topicsInferred ? null
+              gettingTMStatus: false
+            @props.onNumTopicsChange numTopics
+            @listenToChanges()
+      else
+        @setState
+          inferencerStatus: null
+          topicsInferredStatus: null
+          gettingTMStatus: false
+        @props.onNumTopicsChange null
 
   handleInputFocused: ->
     @setState
@@ -66,7 +67,7 @@ module.exports = React.createClass
       not @state.numTopics.match(/^\d+$/)?
     )
       @props.onNumTopicsChange null
-      nextTick => @getTMStatus() if Number(@state.numTopics) > 0
+      @getTMStatus() if Number(@state.numTopics) > 0
 
   handleInputChanged: (event) ->
     @setState numTopics: event.target.value

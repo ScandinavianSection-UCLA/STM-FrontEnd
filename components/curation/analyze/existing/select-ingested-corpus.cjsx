@@ -32,18 +32,19 @@ module.exports = React.createClass
 
   validateIngestedCorpus: ->
     @setState validatingIngestedCorpus: true
-    ingestedCorpusCalls.validate @state.icName, false, (result) =>
-      return unless @state.validatingIngestedCorpus and @isMounted()
-      return @setState validatingIngestedCorpus: false unless result
-      ingestedCorpusCalls.getDetails @state.icName, (details) =>
+    nextTick =>
+      ingestedCorpusCalls.validate @state.icName, false, (result) =>
         return unless @state.validatingIngestedCorpus and @isMounted()
-        @setState validatingIngestedCorpus: false
-        @props.onIngestedCorpusChange
-          name: @state.icName
-          corpus: details.corpus
-          dependsOn: details.dependsOn
-          status: details.status
-        @listenToChanges() if details.status is "processing"
+        return @setState validatingIngestedCorpus: false unless result
+        ingestedCorpusCalls.getDetails @state.icName, (details) =>
+          return unless @state.validatingIngestedCorpus and @isMounted()
+          @setState validatingIngestedCorpus: false
+          @props.onIngestedCorpusChange
+            name: @state.icName
+            corpus: details.corpus
+            dependsOn: details.dependsOn
+            status: details.status
+          @listenToChanges() if details.status is "processing"
 
   listenToChanges: ->
     hash = md5 @props.ingestedCorpus?.name
@@ -65,7 +66,7 @@ module.exports = React.createClass
     @setState icNameFocused: false
     if @props.ingestedCorpus?.name isnt @state.icName
       @props.onIngestedCorpusChange null
-      nextTick => @validateIngestedCorpus()
+      @validateIngestedCorpus()
 
   renderNonTypeaheadInput: ->
     divClassName = "form-group"

@@ -1,5 +1,10 @@
 request = require "superagent"
 
+bindAllToSelf = (obj) ->
+  for name of obj when typeof callback is "function"
+    obj[name] = obj[name].bind @
+  obj
+
 makeRestInterface = (calls, mountPath) ->
   restInterface = {}
   for name of calls then do (name) ->
@@ -20,13 +25,14 @@ makeRouter = (calls, mountPath) -> ({express, bodyParser}) ->
   for name, func of calls then do (name, func) ->
     router.post "#{mountPath}/#{name}", (req, res, next) ->
       if req.body.callback
-        func req.body.args..., ->
+        func.apply calls, req.body.args.concat ->
           res.json result: Array.prototype.slice.call arguments
       else
-        func req.body.args...
+        func.apply calls, req.body.args
         res.end()
 
 module.exports = ({calls, mountPath}) ->
+  # bindAllToSelf calls
   router: makeRouter calls, mountPath
   calls:
     if typeof window isnt "undefined"

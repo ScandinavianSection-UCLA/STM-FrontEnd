@@ -25,19 +25,20 @@ module.exports = React.createClass
 
   validateCorpus: ->
     @setState validatingCorpus: true
-    corpusCalls.validate @state.corpusName, @state.corpusType, (result) =>
-      return unless @state.validatingCorpus and @isMounted()
-      @setState validatingCorpus: false
-      if result
-        @props.onCorpusChange
-          name: @state.corpusName
-          type: @state.corpusType
+    nextTick => 
+      corpusCalls.validate @state.corpusName, @state.corpusType, (result) =>
+        return unless @state.validatingCorpus and @isMounted()
+        @setState validatingCorpus: false
+        if result
+          @props.onCorpusChange
+            name: @state.corpusName
+            type: @state.corpusType
 
   handleCorpusTypeChanged: (type) ->
     @setState corpusType: type
     if @props.corpus?.type isnt type
       @props.onCorpusChange null
-      nextTick => @validateCorpus()
+      @validateCorpus()
 
   renderTypeButtons: ->
     corpusClass = "col-sm-6 btn btn-default"
@@ -73,7 +74,7 @@ module.exports = React.createClass
     @setState corpusNameFocused: false
     if @props.corpus?.name isnt @state.corpusName
       @props.onCorpusChange null
-      nextTick => @validateCorpus()
+      @validateCorpus()
 
   renderNonTypeaheadInput: ->
     placeholder =

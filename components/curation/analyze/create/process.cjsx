@@ -36,14 +36,15 @@ module.exports = React.createClass
       [props.corpus, props.inference]
     )
       @setState @getDefaultState props
-      nextTick => @validateSaveAs()
+      @validateSaveAs()
 
   validateSaveAs: ->
     @setState validatingSaveAs: true
-    ingestedCorpusCalls.validate @state.saveAs, false, (result) =>
-      return unless @state.validatingSaveAs and @isMounted()
-      @setState validatingSaveAs: false
-      @props.onSaveAsChange @state.saveAs unless result
+    nextTick => 
+      ingestedCorpusCalls.validate @state.saveAs, false, (result) =>
+        return unless @state.validatingSaveAs and @isMounted()
+        @setState validatingSaveAs: false
+        @props.onSaveAsChange @state.saveAs unless result
 
   handleInputFocused: ->
     @setState
@@ -54,7 +55,7 @@ module.exports = React.createClass
     @setState saveAsFocused: false
     if @props.saveAs isnt @state.saveAs
       @props.onSaveAsChange null
-      nextTick => @validateSaveAs()
+      @validateSaveAs()
 
   handleInputChanged : (event) ->
     @setState saveAs: event.target.value
