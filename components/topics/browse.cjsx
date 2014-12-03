@@ -3,6 +3,7 @@
 Breadcrumb = require "./browse/breadcrumb"
 ExploreInferencer = require "./browse/explore-inferencer"
 ExploreIngestedCorpus = require "./browse/explore-ingested-corpus"
+ExploreTopic = require "./browse/explore-topic"
 MakeSelection = require "./browse/make-selection"
 React = require "react"
 
@@ -18,7 +19,16 @@ module.exports = React.createClass
   renderChild: ->
     loc = @state.location
     if loc.type is "topic" and loc.ingestedCorpus? and loc.numTopics?
-      <ExploreInferencer />
+      if loc.entity?
+        <ExploreTopic
+          location={@state.location}
+          onLocationChange={@handleLocationChanged}
+        />
+      else
+        <ExploreInferencer
+          location={@state.location}
+          onLocationChange={@handleLocationChanged}
+        />
     else if loc.type is "article" and loc.ingestedCorpus?
       <ExploreIngestedCorpus />
     else

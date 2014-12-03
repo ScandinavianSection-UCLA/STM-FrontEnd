@@ -50,8 +50,16 @@ exports.Topic = metaDB.model "Topic",
 
 exports.SaturationRecord = metaDB.model "SaturationRecord",
   new mongoose.Schema(
-    topicsInferred: type: mongoose.Schema.ObjectId, ref: "TopicsInferred"
+    topicsInferred:
+      type: mongoose.Schema.ObjectId
+      ref: "TopicsInferred"
+      index: true
     articleID: String
-    topic: type: mongoose.Schema.ObjectId, ref: "Topic"
-    proportion: Number
+    topic:
+      type: mongoose.Schema.ObjectId
+      ref: "Topic"
+      index: true
+    proportion:
+      type: Number
+      index: true
   ), "saturationRecords"

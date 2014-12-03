@@ -1,5 +1,6 @@
 # @cjsx React.DOM
 
+browseArticles = require("../../../async-calls/browse-articles").calls
 browseTopics = require("../../../async-calls/browse-topics").calls
 extend = require "extend"
 nextTick = require "next-tick"
@@ -86,7 +87,11 @@ module.exports = React.createClass
   validateICName: ->
     @setState validatingICName: true
     nextTick =>
-      browseTopics.validateICName @state.icName, (result) =>
+      browse =
+        switch @props.location.type
+          when "topic" then browseTopics
+          when "article" then browseArticles
+      browse?.validateICName @state.icName, (result) =>
         return unless @state.validatingICName and @isMounted()
         @setState validatingICName: false
         if result
@@ -259,7 +264,10 @@ module.exports = React.createClass
     @setState numTopics: value
 
   renderNumTopics: ->
-    return unless @props.location.ingestedCorpus?
+    return unless (
+      @props.location.ingestedCorpus? and
+      not @state.validatingICName
+    )
     if @state.numTopicsFocused
       <div className="form-group" style={marginBottom: 0}>
         <label className="col-sm-4 control-label">Number of Topics</label>
@@ -294,5 +302,8 @@ module.exports = React.createClass
     browseTopics.getIngestedCorpora (ingestedCorpora) =>
       return unless @isMounted()
       @setState existingICInferencers: ingestedCorpora
+    browseArticles.getIngestedCorpora (ingestedCorpora) =>
+      return unless @isMounted()
+      @setState existingIC: ingestedCorpora
     @validateICName()
     @fetchExistingNumTopics()

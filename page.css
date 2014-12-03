@@ -6,3 +6,12 @@ body {
 body {
   padding-top: 70px;
 }
+
+.breadcrumb > li + li::before {
+  content: ">";
+}
+
+.tooltip-inner {
+  white-space:nowrap;
+  max-width:none;
+}

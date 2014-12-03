@@ -9,7 +9,13 @@ module.exports = React.createClass
       type: React.PropTypes.oneOf(["topic", "article"]).isRequired
       ingestedCorpus: React.PropTypes.string
       numTopics: React.PropTypes.number
-      entity: React.PropTypes.string
+      entity: React.PropTypes.oneOfType [
+        React.PropTypes.string
+        React.PropTypes.shape
+          words: React.PropTypes.arrayOf React.PropTypes.shape(
+            word: React.PropTypes.string.isRequired
+          ).isRequired
+      ]
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
 
@@ -66,18 +72,27 @@ module.exports = React.createClass
         # no op
       else if loc.entity?
          <li onClick={@handleNumClicked}>
-          <a href="#">Number of Topics: {loc.numTopics}</a>
+          <a href="#">{loc.numTopics} topics</a>
         </li>
       else
         <li className="active">
-          Number of Topics: {loc.numTopics}
+          {loc.numTopics} topics
         </li>
     entityLI =
       unless loc.entity?
         # no op
       else
+        entityText =
+          switch loc.type
+            when "topic"
+              loc.entity.words[0...3]
+                .map (x) -> x.word
+                .concat "…"
+                .join ", "
+            when "article"
+              loc.entity
         <li className="active">
-          {loc.entity}
+          {entityText}
         </li>
     <ol className="breadcrumb">
       {homeLI}
