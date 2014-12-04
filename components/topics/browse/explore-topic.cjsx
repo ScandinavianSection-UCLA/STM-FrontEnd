@@ -3,6 +3,7 @@
 browseTopics = require("../../../async-calls/browse-topics").calls
 React = require "react"
 RelatedArticles = require "./explore-topic/related-articles"
+RelatedCorpora = require "./explore-topic/related-corpora"
 RelatedTopics = require "./explore-topic/related-topics"
 TopPhrases = require "./explore-topic/top-phrases"
 TopWords = require "./explore-topic/top-words"
@@ -51,6 +52,10 @@ module.exports = React.createClass
       </div>
       <div className="col-sm-4">
         <RelatedTopics
+          location={@props.location}
+          onLocationChange={@handleLocationChanged}
+        />
+        <RelatedCorpora
           location={@props.location}
           onLocationChange={@handleLocationChanged}
         />

@@ -75,7 +75,7 @@ browseTopics =
   getSimilarTopics: (topic, callback) ->
     async.auto
       thisTopic: (callback) ->
-        db.Topic.findOne topic, "inferencer", callback
+        db.Topic.findById topic, "inferencer", callback
       topics: ["thisTopic", (callback, {thisTopic}) ->
         db.Topic.find
           inferencer: thisTopic.inferencer
@@ -123,6 +123,25 @@ browseTopics =
             extend true, t.toObject(), { similarityScore }
         similarTopics.sort (a, b) -> b.similarityScore - a.similarityScore
         callback similarTopics
+
+  getRelatedICs: (topic, callback) ->
+    async.waterfall [
+      (callback) ->
+        db.Topic.findById topic, "inferencer", callback
+      (topic, callback) ->
+        db.TopicsInferred
+          .find
+            inferencer: topic.inferencer
+            status: "done"
+            "ingestedCorpus"
+          .populate "ingestedCorpus"
+          .exec callback
+    ], (err, topicsInferred) ->
+      return console.error err if err?
+      relatedICs =
+        x.ingestedCorpus for x in topicsInferred
+      relatedICs.sort (a, b) -> a.name.localeCompare b.name
+      callback relatedICs
 
 module.exports = asyncCaller
   mountPath: "/async-calls/browse-topics"

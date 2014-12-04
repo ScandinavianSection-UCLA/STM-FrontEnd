@@ -1,6 +1,6 @@
 # @cjsx React.DOM
 
-browseTopics = require("../../../async-calls/browse-topics").calls
+browseTopics = require("../../../../async-calls/browse-topics").calls
 React = require "react"
 
 module.exports = React.createClass
@@ -57,8 +57,11 @@ module.exports = React.createClass
   render: ->
     <div className="panel panel-default">
       <div className="panel-heading">
-        <h3 className="panel-title">Related Corpora</h3>
+        <h3 className="panel-title">Inferred on Corpora</h3>
       </div>
       {@renderRelatedICsUL()}
       {@renderLoadingIndicator()}
     </div>
+
+  componentDidMount: ->
+    @loadRelatedICs @props
