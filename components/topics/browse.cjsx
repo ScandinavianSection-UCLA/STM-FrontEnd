@@ -30,7 +30,10 @@ module.exports = React.createClass
           onLocationChange={@handleLocationChanged}
         />
     else if loc.type is "article" and loc.ingestedCorpus?
-      <ExploreIngestedCorpus />
+      <ExploreIngestedCorpus
+        location={@state.location}
+        onLocationChange={@handleLocationChanged}
+      />
     else
       <MakeSelection
         location={@state.location}

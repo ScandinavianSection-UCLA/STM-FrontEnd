@@ -22,8 +22,8 @@ module.exports = React.createClass
 
   loadTopics: (props) ->
     @setState loadingTopics: true
-    browseTopics.getTopicsForIC @props.location.ingestedCorpus,
-      @props.location.numTopics, (topics) =>
+    browseTopics.getTopicsForIC props.location.ingestedCorpus,
+      props.location.numTopics, (topics) =>
         @setState
           topics: topics
           loadingTopics: false

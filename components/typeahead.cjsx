@@ -1,5 +1,6 @@
 # @cjsx React.DOM
 
+escapeStringRegexp = require "escape-string-regexp"
 nextTick = require "next-tick"
 React = require "react"
 
@@ -29,7 +30,7 @@ module.exports = React.createClass
 
   getItems: (value) ->
     query = ".*"
-    query += "#{c}.*" for c in value ? @props.value
+    query += "#{escapeStringRegexp c}.*" for c in value ? @props.value
     regexp = new RegExp query, "ig"
     items =
       for item in @props.suggestions when item.match(regexp)?
