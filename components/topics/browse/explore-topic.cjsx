@@ -31,10 +31,6 @@ module.exports = React.createClass
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
 
-  getInitialState: ->
-    articles: null
-    loadingArticles: false
-
   handleLocationChanged: (location) ->
     @props.onLocationChange location
 

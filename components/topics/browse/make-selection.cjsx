@@ -286,13 +286,15 @@ module.exports = React.createClass
       @renderNumTopicsNonTypeaheadInput()
 
   render: ->
-    <div className="col-sm-6 col-sm-offset-3">
-      <div className="panel panel-default">
-        <div className="panel-body">
-          {@renderTypeButtons()}
-          <div className="form-horizontal clearfix">
-            {@renderICName()}
-            {@renderNumTopics()}
+    <div className="row">
+      <div className="col-sm-6 col-sm-offset-3">
+        <div className="panel panel-default">
+          <div className="panel-body">
+            {@renderTypeButtons()}
+            <div className="form-horizontal clearfix">
+              {@renderICName()}
+              {@renderNumTopics()}
+            </div>
           </div>
         </div>
       </div>

@@ -48,6 +48,12 @@ module.exports = React.createClass
         articles: articles
         loadingArticles: false
 
+  handleArticleClicked: (article) ->
+    @props.onLocationChange
+      type: "article"
+      ingestedCorpus: article.ingestedCorpus
+      entity: article.articleID
+
   renderArticleLI: (article, i) ->
     proportion = article.proportion * 100
     proportion = proportion.toFixed 2
@@ -66,7 +72,8 @@ module.exports = React.createClass
     <a
       className="list-group-item"
       key={i}
-      href="#">
+      href="#"
+      onClick={@handleArticleClicked.bind @, article}>
       {pieChart}
       <div>{article.articleID}</div>
       <div>

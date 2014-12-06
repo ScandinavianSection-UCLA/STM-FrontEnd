@@ -32,8 +32,17 @@ module.exports = React.createClass
         relatedICs: relatedICs
         loadingRelatedICs: false
 
+  handleRelatedICClicked: (relatedIC) ->
+    @props.onLocationChange
+      type: "article"
+      ingestedCorpus: relatedIC.name
+
   renderRelatedICsLI: (relatedIC, i) ->
-    <a className="list-group-item" key={i} href="#">
+    <a
+      className="list-group-item"
+      key={i}
+      href="#"
+      onClick={@handleRelatedICClicked.bind @, relatedIC}>
       {relatedIC.name}
     </a>
 

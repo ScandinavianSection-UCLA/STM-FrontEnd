@@ -71,13 +71,15 @@ module.exports = React.createClass
   render: ->
     ic = @props.location.ingestedCorpus
     numTopics = @props.location.numTopics
-    <div className="col-sm-6 col-sm-offset-3">
-      <div className="panel panel-default">
-        <div className="panel-heading">
-          <h3 className="panel-title">Topics in {ic} ({numTopics} topics)</h3>
+    <div className="row">
+      <div className="col-sm-6 col-sm-offset-3">
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h3 className="panel-title">Topics in {ic} ({numTopics} topics)</h3>
+          </div>
+          {@renderTopicsUL()}
+          {@renderLoadingIndicator()}
         </div>
-        {@renderTopicsUL()}
-        {@renderLoadingIndicator()}
       </div>
     </div>
 

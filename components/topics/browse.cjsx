@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
 Breadcrumb = require "./browse/breadcrumb"
+ExploreArticle = require "./browse/explore-article"
 ExploreInferencer = require "./browse/explore-inferencer"
 ExploreIngestedCorpus = require "./browse/explore-ingested-corpus"
 ExploreTopic = require "./browse/explore-topic"
@@ -30,10 +31,16 @@ module.exports = React.createClass
           onLocationChange={@handleLocationChanged}
         />
     else if loc.type is "article" and loc.ingestedCorpus?
-      <ExploreIngestedCorpus
-        location={@state.location}
-        onLocationChange={@handleLocationChanged}
-      />
+      if loc.entity?
+        <ExploreArticle
+          location={@state.location}
+          onLocationChange={@handleLocationChanged}
+        />
+      else
+        <ExploreIngestedCorpus
+          location={@state.location}
+          onLocationChange={@handleLocationChanged}
+        />
     else
       <MakeSelection
         location={@state.location}

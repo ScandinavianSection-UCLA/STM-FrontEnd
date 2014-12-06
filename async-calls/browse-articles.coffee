@@ -1,6 +1,8 @@
 async = require "async"
 asyncCaller = require "../async-caller"
+dataPath = require("../constants").dataPath
 db = require "../db"
+fs = require "node-fs"
 
 browseArticles =
   getIngestedCorpora: (callback) ->
@@ -42,6 +44,64 @@ browseArticles =
     ], (err, articles) ->
       return console.error err if err?
       callback articles
+
+  getContent: (icName, articleID, callback) ->
+    async.waterfall [
+      (callback) ->
+        db.IngestedCorpus.findOne name: icName, callback
+      (ic, callback) ->
+        fs.readFile "#{dataPath}/files/#{ic.corpus}/#{articleID}",
+          encoding: "utf8", callback
+    ], (err, content) ->
+      return console.error err if err?
+      callback content
+
+  getRelatedInferencers: (icName, articleID, callback) ->
+    async.waterfall [
+      (callback) ->
+        db.IngestedCorpus.findOne name: icName, callback
+      (ic, callback) ->
+        db.TopicsInferred.find ingestedCorpus: ic._id, callback
+      (topicsInferred, callback) ->
+        tiIDs = topicsInferred.map (x) -> x._id
+        db.SaturationRecord.aggregate()
+          .match
+            topicsInferred: $in: tiIDs
+            articleID: articleID
+          .group
+            _id: "$topicsInferred"
+            topics:
+              $push:
+                topic: "$topic"
+                proportion: "$proportion"
+          .exec callback
+      (results, callback) ->
+        db.TopicsInferred.populate results,
+          path: "_id"
+          select: "inferencer"
+          callback
+      (results, callback) ->
+        db.Inferencer.populate results,
+          path: "_id.inferencer"
+          select: "ingestedCorpus numTopics"
+          callback
+      (results, callback) ->
+        db.IngestedCorpus.populate results,
+          path: "_id.inferencer.ingestedCorpus"
+          select: "name"
+          callback
+      (results, callback) ->
+        db.Topic.populate results,
+          path: "topics.topic"
+          select: "totalTokens words phrases"
+          callback
+    ], (err, results) ->
+      return console.error err if err?
+      results = results.map (result) ->
+        ingestedCorpus: result._id.inferencer.ingestedCorpus.name
+        numTopics: result._id.inferencer.numTopics
+        topics: result.topics.sort (a, b) -> b.proportion - a.proportion
+      callback results
 
 module.exports = asyncCaller
   mountPath: "/async-calls/browse-articles"

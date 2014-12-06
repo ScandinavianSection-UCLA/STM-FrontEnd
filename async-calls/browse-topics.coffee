@@ -129,17 +129,25 @@ browseTopics =
       (callback) ->
         db.Topic.findById topic, "inferencer", callback
       (topic, callback) ->
+        db.TopicsInferred .find
+          inferencer: topic.inferencer
+          status: "done"
+          callback
+      (topicsInferred, callback) ->
+        tiIDs = topicsInferred.map (x) -> x._id
+        db.SaturationRecord
+          .find topicsInferred: $in: tiIDs
+          .distinct "topicsInferred"
+          .exec callback
+      (filteredTIIDs, callback) ->
         db.TopicsInferred
-          .find
-            inferencer: topic.inferencer
-            status: "done"
-            "ingestedCorpus"
+          .find _id: $in: filteredTIIDs, "ingestedCorpus"
           .populate "ingestedCorpus"
           .exec callback
-    ], (err, topicsInferred) ->
+    ], (err, filteredTopicsInferred) ->
       return console.error err if err?
       relatedICs =
-        x.ingestedCorpus for x in topicsInferred
+        x.ingestedCorpus for x in filteredTopicsInferred
       relatedICs.sort (a, b) -> a.name.localeCompare b.name
       callback relatedICs
 

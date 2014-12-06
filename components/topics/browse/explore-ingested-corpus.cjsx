@@ -39,11 +39,18 @@ module.exports = React.createClass
     regexp = new RegExp query, "ig"
     item for item in @state.articles when item.match(regexp)?
 
+  handleArticleClicked: (article) ->
+    @props.onLocationChange
+      type: "article"
+      ingestedCorpus: @props.location.ingestedCorpus
+      entity: article
+
   renderArticleLI: (article, i) ->
     <a
       className="list-group-item"
       key={i}
-      href="#">
+      href="#"
+      onClick={@handleArticleClicked.bind @, article}>
       {article}
     </a>
 
@@ -83,28 +90,30 @@ module.exports = React.createClass
 
   render: ->
     ic = @props.location.ingestedCorpus
-    <div className="col-sm-6 col-sm-offset-3">
-      <div className="panel panel-default">
-        <div className="panel-heading">
-          <h3 className="panel-title" style={marginBottom: 10}>
-            Articles in {ic}
-          </h3>
-          <div className="input-group">
-            <span className="input-group-addon">
-              <i className="fa fa-search" />
-            </span>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Filter"
-              value={@state.filterQuery}
-              onChange={@handleFilterQueryChanged}
-            />
+    <div className="row">
+      <div className="col-sm-6 col-sm-offset-3">
+        <div className="panel panel-default">
+          <div className="panel-heading">
+            <h3 className="panel-title" style={marginBottom: 10}>
+              Articles in {ic}
+            </h3>
+            <div className="input-group">
+              <span className="input-group-addon">
+                <i className="fa fa-search" />
+              </span>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Filter"
+                value={@state.filterQuery}
+                onChange={@handleFilterQueryChanged}
+              />
+            </div>
           </div>
+          {@renderArticlesUL()}
+          {@renderLoadingIndicator()}
+          {@renderFooter()}
         </div>
-        {@renderArticlesUL()}
-        {@renderLoadingIndicator()}
-        {@renderFooter()}
       </div>
     </div>
 
