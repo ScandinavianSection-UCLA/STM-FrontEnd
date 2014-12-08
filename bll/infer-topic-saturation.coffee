@@ -43,13 +43,18 @@ saveMeasuring = (file, name, numTopics, callback) ->
         db.Topic.find
           inferencer: inferencer._id
           callback
-    ], (err, {topicsInferred, topics}) ->
+    ], (err, {topicsInferred, topics, ingestedCorpus}) ->
       topicsHash = {}
       for topic in topics
         topicsHash[topic.id] = topic
-      cargo = async.cargo (records, callback) ->
+      saturationRecordsCargo = async.cargo (records, callback) ->
         bulk = db.SaturationRecord.collection.initializeUnorderedBulkOp()
         bulk.insert record for record in records
+        bulk.execute callback
+      , 1000
+      articlesCargo = async.cargo (articles, callback) ->
+        bulk = db.Article.collection.initializeUnorderedBulkOp()
+        bulk.insert article.toObject() for article in articles
         bulk.execute callback
       , 1000
       firstLineDone = false
@@ -62,14 +67,19 @@ saveMeasuring = (file, name, numTopics, callback) ->
           line.shift()
           articleID = line.shift()
           articleID = articleID.split("/")[-1..][0]
+          article =
+            new db.Article
+              name: articleID
+              ingestedCorpus: ingestedCorpus._id
+          articlesCargo.push article
           for prob, i in line
-            cargo.push
+            saturationRecordsCargo.push
               topicsInferred: topicsInferred._id
-              articleID: articleID
+              article: article._id
               topic: topicsHash[i]._id
               proportion: Number prob
-        cargo.drain = ->
-          callback()
+      saturationRecordsCargo.drain = ->
+        callback()
 
 inferTopicSaturation = (name, numTopics, callback) ->
   db.IngestedCorpus.findOne name: name, (err, ic) ->

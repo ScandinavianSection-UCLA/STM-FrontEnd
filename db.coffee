@@ -16,6 +16,12 @@ exports.IngestedCorpus = metaDB.model "IngestedCorpus",
     status: String
   ), "ingestedCorpora"
 
+exports.Article = metaDB.model "Article",
+  new mongoose.Schema(
+    name: String
+    ingestedCorpus: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
+  ), "articles"
+
 exports.Inferencer = metaDB.model "Inferencer",
   new mongoose.Schema(
     ingestedCorpus: type: mongoose.Schema.ObjectId, ref: "IngestedCorpus"
@@ -54,7 +60,10 @@ exports.SaturationRecord = metaDB.model "SaturationRecord",
       type: mongoose.Schema.ObjectId
       ref: "TopicsInferred"
       index: true
-    articleID: String
+    article:
+      type: mongoose.Schema.ObjectId
+      ref: "Article"
+      index: true
     topic:
       type: mongoose.Schema.ObjectId
       ref: "Topic"

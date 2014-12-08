@@ -2,7 +2,6 @@
 
 BinaryPieChart = require "../../../binary-pie-chart"
 browseTopics = require("../../../../async-calls/browse-topics").calls
-humanFormat = require "human-format"
 React = require "react"
 Tooltip = require "../../../tooltip"
 

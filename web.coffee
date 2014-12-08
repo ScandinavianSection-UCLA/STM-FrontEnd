@@ -31,6 +31,10 @@ if simulateBadLatency
   router.use (req, res, next) ->
     setTimeout next, Math.random() * 1000 + 200
 
+router.use (req, res, next) ->
+  res.setTimeout 0
+  next()
+
 router.use compression()
 router.use rootViewsRouter
 router.use "/static", staticRouter

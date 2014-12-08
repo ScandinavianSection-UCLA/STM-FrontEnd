@@ -54,10 +54,11 @@ browseTopics =
     async.waterfall [
       (callback) ->
         db.SaturationRecord
-          .find topic: topic, "topicsInferred articleID proportion"
+          .find topic: topic, "topicsInferred article proportion"
           .sort "-proportion"
           .limit 20
           .populate "topicsInferred", "ingestedCorpus"
+          .populate "article"
           .exec callback
       (saturationRecords, callback) ->
         db.IngestedCorpus.populate saturationRecords,
@@ -68,7 +69,7 @@ browseTopics =
       return console.error err if err?
       articles = saturationRecords.map (x) ->
         ingestedCorpus: x.topicsInferred.ingestedCorpus.name
-        articleID: x.articleID
+        articleID: x.article.name
         proportion: x.proportion
       callback articles
 
@@ -87,11 +88,11 @@ browseTopics =
         db.SaturationRecord
           .find
             topic: topic
-            "topicsInferred articleID proportion"
+            "topicsInferred article proportion"
           .stream()
             .on "data", (doc) ->
               thisSats[doc.topicsInferred] ?= {}
-              thisSats[doc.topicsInferred][doc.articleID] = doc.proportion
+              thisSats[doc.topicsInferred][doc.article] = doc.proportion
             .on "error", console.error
             .on "close", ->
               callback null, thisSats
@@ -105,7 +106,7 @@ browseTopics =
             .on "data", (doc) ->
               jointDist[doc.topic] ?= 0
               jointDist[doc.topic] +=
-                doc.proportion * thisSats[doc.topicsInferred][doc.articleID]
+                doc.proportion * thisSats[doc.topicsInferred][doc.article]
               marginalDist[doc.topic] ?= 0
               marginalDist[doc.topic] += doc.proportion
             .on "error", console.error

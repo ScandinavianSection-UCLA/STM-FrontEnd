@@ -1,7 +1,9 @@
 async = require "async"
 asyncCaller = require "../async-caller"
+chunk = require "chunk"
 dataPath = require("../constants").dataPath
 db = require "../db"
+hashCode = require "../hash-code"
 fs = require "node-fs"
 
 browseArticles =
@@ -39,7 +41,12 @@ browseArticles =
         tiIDs = topicsInferred.map (x) -> x._id
         db.SaturationRecord
           .find topicsInferred: $in: tiIDs
-          .distinct "articleID"
+          .distinct "article"
+          .exec callback
+      (articleIDs, callback) ->
+        db.Article
+          .find _id: $in: articleIDs
+          .distinct "name"
           .exec callback
     ], (err, articles) ->
       return console.error err if err?
@@ -61,13 +68,17 @@ browseArticles =
       (callback) ->
         db.IngestedCorpus.findOne name: icName, callback
       (ic, callback) ->
-        db.TopicsInferred.find ingestedCorpus: ic._id, callback
-      (topicsInferred, callback) ->
+        db.Article.findOne name: articleID, ingestedCorpus: ic._id, callback
+      (article, callback) ->
+        db.TopicsInferred.find ingestedCorpus: article.ingestedCorpus,
+          (err, topicsInferred) ->
+            callback err, article, topicsInferred
+      (article, topicsInferred, callback) ->
         tiIDs = topicsInferred.map (x) -> x._id
         db.SaturationRecord.aggregate()
           .match
             topicsInferred: $in: tiIDs
-            articleID: articleID
+            article: article._id
           .group
             _id: "$topicsInferred"
             topics:
@@ -102,6 +113,144 @@ browseArticles =
         numTopics: result._id.inferencer.numTopics
         topics: result.topics.sort (a, b) -> b.proportion - a.proportion
       callback results
+
+  getSimilarArticles: (icName, articleID, callback) ->
+    async.auto
+      ic: (callback) ->
+        db.IngestedCorpus.findOne name: icName, callback
+      thisTopicsInferred: ["ic", (callback, {ic}) ->
+        db.TopicsInferred.find ingestedCorpus: ic._id, callback
+      ]
+      topicsInferred: ["thisTopicsInferred", (callback, {thisTopicsInferred}) ->
+        inferencerIDs = thisTopicsInferred.map (x) -> x.inferencer
+        db.TopicsInferred.find
+          inferencer: $in: inferencerIDs
+          status: "done"
+          callback
+      ]
+      article: ["ic", (callback, {ic}) ->
+        db.Article.findOne name: articleID, ingestedCorpus: ic._id, callback
+      ]
+      μs: ["topicsInferred", (callback, {topicsInferred}) ->
+        tiIDs = topicsInferred.map (x) -> x._id
+        db.SaturationRecord.aggregate()
+          .match
+            topicsInferred: $in: tiIDs
+          .group
+            _id: "$article"
+            μ: $avg: "$proportion"
+          .exec callback
+      ]
+      thisσEs: ["article", "μs", (callback, {article, μs}) ->
+        thisμ = μs.filter((x) -> x._id.equals article._id)[0].μ
+        db.SaturationRecord.aggregate()
+          .match
+            article: article._id
+          .project
+            topic: "$topic"
+            σE: $subtract: ["$proportion", $literal: thisμ]
+          .exec callback
+      ]
+      dist: ["thisσEs", "μs", "article", (callback, {thisσEs, μs, article}) ->
+        thisσEsCondObj = do ->
+          thisσEs = thisσEs.sort (a, b) ->
+            if a.topic < b.topic then -1 else 1
+          makeBST = (low = 0, high = thisσEs.length - 1) ->
+            if high is low
+              $literal: thisσEs[low].σE
+            else if high is low + 1
+              $cond: [
+                { $eq: ["$topic", $literal: thisσEs[low].topic] }
+                { $literal: thisσEs[low].σE }
+                { $literal: thisσEs[high].σE }
+              ]
+            else
+              mid = Math.floor (high + low) / 2
+              $cond: [
+                { $eq: ["$topic", $literal: thisσEs[mid].topic] }
+                { $literal: thisσEs[mid].σE }
+                $cond: [
+                  { $lt: ["$topic", $literal: thisσEs[mid].topic] }
+                  makeBST low, mid - 1
+                  makeBST mid + 1, high
+                ]
+              ]
+          makeBST()
+        μsChunks = chunk μs, 10000
+        async.mapLimit(
+          μsChunks
+          4
+          (μsChunk, callback) ->
+            μsCondObj = do ->
+              μsChunk = μsChunk.sort (a, b) ->
+                if a._id < b._id then -1 else 1
+              makeBST = (low = 0, high = μsChunk.length - 1) ->
+                if high is low
+                  $literal: μsChunk[low].μ
+                else if high is low + 1
+                  $cond: [
+                    { $eq: ["$article", $literal: μsChunk[low]._id] }
+                    { $literal: μsChunk[low].μ }
+                    { $literal: μsChunk[high].μ }
+                  ]
+                else
+                  mid = Math.floor (high + low) / 2
+                  $cond: [
+                    { $eq: ["$article", $literal: μsChunk[mid]._id] }
+                    { $literal: μsChunk[mid].μ }
+                    $cond: [
+                      { $lt: ["$article", $literal: μsChunk[mid]._id] }
+                      makeBST low, mid - 1
+                      makeBST mid + 1, high
+                    ]
+                  ]
+              makeBST()
+            db.SaturationRecord.aggregate()
+              .match
+                article: $in: μsChunk.map (x) -> x._id
+              .project
+                article: 1
+                topic: 1
+                proportion: 1
+                μ: μsCondObj
+              .project
+                article: 1
+                topic: 1
+                σE: $subtract: ["$proportion", "$μ"]
+                thisσE: thisσEsCondObj
+              .project
+                article: 1
+                cov: $multiply: ["$σE", "$thisσE"]
+                σ2: $multiply: ["$σE", "$σE"]
+              .group
+                _id: "$article"
+                cov: $avg: "$cov"
+                σ2: $avg: "$σ2"
+              .exec callback
+          (err, distChunks) ->
+            callback err, [].concat distChunks...
+        )
+      ]
+      (err, {dist, article}) ->
+        return console.error err if err?
+        thisσ = dist.filter((x) -> x._id.equals article._id)[0]
+        dist = dist.map (x) ->
+            article: x._id
+            corr: x.cov / (Math.sqrt(x.σ2) * Math.sqrt(thisσ.σ2))
+        dist.filter (x) -> x.corr >= 0
+        dist.sort (a, b) -> b.corr - a.corr
+        async.waterfall [
+          (callback) ->
+            db.Article.populate dist[1...11], "article", callback
+          (dist, callback) ->
+            db.IngestedCorpus.populate dist, "article.ingestedCorpus", callback
+        ], (err, dist) ->
+          return console.error err if err?
+          similarArticles = dist.map (x) ->
+            articleID: x.article.name
+            ingestedCorpus: x.article.ingestedCorpus.name
+            correlation: x.corr
+          callback similarArticles
 
 module.exports = asyncCaller
   mountPath: "/async-calls/browse-articles"

@@ -23,7 +23,7 @@ module.exports = React.createClass
 
   componentWillReceiveProps: (props) ->
     @setState @getDefaultState()
-    @loadingInferencers props
+    @loadInferencers props
 
   handleLocationChanged: (location) ->
     @props.onLocationChange location
