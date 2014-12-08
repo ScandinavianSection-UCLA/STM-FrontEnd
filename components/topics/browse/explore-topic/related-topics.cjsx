@@ -1,7 +1,8 @@
 # @cjsx React.DOM
 
-humanFormat = require "human-format"
+BinaryPieChart = require "../../../binary-pie-chart"
 React = require "react"
+Tooltip = require "../../../tooltip"
 
 {
   calls: browseTopics
@@ -57,9 +58,9 @@ module.exports = React.createClass
   handleSimilarTopicClicked: (similarTopic) ->
     @props.onLocationChange
       type: "topic"
-      ingestedCorpus: @props.location.ingestedCorpus
-      numTopics: @props.location.numTopics
-      entity: similarTopic
+      ingestedCorpus: similarTopic.ingestedCorpus
+      numTopics: similarTopic.numTopics
+      entity: similarTopic.topic
 
   renderSimilarTopicLI: (similarTopic, i) ->
     sampleWords =
@@ -67,24 +68,46 @@ module.exports = React.createClass
         .map (x) -> x.word
         .concat "…"
         .join ", "
-    similarityScore = humanFormat similarTopic.similarityScore, unit: ""
+    correlation = similarTopic.correlation * 100
+    correlation = correlation.toFixed 2
+    pieTitle = "Correlation: #{correlation}%"
+    pieChart =
+      <div className="pull-right">
+        <Tooltip placement="right" title={pieTitle}>
+          <BinaryPieChart
+            size={40}
+            radius={18}
+            fraction={similarTopic.correlation}
+            trueColor="#777"
+          />
+        </Tooltip>
+      </div>
     <a
       className="list-group-item"
       key={i}
       href="#"
       onClick={@handleSimilarTopicClicked.bind @, similarTopic}>
-      <span className="badge">{similarityScore}</span>
-      {sampleWords}
+      {pieChart}
+      <div>{sampleWords}</div>
+      <div>
+        <small className="text-muted">of </small>
+        {similarTopic.ingestedCorpus}
+      </div>
     </a>
 
   renderSimilarTopicsUL: ->
     return unless @state.similarTopics? and not @state.loadingSimiliarTopics
-    similarTopics =
-      for similarTopic, i in @state.similarTopics
-        @renderSimilarTopicLI similarTopic, i
-    <div className="list-group">
-      {similarTopics}
-    </div>
+    unless @state.similarTopics.length is 0
+      similarTopics =
+        for similarTopic, i in @state.similarTopics
+          @renderSimilarTopicLI similarTopic, i
+      <div className="list-group">
+        {similarTopics}
+      </div>
+    else
+      <div className="panel-body text-center text-muted">
+        No related topics
+      </div>
 
   renderLoadingIndicator: ->
     return unless @state.loadingSimiliarTopics

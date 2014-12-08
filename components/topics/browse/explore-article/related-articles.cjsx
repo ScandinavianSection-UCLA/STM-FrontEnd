@@ -1,7 +1,6 @@
 # @cjsx React.DOM
 
 BinaryPieChart = require "../../../binary-pie-chart"
-browseArticles = require("../../../../async-calls/browse-articles").calls
 React = require "react"
 Tooltip = require "../../../tooltip"
 

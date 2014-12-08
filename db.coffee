@@ -72,3 +72,11 @@ exports.SaturationRecord = metaDB.model "SaturationRecord",
       type: Number
       index: true
   ), "saturationRecords"
+
+exports.createTemporaryCollection = ->
+  name = "tempCollection#{Date.now()}"
+  metaDB.model "TempCollection",
+    new mongoose.Schema(
+      {}
+      strict: false
+    ), name

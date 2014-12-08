@@ -1,5 +1,6 @@
 async = require "async"
 asyncCaller = require "../async-caller"
+chunk = require "chunk"
 db = require "../db"
 extend = require "extend"
 
@@ -76,54 +77,175 @@ browseTopics =
   getSimilarTopics: (topic, callback) ->
     async.auto
       thisTopic: (callback) ->
-        db.Topic.findById topic, "inferencer", callback
-      topics: ["thisTopic", (callback, {thisTopic}) ->
-        db.Topic.find
-          inferencer: thisTopic.inferencer
-          "totalTokens words phrases"
-          callback
+        db.Topic.findById topic, callback
+      ingestedCorporaIDs: ["thisTopic", (callback, {thisTopic}) ->
+        db.TopicsInferred
+          .find inferencer: thisTopic.inferencer
+          .distinct "ingestedCorpus"
+          .exec callback
       ]
-      thisSats: (callback) ->
-        thisSats = {}
-        db.SaturationRecord
-          .find
-            topic: topic
-            "topicsInferred article proportion"
-          .stream()
-            .on "data", (doc) ->
-              thisSats[doc.topicsInferred] ?= {}
-              thisSats[doc.topicsInferred][doc.article] = doc.proportion
-            .on "error", console.error
-            .on "close", ->
-              callback null, thisSats
-      dist: ["topics", "thisSats", (callback, {topics, thisSats}) ->
-        jointDist = {}
-        marginalDist = {}
-        db.SaturationRecord
-          .find
-            topic: $in: topics.map (x) -> x._id
-          .stream()
-            .on "data", (doc) ->
-              jointDist[doc.topic] ?= 0
-              jointDist[doc.topic] +=
-                doc.proportion * thisSats[doc.topicsInferred][doc.article]
-              marginalDist[doc.topic] ?= 0
-              marginalDist[doc.topic] += doc.proportion
-            .on "error", console.error
-            .on "close", ->
-              callback null, { jointDist, marginalDist }
+      tiIDs:["ingestedCorporaIDs", (callback, {ingestedCorporaIDs}) ->
+        db.TopicsInferred
+          .find ingestedCorpus: $in: ingestedCorporaIDs
+          .distinct "_id"
+          .exec callback
       ]
-      (err, {dist: {jointDist, marginalDist}, topics}) ->
+      μs: ["tiIDs", (callback, {tiIDs}) ->
+        db.SaturationRecord.aggregate()
+          .match
+            topicsInferred: $in: tiIDs
+          .group
+            _id: "$topic"
+            μ: $avg: "$proportion"
+          .exec callback
+      ]
+      thisσEs: ["thisTopic", "μs", (callback, {thisTopic, μs}) ->
+        thisμ = μs.filter((x) -> x._id.equals thisTopic._id)[0].μ
+        db.SaturationRecord.aggregate()
+          .match
+            topic: thisTopic._id
+          .project
+            _id: 0
+            article: 1
+            σE: $subtract: ["$proportion", $literal: thisμ]
+          .exec callback
+      ]
+      aggCol: ["thisσEs", "μs", (callback, {thisσEs, μs}) ->
+        μsCondObj = do ->
+          μs = μs.sort (a, b) ->
+            if a._id < b._id then -1 else 1
+          makeBST = (low = 0, high = μs.length - 1) ->
+            if high is low
+              $literal: μs[low].μ
+            else if high is low + 1
+              $cond: [
+                { $eq: ["$topic", $literal: μs[low]._id] }
+                { $literal: μs[low].μ }
+                { $literal: μs[high].μ }
+              ]
+            else
+              mid = Math.floor (high + low) / 2
+              $cond: [
+                { $eq: ["$topic", $literal: μs[mid]._id] }
+                { $literal: μs[mid].μ }
+                $cond: [
+                  { $lt: ["$topic", $literal: μs[mid]._id] }
+                  makeBST low, mid - 1
+                  makeBST mid + 1, high
+                ]
+              ]
+          makeBST()
+        thisσEsChunks = chunk thisσEs, 20000
+        aggCol = db.createTemporaryCollection()
+        async.eachLimit(
+          thisσEsChunks
+          4
+          (thisσEsChunk, callback) ->
+            thisσEsCondObj = do ->
+              thisσEsChunk = thisσEsChunk.sort (a, b) ->
+                if a.article < b.article then -1 else 1
+              makeBST = (low = 0, high = thisσEsChunk.length - 1) ->
+                if high is low
+                  $literal: thisσEsChunk[low].σE
+                else if high is low + 1
+                  $cond: [
+                    { $eq: ["$article", $literal: thisσEsChunk[low].article] }
+                    { $literal: thisσEsChunk[low].σE }
+                    { $literal: thisσEsChunk[high].σE }
+                  ]
+                else
+                  mid = Math.floor (high + low) / 2
+                  $cond: [
+                    { $eq: ["$article", $literal: thisσEsChunk[mid].article] }
+                    { $literal: thisσEsChunk[mid].σE }
+                    $cond: [
+                      { $lt: ["$article", $literal: thisσEsChunk[mid].article] }
+                      makeBST low, mid - 1
+                      makeBST mid + 1, high
+                    ]
+                  ]
+              makeBST()
+            now = Date.now()
+            db.SaturationRecord.aggregate()
+              .match
+                topic: $in: μs.map (x) -> x._id
+                articles: $in: thisσEsChunk.map (x) -> x.article
+              .project
+                article: 1
+                topic: 1
+                proportion: 1
+                μ: μsCondObj
+                thisσE: thisσEsCondObj
+              .match
+                thisσE: $ne: null
+              .project
+                article: 1
+                topic: 1
+                σE: $subtract: ["$proportion", "$μ"]
+                thisσE: 1
+              .project
+                topic: 1
+                cov: $multiply: ["$σE", "$thisσE"]
+                σ2: $multiply: ["$σE", "$σE"]
+              .group
+                _id: "$topic"
+                cov: $sum: "$cov"
+                σ2: $sum: "$σ2"
+                count: $sum: 1
+              .project
+                _id: 0
+                topic: "$_id"
+                cov: 1
+                σ2: 1
+                count: 1
+              .append
+                $out: aggCol.collection.name
+              .exec callback
+          (err) ->
+            callback err, aggCol
+        )
+      ]
+      dist: ["aggCol", (callback, {aggCol}) ->
+        aggCol.aggregate()
+          .group
+            _id: "$topic"
+            cov: $sum: "$cov"
+            σ2: $sum: "$σ2"
+            count: $sum: "$count"
+          .project
+            cov: $divide: ["$cov", "$count"]
+            σ2: $divide: ["$σ2", "$count"]
+          .exec callback
+      ]
+      (err, {dist, thisTopic, aggCol}) ->
         return console.error err if err?
-        similarTopics =
-          for t in topics when (
-            t._id.toString() isnt topic
-          )
-            denom = marginalDist[t._id] * marginalDist[topic]
-            similarityScore = jointDist[t._id] / denom
-            extend true, t.toObject(), { similarityScore }
-        similarTopics.sort (a, b) -> b.similarityScore - a.similarityScore
-        callback similarTopics
+        aggCol.collection.drop()
+        thisσ = dist.filter((x) -> x._id.equals thisTopic._id)[0]
+        dist = dist.map (x) ->
+            topic: x._id
+            corr: x.cov / (Math.sqrt(x.σ2) * Math.sqrt(thisσ.σ2))
+        dist = dist.filter (x) -> x.corr >= 0
+        dist = dist.sort (a, b) -> b.corr - a.corr
+        async.waterfall [
+          (callback) ->
+            db.Topic.populate dist[1...11], "topic", callback
+          (dist, callback) ->
+            db.Inferencer.populate dist, "topic.inferencer", callback
+          (dist, callback) ->
+            db.IngestedCorpus.populate dist, "topic.inferencer.ingestedCorpus",
+              callback
+        ], (err, dist) ->
+          return console.error err if err?
+          similarTopics = dist.map (x) ->
+            topic:
+              _id: x.topic._id
+              totalTokens: x.topic.totalTokens
+              words: x.topic.words
+              phrases: x.topic.phrases
+            ingestedCorpus: x.topic.inferencer.ingestedCorpus.name
+            numTopics: x.topic.numTopics
+            correlation: x.corr
+          callback similarTopics
 
   getRelatedICs: (topic, callback) ->
     async.waterfall [

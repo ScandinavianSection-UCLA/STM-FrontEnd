@@ -147,11 +147,12 @@ browseArticles =
           .match
             article: article._id
           .project
-            topic: "$topic"
+            _id: 0
+            topic: 1
             σE: $subtract: ["$proportion", $literal: thisμ]
           .exec callback
       ]
-      dist: ["thisσEs", "μs", "article", (callback, {thisσEs, μs, article}) ->
+      dist: ["thisσEs", "μs", (callback, {thisσEs, μs}) ->
         thisσEsCondObj = do ->
           thisσEs = thisσEs.sort (a, b) ->
             if a.topic < b.topic then -1 else 1
@@ -237,8 +238,8 @@ browseArticles =
         dist = dist.map (x) ->
             article: x._id
             corr: x.cov / (Math.sqrt(x.σ2) * Math.sqrt(thisσ.σ2))
-        dist.filter (x) -> x.corr >= 0
-        dist.sort (a, b) -> b.corr - a.corr
+        dist = dist.filter (x) -> x.corr >= 0
+        dist = dist.sort (a, b) -> b.corr - a.corr
         async.waterfall [
           (callback) ->
             db.Article.populate dist[1...11], "article", callback
