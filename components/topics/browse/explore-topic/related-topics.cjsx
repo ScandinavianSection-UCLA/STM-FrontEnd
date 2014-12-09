@@ -64,7 +64,7 @@ module.exports = React.createClass
 
   renderSimilarTopicLI: (similarTopic, i) ->
     sampleWords =
-      similarTopic.words[0...3]
+      similarTopic.topic.words[0...3]
         .map (x) -> x.word
         .concat "…"
         .join ", "
@@ -79,6 +79,7 @@ module.exports = React.createClass
             radius={18}
             fraction={similarTopic.correlation}
             trueColor="#777"
+            falseColor="#eee"
           />
         </Tooltip>
       </div>
@@ -91,7 +92,7 @@ module.exports = React.createClass
       <div>{sampleWords}</div>
       <div>
         <small className="text-muted">of </small>
-        {similarTopic.ingestedCorpus}
+        {similarTopic.ingestedCorpus} ({similarTopic.numTopics} topics)
       </div>
     </a>
 

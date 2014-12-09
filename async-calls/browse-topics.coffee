@@ -110,7 +110,7 @@ browseTopics =
             σE: $subtract: ["$proportion", $literal: thisμ]
           .exec callback
       ]
-      aggCol: ["thisσEs", "μs", (callback, {thisσEs, μs}) ->
+      aggCols: ["thisσEs", "μs", (callback, {thisσEs, μs}) ->
         μsCondObj = do ->
           μs = μs.sort (a, b) ->
             if a._id < b._id then -1 else 1
@@ -136,8 +136,7 @@ browseTopics =
               ]
           makeBST()
         thisσEsChunks = chunk thisσEs, 20000
-        aggCol = db.createTemporaryCollection()
-        async.eachLimit(
+        async.mapLimit(
           thisσEsChunks
           4
           (thisσEsChunk, callback) ->
@@ -165,11 +164,11 @@ browseTopics =
                     ]
                   ]
               makeBST()
-            now = Date.now()
+            aggCol = db.createTemporaryCollection()
             db.SaturationRecord.aggregate()
               .match
                 topic: $in: μs.map (x) -> x._id
-                articles: $in: thisσEsChunk.map (x) -> x.article
+                article: $in: thisσEsChunk.map (x) -> x.article
               .project
                 article: 1
                 topic: 1
@@ -200,10 +199,22 @@ browseTopics =
                 count: 1
               .append
                 $out: aggCol.collection.name
-              .exec callback
-          (err) ->
-            callback err, aggCol
+              .exec (err) ->
+                callback err, aggCol
+          callback
         )
+      ]
+      aggCol: ["aggCols", (callback, {aggCols}) ->
+        aggCol = db.createTemporaryCollection()
+        async.each aggCols,
+          (x, callback) ->
+            db.eval(
+              "db.#{x.collection.name}.copyTo(\"#{aggCol.collection.name}\")"
+              callback
+            )
+          (err) ->
+            x.collection.drop() for x in aggCols
+            callback err, aggCol
       ]
       dist: ["aggCol", (callback, {aggCol}) ->
         aggCol.aggregate()
@@ -222,9 +233,9 @@ browseTopics =
         aggCol.collection.drop()
         thisσ = dist.filter((x) -> x._id.equals thisTopic._id)[0]
         dist = dist.map (x) ->
-            topic: x._id
-            corr: x.cov / (Math.sqrt(x.σ2) * Math.sqrt(thisσ.σ2))
-        dist = dist.filter (x) -> x.corr >= 0
+          topic: x._id
+          corr: x.cov / (Math.sqrt(x.σ2) * Math.sqrt(thisσ.σ2))
+        dist = dist.filter (x) -> x.corr > 0
         dist = dist.sort (a, b) -> b.corr - a.corr
         async.waterfall [
           (callback) ->
@@ -243,7 +254,7 @@ browseTopics =
               words: x.topic.words
               phrases: x.topic.phrases
             ingestedCorpus: x.topic.inferencer.ingestedCorpus.name
-            numTopics: x.topic.numTopics
+            numTopics: x.topic.inferencer.numTopics
             correlation: x.corr
           callback similarTopics
 

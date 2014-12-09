@@ -80,3 +80,5 @@ exports.createTemporaryCollection = ->
       {}
       strict: false
     ), name
+
+exports.eval = metaDB.db.eval.bind metaDB.db

@@ -65,6 +65,7 @@ module.exports = React.createClass
             radius={18}
             fraction={article.proportion}
             trueColor="#777"
+            falseColor="#eee"
           />
         </Tooltip>
       </div>

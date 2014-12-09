@@ -60,6 +60,7 @@ module.exports = React.createClass
             radius={18}
             fraction={similarArticle.correlation}
             trueColor="#777"
+            falseColor="#eee"
           />
         </Tooltip>
       </div>
