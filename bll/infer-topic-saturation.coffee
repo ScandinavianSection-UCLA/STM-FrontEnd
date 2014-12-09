@@ -72,12 +72,21 @@ saveMeasuring = (file, name, numTopics, callback) ->
               name: articleID
               ingestedCorpus: ingestedCorpus._id
           articlesCargo.push article
-          for prob, i in line
-            saturationRecordsCargo.push
-              topicsInferred: topicsInferred._id
-              article: article._id
-              topic: topicsHash[i]._id
-              proportion: Number prob
+          line = line.filter (x) -> x isnt ""
+          if line.length == 2 * Object.keys(topicsHash).length
+            for i in [0...line] by 2
+              saturationRecordsCargo.push
+                topicsInferred: topicsInferred._id
+                article: article._id
+                topic: topicsHash[line[i]]._id
+                proportion: Number line[i + 1]
+          else
+            for prob, i in line
+              saturationRecordsCargo.push
+                topicsInferred: topicsInferred._id
+                article: article._id
+                topic: topicsHash[i]._id
+                proportion: Number prob
       saturationRecordsCargo.drain = ->
         callback()
 
