@@ -1,6 +1,7 @@
+dbName = require("./constants").dbName
 mongoose = require "mongoose"
 
-metaDB = mongoose.createConnection "/tmp/mongodb-27017.sock/stm"
+metaDB = mongoose.createConnection "/tmp/mongodb-27017.sock/#{dbName}"
 
 exports.Corpus = metaDB.model "Corpus",
   new mongoose.Schema(

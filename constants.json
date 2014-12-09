@@ -9,5 +9,6 @@
   },
   "dataPath": "./data",
   "malletPath": "~/Documents/STM/Mallet/bin/mallet",
-  "simulateBadLatency": false
+  "simulateBadLatency": false,
+  "dbName": "stm"
 }
