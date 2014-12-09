@@ -82,7 +82,7 @@ extractArchive = (archivePath, extractDir, callback) ->
 
 handleArchive = (file, corpusFilesDir, callback) ->
   hash = md5 "#{file.path}/#{Math.random()}"
-  tmpDir = "#{os.tmpdir()}#{hash}"
+  tmpDir = "#{os.tmpdir()}/#{hash}"
   callback status: "extracting", hash: hash
   extractArchive file.path, tmpDir, (update) ->
     filesIO.emit hash, update
