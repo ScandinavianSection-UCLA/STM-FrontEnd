@@ -73,8 +73,8 @@ saveMeasuring = (file, name, numTopics, callback) ->
               ingestedCorpus: ingestedCorpus._id
           articlesCargo.push article
           line = line.filter (x) -> x isnt ""
-          if line.length == 2 * Object.keys(topicsHash).length
-            for i in [0...line] by 2
+          if line.length is 2 * Object.keys(topicsHash).length
+            for i in [0...line.length] by 2
               saturationRecordsCargo.push
                 topicsInferred: topicsInferred._id
                 article: article._id
