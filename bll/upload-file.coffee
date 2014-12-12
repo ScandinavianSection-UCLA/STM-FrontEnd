@@ -11,7 +11,8 @@ replaceStream = require "replacestream"
 
 childProcessQ = queue concurrency: 10
 
-isFileText = (filePath, theCallback) ->
+isFileText = (filePath, preprocessed, theCallback) ->
+  return theCallback true if preprocessed
   childProcessQ.push (cb) ->
     callback = (res) ->
       theCallback res
@@ -24,7 +25,7 @@ isFileText = (filePath, theCallback) ->
       callback stdout.toString("utf8").toLowerCase().match(regex)?
   childProcessQ.start()
 
-testAndMoveWithDuplicates = (sourceFile, targetFile, callback) ->
+testAndMoveWithDuplicates = (sourceFile, targetFile, preprocessed, callback) ->
   rec = (i) ->
     tf =
       if i is 0 then targetFile
@@ -37,11 +38,11 @@ testAndMoveWithDuplicates = (sourceFile, targetFile, callback) ->
           .on "finish", callback
       else
         rec i + 1
-  isFileText sourceFile, (result) ->
+  isFileText sourceFile, preprocessed, (result) ->
     if result then rec 0
     else fs.unlink sourceFile, -> callback "Not a text file"
 
-flattenAndMove = (sourceDir, targetDir, callback) ->
+flattenAndMove = (sourceDir, targetDir, preprocessed, callback) ->
   iterator = (file, callback) ->
     sourcePath = "#{sourceDir}/#{file}"
     targetPath = "#{targetDir}/#{file}"
@@ -50,12 +51,14 @@ flattenAndMove = (sourceDir, targetDir, callback) ->
         console.error err
         return callback err
       if stat.isDirectory()
-        flattenAndMove sourcePath, targetDir, -> callback()
+        flattenAndMove sourcePath, targetDir, preprocessed, ->
+          callback()
       else
-        testAndMoveWithDuplicates sourcePath, targetPath, -> callback()
+        testAndMoveWithDuplicates sourcePath, targetPath, preprocessed, ->
+          callback()
   fs.readdir sourceDir, (err, files) ->
     console.error err if err?
-    async.each files, iterator, -> callback()
+    async.eachLimit files, 512, iterator, -> callback()
 
 isFileArchive = (filePath, callback) ->
   childProcess.exec "file #{filePath}", (err, stdout, stderr) ->
@@ -80,7 +83,7 @@ extractArchive = (archivePath, extractDir, callback) ->
     tarProcess.on "exit", (code, signal) ->
       callback message: "extracted"
 
-handleArchive = (file, corpusFilesDir, callback) ->
+handleArchive = (file, corpusFilesDir, preprocessed, callback) ->
   hash = md5 "#{file.path}/#{Math.random()}"
   tmpDir = "#{os.tmpdir()}/#{hash}"
   callback status: "extracting", hash: hash
@@ -88,15 +91,18 @@ handleArchive = (file, corpusFilesDir, callback) ->
     filesIO.emit hash, update
     if update.message is "extracted"
       async.parallel [
-        (callback) -> flattenAndMove tmpDir, corpusFilesDir, callback
-        (callback) -> fs.unlink file.path, callback
+        (callback) ->
+          flattenAndMove tmpDir, corpusFilesDir, preprocessed, callback
+        (callback) ->
+          fs.unlink file.path, callback
       ], -> filesIO.emit hash, message: "done"
 
-handleSingleFile = (file, corpusFilesDir, callback) ->
+handleSingleFile = (file, corpusFilesDir, preprocessed, callback) ->
   testAndMoveWithDuplicates file.path, "#{corpusFilesDir}/#{file.originalname}",
-    (err) -> callback status: unless err? then "done" else "failure"
+    preprocessed, (err) ->
+      callback status: unless err? then "done" else "failure"
 
-module.exports = ({file, corpusName, corpusType}, callback) ->
+module.exports = ({file, corpusName, corpusType, preprocessed}, callback) ->
   db.Corpus.findOne name: corpusName, type: corpusType, (err, corpus) ->
     return console.error err if err?
     return callback status: failure unless corpus?
@@ -104,5 +110,7 @@ module.exports = ({file, corpusName, corpusType}, callback) ->
     fs.mkdir corpusFilesDir, "0777", true, (err) ->
       return console.error err if err?
       isFileArchive file.path, (result) ->
-        if result then handleArchive file, corpusFilesDir, callback
-        else handleSingleFile file, corpusFilesDir, callback
+        if result
+          handleArchive file, corpusFilesDir, preprocessed, callback
+        else
+          handleSingleFile file, corpusFilesDir, preprocessed, callback

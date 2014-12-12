@@ -13,6 +13,7 @@ router.post "/upload", (req, res, next) ->
     file: req.files.file
     corpusName: req.body.corpusName
     corpusType: req.body.corpusType
+    preprocessed: req.body.preprocessed is "true"
   uploadFile fileParams, (response) ->
       res.json response
 

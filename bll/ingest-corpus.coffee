@@ -4,13 +4,13 @@ fs = require "node-fs"
 
 {dataPath, malletPath} = require "../constants"
 
-runProcess = (input, output, pipeFrom, callback) ->
+runProcess = (input, output, pipeFrom, regexToken, callback) ->
   childProcess.exec d = """
     #{malletPath} import-dir
       --input #{input}
       --output #{output}
       #{if pipeFrom? then "--use-pipe-from #{pipeFrom}" else ""}
-      --token-regex '\\p{L}[\\p{L}\\p{P}]*\\p{L}'
+      --token-regex '#{regexToken}'
       --keep-sequence
       --remove-stopwords
   """.replace(/[\n\r]+/g, " "), (err, stdout, stderr) ->
@@ -18,7 +18,7 @@ runProcess = (input, output, pipeFrom, callback) ->
     return console.error err if err?
     callback()
 
-ingestCorpus = (name, callback) ->
+ingestCorpus = (name, regexToken, callback) ->
   db.IngestedCorpus
     .findOne(name: name)
     .populate("corpus")
@@ -30,6 +30,6 @@ ingestCorpus = (name, callback) ->
       pipeFrom = "#{icDir}/#{ic.dependsOn}.mallet" if ic.dependsOn?
       fs.mkdir icDir, "0777", true, (err) ->
         return console.error err if err?
-        runProcess input, output, pipeFrom, callback
+        runProcess input, output, pipeFrom, regexToken, callback
 
 module.exports = ingestCorpus

@@ -17,6 +17,14 @@ module.exports = React.createClass
       inferFrom: React.PropTypes.oneOf(["self", "another"]).isRequired
       dependsOn: React.PropTypes.string
     ).isRequired
+    regexToken: React.PropTypes.shape(
+      type: React.PropTypes.oneOf([
+        "Latin"
+        "Classical Chinese"
+        "Custom"
+      ]).isRequired
+      token: React.PropTypes.string
+    )
     saveAs: React.PropTypes.string
     onSaveAsChange: React.PropTypes.func.isRequired
     onProcessStart: React.PropTypes.func.isRequired
@@ -114,8 +122,13 @@ module.exports = React.createClass
 
   handleProcessClicked: ->
     @setState waitingForProcess: true
+    regexToken =
+      switch @props.regexToken?.type ? "Latin"
+        when "Latin" then "\\p{L}[\\p{L}\\p{P}]*\\p{L}"
+        when "Classical Chinese" then "[\\p{L}\\p{M}]"
+        when "Custom" then @props.regexToken.token
     processCorpusCalls.process @props.saveAs, @props.corpus,
-      @props.inference.dependsOn, (result) =>
+      @props.inference.dependsOn, regexToken, (result) =>
         return unless @isMounted()
         @props.onProcessStart() if result
         @setState waitingForProcess: true

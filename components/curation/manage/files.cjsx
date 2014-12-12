@@ -16,6 +16,7 @@ module.exports = React.createClass
   getInitialState: ->
     pendingUploads: []
     numFiles: null
+    preprocessed: false
 
   componentWillReceiveProps: (newProps) ->
     @setState
@@ -44,6 +45,23 @@ module.exports = React.createClass
         {uploads}
       </ul>
 
+  handlePreprocessChanged: (event) ->
+    @setState preprocessed: event.target.checked
+
+  renderFooter: ->
+    <div className="panel-footer">
+      <div className="checkbox" style={margin: 0}>
+        <label>
+          <input
+            type="checkbox"
+            checked={@state.preprocessed}
+            onChange={@handlePreprocessChanged}>
+            {" Already Preprocessed"}
+          </input>
+        </label>
+      </div>
+    </div>
+
   render: ->
     title = "Add Files"
     if @state.numFiles?
@@ -57,6 +75,7 @@ module.exports = React.createClass
       </div>
       {@renderDropzone()}
       {@renderUploads()}
+      {@renderFooter()}
     </div>
 
   newUploadStarted: (file, xhr, formData) ->
@@ -68,6 +87,7 @@ module.exports = React.createClass
         status: "uploading"
     formData.append "corpusName", @props.corpus.name
     formData.append "corpusType", @props.corpus.type
+    formData.append "preprocessed", @state.preprocessed
 
   uploadProgressChanged: (file, percentDone, bytesDone) ->
     return unless @isMounted()
