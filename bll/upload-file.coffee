@@ -9,7 +9,8 @@ os = require "os"
 queue = require "queue"
 replaceStream = require "replacestream"
 
-childProcessQ = queue concurrency: 10
+childProcessQ = queue concurrency: 16
+fdQ = queue concurrency: 256
 
 isFileText = (filePath, preprocessed, theCallback) ->
   return theCallback true if preprocessed
@@ -25,22 +26,28 @@ isFileText = (filePath, preprocessed, theCallback) ->
       callback stdout.toString("utf8").toLowerCase().match(regex)?
   childProcessQ.start()
 
-testAndMoveWithDuplicates = (sourceFile, targetFile, preprocessed, callback) ->
-  rec = (i) ->
-    tf =
-      if i is 0 then targetFile
-      else "#{targetFile} (#{i})"
-    fs.stat tf, (err, stat) ->
-      if err?
-        fs.createReadStream sourceFile, encoding: "utf8"
-          .pipe replaceStream /[&"'<>]+/g, " "
-          .pipe fs.createWriteStream tf, encoding: "utf8"
-          .on "finish", callback
-      else
-        rec i + 1
-  isFileText sourceFile, preprocessed, (result) ->
-    if result then rec 0
-    else fs.unlink sourceFile, -> callback "Not a text file"
+testAndMoveWithDuplicates =
+  (sourceFile, targetFile, preprocessed, theCallback) ->
+    rec = (i) ->
+      tf =
+        if i is 0 then targetFile
+        else "#{targetFile} (#{i})"
+      fs.stat tf, (err, stat) ->
+        if err?
+          fdQ.push (cb) ->
+            callback = (err, res) ->
+              theCallback err, result
+              cb err, result
+            fs.createReadStream sourceFile, encoding: "utf8"
+              .pipe replaceStream /[&"'<>]+/g, " "
+              .pipe fs.createWriteStream tf, encoding: "utf8"
+              .on "finish", callback
+          fdQ.start()
+        else
+          rec i + 1
+    isFileText sourceFile, preprocessed, (result) ->
+      if result then rec 0
+      else fs.unlink sourceFile, -> callback "Not a text file"
 
 flattenAndMove = (sourceDir, targetDir, preprocessed, callback) ->
   iterator = (file, callback) ->
@@ -58,7 +65,7 @@ flattenAndMove = (sourceDir, targetDir, preprocessed, callback) ->
           callback()
   fs.readdir sourceDir, (err, files) ->
     console.error err if err?
-    async.eachLimit files, 512, iterator, -> callback()
+    async.each files, iterator, -> callback()
 
 isFileArchive = (filePath, callback) ->
   childProcess.exec "file #{filePath}", (err, stdout, stderr) ->
