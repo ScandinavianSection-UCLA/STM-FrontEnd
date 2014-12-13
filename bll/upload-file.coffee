@@ -36,8 +36,8 @@ testAndMoveWithDuplicates =
         if err?
           fdQ.push (cb) ->
             callback = (err, res) ->
-              theCallback err, result
-              cb err, result
+              theCallback err, res
+              cb err, res
             fs.createReadStream sourceFile, encoding: "utf8"
               .pipe replaceStream /[&"'<>]+/g, " "
               .pipe fs.createWriteStream tf, encoding: "utf8"
