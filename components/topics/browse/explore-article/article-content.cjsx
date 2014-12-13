@@ -38,10 +38,10 @@ module.exports = React.createClass
         loadingContent: false
 
   renderContent: ->
-    return if @state.loadingContent
+    return if @state.loadingContent or not @state.content?
+    str = @state.content
     content =
       if @props.highlightedTopic?
-        str = @state.content
         query = @props.highlightedTopic.words.map((x) -> x.word).join "|"
         regex = new RegExp query, "ig"
         marks = []
@@ -64,7 +64,7 @@ module.exports = React.createClass
           )
         content
       else
-        @state.content
+        str
     <div className="panel-body">
       {content}
     </div>
