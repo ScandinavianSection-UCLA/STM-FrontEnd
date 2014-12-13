@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
 d3 = require "d3"
+deepEqual = require "deep-equal"
 React = require "react"
 
 module.exports = React.createClass
@@ -33,6 +34,7 @@ module.exports = React.createClass
     height: React.PropTypes.number.isRequired
     radius: React.PropTypes.number.isRequired
     onLocationChange: React.PropTypes.func.isRequired
+    onHighlightedTopicChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
     @getDefaultState()
@@ -41,10 +43,15 @@ module.exports = React.createClass
     activeTopic: @props.inferencer.topics[0]
 
   componentWillReceiveProps: (props) ->
-    @setState @getDefaultState()
+    unless deepEqual @props.inferencer, props.inferencer
+      @setState @getDefaultState()
 
   handleTopicMouseEnter: (topic) ->
     @setState activeTopic: topic
+    @props.onHighlightedTopicChange topic.topic
+
+  handleTopicMouseLeave: ->
+    @props.onHighlightedTopicChange null
 
   handleTopicClicked: (topic) ->
     @props.onLocationChange
@@ -72,6 +79,7 @@ module.exports = React.createClass
       style={pathStyle}
       key={i}
       onMouseEnter={@handleTopicMouseEnter.bind @, d.data}
+      onMouseLeave={@handleTopicMouseLeave.bind @, d.data}
       onClick={@handleTopicClicked.bind @, d.data}
       transform={transform}
     />

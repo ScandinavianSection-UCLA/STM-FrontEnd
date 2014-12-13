@@ -14,8 +14,14 @@ module.exports = React.createClass
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
 
+  getInitialState: ->
+    highlightedTopic: null
+
   handleLocationChanged: (location) ->
     @props.onLocationChange location
+
+  handleHighlightedTopicChanged: (topic) ->
+    @setState highlightedTopic: topic
 
   render: ->
     <div className="row">
@@ -23,6 +29,7 @@ module.exports = React.createClass
         <RelatedInferencers
           location={@props.location}
           onLocationChange={@handleLocationChanged}
+          onHighlightedTopicChange={@handleHighlightedTopicChanged}
         />
         <RelatedArticles
           location={@props.location}
@@ -30,6 +37,9 @@ module.exports = React.createClass
         />
       </div>
       <div className="col-sm-8">
-        <ArticleContent location={@props.location} />
+        <ArticleContent
+          location={@props.location}
+          highlightedTopic={@state.highlightedTopic}
+        />
       </div>
     </div>

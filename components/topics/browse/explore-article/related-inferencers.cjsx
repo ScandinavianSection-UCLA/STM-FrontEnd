@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
 browseArticles = require("../../../../async-calls/browse-articles").calls
+deepEqual = require "deep-equal"
 TopicsPieChart = require "./related-inferencers/topics-pie-chart"
 React = require "react"
 
@@ -12,6 +13,7 @@ module.exports = React.createClass
       entity: React.PropTypes.string.isRequired
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
+    onHighlightedTopicChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
     @getDefaultState()
@@ -22,8 +24,9 @@ module.exports = React.createClass
     selectedInferencer: null
 
   componentWillReceiveProps: (props) ->
-    @setState @getDefaultState()
-    @loadInferencers props
+    unless deepEqual @props.location, props.location
+      @setState @getDefaultState()
+      @loadInferencers props
 
   handleLocationChanged: (location) ->
     @props.onLocationChange location
@@ -41,6 +44,9 @@ module.exports = React.createClass
   handleInferencersLIClicked: (inferencer) ->
     @setState selectedInferencer: inferencer
 
+  handleHighlightedTopicChanged: (topic) ->
+    @props.onHighlightedTopicChange topic
+
   renderInferencersLI: (inferencer, i) ->
     text = "#{inferencer.ingestedCorpus} (#{inferencer.numTopics} topics)"
     className = "list-group-item"
@@ -53,6 +59,7 @@ module.exports = React.createClass
           height={230}
           radius={110}
           onLocationChange={@handleLocationChanged}
+          onHighlightedTopicChange={@handleHighlightedTopicChanged}
         />
       </div>
     else

@@ -10,6 +10,13 @@ module.exports = React.createClass
       ingestedCorpus: React.PropTypes.string.isRequired
       entity: React.PropTypes.string.isRequired
     ).isRequired
+    highlightedTopic: React.PropTypes.shape
+      words: React.PropTypes.arrayOf React.PropTypes.shape(
+        word: React.PropTypes.string.isRequired
+      ).isRequired
+      phrases: React.PropTypes.arrayOf React.PropTypes.shape(
+        phrase: React.PropTypes.string.isRequired
+      ).isRequired
 
   getInitialState: ->
     @getDefaultState()
@@ -32,8 +39,34 @@ module.exports = React.createClass
 
   renderContent: ->
     return if @state.loadingContent
+    content =
+      if @props.highlightedTopic?
+        str = @state.content
+        query = @props.highlightedTopic.words.map((x) -> x.word).join "|"
+        regex = new RegExp query, "ig"
+        marks = []
+        while match = regex.exec str
+          start = match.index
+          end = match.index + match[0].length - 1
+          continue unless start is 0 or str[start - 1].match(/\s/)?
+          continue unless end is str.length - 1 or str[end + 1].match(/\s/)?
+          marks.push { start, end }
+        content = []
+        content.push str[0...(marks[0]?.start ? str.length)]
+        for mark, i in marks
+          content.push(
+            <mark className="bg-primary" style={padding: 0}>
+              {str[marks[i].start..marks[i].end]}
+            </mark>
+          )
+          content.push(
+            str[(marks[i].end + 1)...(marks[i + 1]?.start ? str.length)]
+          )
+        content
+      else
+        @state.content
     <div className="panel-body">
-      {@state.content}
+      {content}
     </div>
 
   renderLoadingIndicator: ->
