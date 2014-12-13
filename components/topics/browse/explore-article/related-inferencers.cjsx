@@ -46,7 +46,7 @@ module.exports = React.createClass
     className = "list-group-item"
     if inferencer is @state.selectedInferencer
       <div className="list-group-item active text-center" key={i} href="#">
-        <div>{text}</div>
+        <div style={fontWeight: 500}>{text}</div>
         <TopicsPieChart
           inferencer={inferencer}
           width={230}
@@ -57,10 +57,11 @@ module.exports = React.createClass
       </div>
     else
       <a
-        className="list-group-item"
+        className="list-group-item text-center"
         key={i}
         href="#"
-        onClick={@handleInferencersLIClicked.bind @, inferencer}>
+        onClick={@handleInferencersLIClicked.bind @, inferencer}
+        style={fontWeight: 500}>
         {text}
       </a>
 

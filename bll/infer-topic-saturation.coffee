@@ -1,4 +1,5 @@
 async = require "async"
+bs = require "binary-search"
 childProcess = require "child_process"
 db = require "../db"
 fs = require "node-fs"
@@ -57,6 +58,34 @@ saveMeasuring = (file, name, numTopics, callback) ->
         bulk.insert article.toObject() for article in articles
         bulk.execute callback
       , 1000
+      processArticlesCargo = async.cargo (jobs, callback) ->
+        articleIDs = jobs.map (x) -> x.articleID
+        db.Article
+          .find
+            name: $in: articleIDs
+            ingestedCorpus: ingestedCorpus._id
+            "_id name"
+          .sort "name"
+          .exec (err, articles) ->
+            return console.error err if err?
+            articleIDs = articles.map (x) -> x.name
+            for job in jobs
+              idx = bs articleIDs, job.articleID, (a, b) ->
+                if a is b then 0
+                else if a < b then -1
+                else 1
+              if idx < 0
+                article =
+                  new db.Article
+                    name: job.articleID
+                    ingestedCorpus: ingestedCorpus._id
+                articlesCargo.push article
+                job.exec article
+              else
+                article = articles[idx]
+                job.exec article
+            callback()
+      , 10000
       firstLineDone = false
       fs.createReadStream file, encoding: "utf8"
         .pipe split()
@@ -67,26 +96,25 @@ saveMeasuring = (file, name, numTopics, callback) ->
           line.shift()
           articleID = line.shift()
           articleID = articleID.split("/")[-1..][0]
-          article =
-            new db.Article
-              name: articleID
-              ingestedCorpus: ingestedCorpus._id
-          articlesCargo.push article
-          line = line.filter (x) -> x isnt ""
-          if line.length is 2 * Object.keys(topicsHash).length
-            for i in [0...line.length] by 2
-              saturationRecordsCargo.push
-                topicsInferred: topicsInferred._id
-                article: article._id
-                topic: topicsHash[line[i]]._id
-                proportion: Number line[i + 1]
-          else
-            for prob, i in line
-              saturationRecordsCargo.push
-                topicsInferred: topicsInferred._id
-                article: article._id
-                topic: topicsHash[i]._id
-                proportion: Number prob
+          articleID = decodeURIComponent articleID
+          processArticlesCargo.push
+            articleID: articleID
+            exec: (article) ->
+              line = line.filter (x) -> x isnt ""
+              if line.length is 2 * Object.keys(topicsHash).length
+                for i in [0...line.length] by 2
+                  saturationRecordsCargo.push
+                    topicsInferred: topicsInferred._id
+                    article: article._id
+                    topic: topicsHash[line[i]]._id
+                    proportion: Number line[i + 1]
+              else
+                for prob, i in line
+                  saturationRecordsCargo.push
+                    topicsInferred: topicsInferred._id
+                    article: article._id
+                    topic: topicsHash[i]._id
+                    proportion: Number prob
       saturationRecordsCargo.drain = ->
         callback()
 

@@ -60,11 +60,11 @@ module.exports = React.createClass
         loc.type is "topic" and loc.numTopics? or
         loc.type is "article" and loc.entity?
       )
-        <li onClick={@handleICCLicked}>
+        <li onClick={@handleICCLicked} style={whiteSpace: "nowrap"}>
           <a href="#">{loc.ingestedCorpus}</a>
         </li>
       else
-        <li className="active">
+        <li className="active" style={whiteSpace: "nowrap"}>
           {loc.ingestedCorpus}
         </li>
     numLI =
@@ -91,7 +91,7 @@ module.exports = React.createClass
                 .join ", "
             when "article"
               loc.entity
-        <li className="active">
+        <li className="active" style={whiteSpace: "nowrap"}>
           {entityText}
         </li>
     <ol className="breadcrumb">
