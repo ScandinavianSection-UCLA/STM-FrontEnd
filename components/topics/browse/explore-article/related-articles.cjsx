@@ -1,6 +1,7 @@
 # @cjsx React.DOM
 
 BinaryPieChart = require "../../../binary-pie-chart"
+deepEqual = require "deep-equal"
 React = require "react"
 Tooltip = require "../../../tooltip"
 
@@ -26,8 +27,9 @@ module.exports = React.createClass
     loadingSimilarArticles: false
 
   componentWillReceiveProps: (props) ->
-    @setState @getDefaultState()
-    @loadSimilarArticles props if @isSimilarArticlesCached props
+    unless deepEqual @props.location, props.location
+      @setState @getDefaultState()
+      @loadSimilarArticles props if @isSimilarArticlesCached props
 
   isSimilarArticlesCached: (props) ->
     loc = props.location
