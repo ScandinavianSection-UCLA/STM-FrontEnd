@@ -19,6 +19,8 @@ module.exports = React.createClass
       articles: React.PropTypes.arrayOf React.PropTypes.string
     ).isRequired
     containerWidth: React.PropTypes.number.isRequired
+    numNodesToExpandTo: React.PropTypes.number.isRequired
+    onNumNodesToExpandToChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
     force: @initializeForce()
@@ -31,7 +33,10 @@ module.exports = React.createClass
       @state.force
         .size [props.containerWidth, containerHeight]
         .resume()
-    unless deepEqual @props.graphSeeds, props.graphSeeds
+    unless (
+      deepEqual(@props.graphSeeds, props.graphSeeds) and
+      deepEqual(@props.numNodesToExpandTo, props.numNodesToExpandTo)
+    )
       @handleGraphSeedsUpdated props
 
   initializeForce: ->
@@ -68,14 +73,18 @@ module.exports = React.createClass
     gsArticleIDs = gsArticles.map (x) -> x._id
     gsIDs = [].concat gsTopicIDs, gsArticleIDs
     forceNodeIDs = []
-    forceLinks = @state.forceLinks.filter ({source, target}) ->
-      result = source.value._id in gsIDs and target.value._id in gsIDs
+    forceLinks = @state.forceLinks.filter ({source, target, rank}) ->
+      result =
+        source.value._id in gsIDs and
+        target.value._id in gsIDs and
+        rank < props.numNodesToExpandTo
       forceNodeIDs.push source.value._id, target.value._id if result
       result
     unique forceNodeIDs
     forceNodes = @state.forceNodes.filter (node) ->
       node.value._id in forceNodeIDs
     @state.force
+      .stop()
       .nodes forceNodes
       .links forceLinks
       .start()
@@ -111,7 +120,8 @@ module.exports = React.createClass
               x: @props.containerWidth / 2 + (Math.random() - 0.5) * 100
               y: containerHeight / 2 +  + (Math.random() - 0.5) * 100
             forceNodes.push forceTopic
-          for {article, proportion} in articles
+          topArticles = articles[0 ... @props.numNodesToExpandTo]
+          for {article, proportion}, i in topArticles
             forceArticle =
               forceNodes.filter((x) -> x.value._id is article._id)[0]
             unless forceArticle?
@@ -130,7 +140,10 @@ module.exports = React.createClass
               forceLink =
                 source: forceTopic
                 target: forceArticle
+                rank: i
               forceLinks.push forceLink
+            else
+              forceLink.rank = Math.min forceLink.rank, i
             forceLink.proportion = proportion
         for {article, topics} in articlesFetched
           forceArticle =
@@ -142,7 +155,8 @@ module.exports = React.createClass
               x: @props.containerWidth / 2 + (Math.random() - 0.5) * 100
               y: containerHeight / 2 +  + (Math.random() - 0.5) * 100
             forceNodes.push forceArticle
-          for {topic, proportion} in topics
+          topTopics = topics[0 ... @props.numNodesToExpandTo]
+          for {topic, proportion}, i in topTopics
             forceTopic =
               forceNodes.filter((x) -> x.value._id is topic._id)[0]
             unless forceTopic?
@@ -161,7 +175,10 @@ module.exports = React.createClass
               forceLink =
                 source: forceArticle
                 target: forceTopic
+                rank: i
               forceLinks.push forceLink
+            else
+              forceLink.rank = Math.min forceLink.rank, i
             forceLink.proportion = proportion
         @state.force
           .nodes forceNodes
@@ -250,8 +267,35 @@ module.exports = React.createClass
       {nodes}
     </svg>
 
+  handleNumNodesToExpandToChanged: (event) ->
+    num =
+      unless isNaN event.target.value
+        Number event.target.value
+      else
+        0
+    @props.onNumNodesToExpandToChange num
+
+  renderOptions: ->
+    <div className="form-inline" style={textAlign: "center"}>
+      <div className="form-group">
+        <div className="input-group">
+          <div className="input-group-addon">Number of nodes to expand</div>
+          <input
+            type="number"
+            min={0}
+            className="form-control"
+            value={@props.numNodesToExpandTo}
+            onChange={@handleNumNodesToExpandToChanged}
+          />
+        </div>
+      </div>
+    </div>
+
   render: ->
-    @renderSVG()
+    <div>
+      {@renderOptions()}
+      {@renderSVG()}
+    </div>
 
   componentDidMount: ->
     @handleGraphSeedsUpdated @props

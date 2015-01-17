@@ -12,12 +12,17 @@ module.exports = React.createClass
     ).isRequired
     onGraphSeedsChange: React.PropTypes.func.isRequired
     onTabChange: React.PropTypes.func.isRequired
+    numNodesToExpandTo: React.PropTypes.number.isRequired
+    onNumNodesToExpandToChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
     containerWidth: @getContainerWidth()
 
   handleGoToBrowseClicked: ->
     @props.onTabChange "browse"
+
+  handleNumNodesToExpandToChanged: (num) ->
+    @props.onNumNodesToExpandToChange num
 
   render: ->
     if (
@@ -35,6 +40,8 @@ module.exports = React.createClass
       <GraphView
         graphSeeds={@props.graphSeeds}
         containerWidth={@state.containerWidth}
+        numNodesToExpandTo={@props.numNodesToExpandTo}
+        onNumNodesToExpandToChange={@handleNumNodesToExpandToChanged}
       />
 
   getContainerWidth: ->

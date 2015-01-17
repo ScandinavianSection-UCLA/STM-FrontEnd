@@ -14,6 +14,7 @@ module.exports = React.createClass
     graphSeeds:
       topics: []
       articles: []
+    graphNumNodesToExpandTo: 10
 
   handleTabChanged: (activeTab) ->
     @setState activeTab: activeTab
@@ -23,6 +24,9 @@ module.exports = React.createClass
 
   handleGraphSeedsChanged: (graphSeeds) ->
     @setState graphSeeds: graphSeeds
+
+  handleGraphNumNodesToExpandToChanged: (num) ->
+    @setState graphNumNodesToExpandTo: num
 
   renderChild: ->
     switch @state.activeTab
@@ -38,6 +42,8 @@ module.exports = React.createClass
           graphSeeds={@state.graphSeeds}
           onGraphSeedsChange={@handleGraphSeedsChanged}
           onTabChange={@handleTabChanged}
+          numNodesToExpandTo={@state.graphNumNodesToExpandTo}
+          onNumNodesToExpandToChange={@handleGraphNumNodesToExpandToChanged}
         />
 
   render: ->
