@@ -51,7 +51,7 @@ module.exports = React.createClass
     @props.onLocationChange
       type: "article"
       ingestedCorpus: article.ingestedCorpus
-      entity: article.articleID
+      entity: article.article
 
   renderArticleLI: (article, i) ->
     proportion = article.proportion * 100
@@ -75,7 +75,7 @@ module.exports = React.createClass
       href="#"
       onClick={@handleArticleClicked.bind @, article}>
       {pieChart}
-      <div>{article.articleID}</div>
+      <div>{article.article.name}</div>
       <div>
         <small className="text-muted">in </small>
         {article.ingestedCorpus}

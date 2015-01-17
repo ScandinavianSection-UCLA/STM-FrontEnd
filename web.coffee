@@ -14,6 +14,7 @@ ingestIO = require "./io/ingest-io"
 filesCalls = require "./async-calls/files"
 filesIO = require "./io/files-io"
 filesRouter = require "./routers/files-router"
+graphNodesCalls = require "./async-calls/graph-nodes"
 http = require "http"
 nop = require "nop"
 processCorpusCalls = require "./async-calls/process-corpus"
@@ -47,6 +48,7 @@ router.use processCorpusCalls.router express: express, bodyParser: bodyParser
 router.use topicModelingCalls.router express: express, bodyParser: bodyParser
 router.use browseTopicsCalls.router express: express, bodyParser: bodyParser
 router.use browseArticlesCalls.router express: express, bodyParser: bodyParser
+router.use graphNodesCalls.router express: express, bodyParser: bodyParser
 
 server = http.createServer router
 

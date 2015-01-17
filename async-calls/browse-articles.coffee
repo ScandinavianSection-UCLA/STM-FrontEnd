@@ -44,31 +44,37 @@ browseArticles =
           .distinct "article"
           .exec callback
       (articleIDs, callback) ->
-        db.Article
-          .find _id: $in: articleIDs
-          .distinct "name"
-          .exec callback
+        db.Article.find _id: $in: articleIDs, callback
     ], (err, articles) ->
       return console.error err if err?
+      articles = articles.map (x) ->
+        _id: x._id
+        name: x.name
       callback articles
 
-  getContent: (icName, articleID, callback) ->
+  getContent: (article, callback) ->
     async.waterfall [
       (callback) ->
-        db.IngestedCorpus.findOne name: icName, callback
-      (ic, callback) ->
-        fs.readFile "#{dataPath}/files/#{ic.corpus}/#{articleID}",
-          encoding: "utf8", callback
+        db.Article
+          .findById article
+          .populate "ingestedCorpus"
+          .exec callback
+      (article, callback) ->
+        path = [
+          dataPath
+          "files"
+          article.ingestedCorpus.corpus
+          article.name
+        ].join "/"
+        fs.readFile path, encoding: "utf8", callback
     ], (err, content) ->
       return console.error err if err?
       callback content
 
-  getRelatedInferencers: (icName, articleID, callback) ->
+  getRelatedInferencers: (article, callback) ->
     async.waterfall [
       (callback) ->
-        db.IngestedCorpus.findOne name: icName, callback
-      (ic, callback) ->
-        db.Article.findOne name: articleID, ingestedCorpus: ic._id, callback
+        db.Article.findById article, callback
       (article, callback) ->
         db.TopicsInferred.find ingestedCorpus: article.ingestedCorpus,
           (err, topicsInferred) ->
@@ -114,12 +120,12 @@ browseArticles =
         topics: result.topics.sort (a, b) -> b.proportion - a.proportion
       callback results
 
-  getSimilarArticles: (icName, articleID, callback) ->
+  getSimilarArticles: (article, callback) ->
     async.auto
-      ic: (callback) ->
-        db.IngestedCorpus.findOne name: icName, callback
-      thisTopicsInferred: ["ic", (callback, {ic}) ->
-        db.TopicsInferred.find ingestedCorpus: ic._id, callback
+      article: (callback) ->
+        db.Article.findById article, callback
+      thisTopicsInferred: ["article", (callback, {article}) ->
+        db.TopicsInferred.find ingestedCorpus: article.ingestedCorpus, callback
       ]
       topicsInferred: ["thisTopicsInferred", (callback, {thisTopicsInferred}) ->
         inferencerIDs = thisTopicsInferred.map (x) -> x.inferencer
@@ -127,9 +133,6 @@ browseArticles =
           inferencer: $in: inferencerIDs
           status: "done"
           callback
-      ]
-      article: ["ic", (callback, {ic}) ->
-        db.Article.findOne name: articleID, ingestedCorpus: ic._id, callback
       ]
       μs: ["topicsInferred", (callback, {topicsInferred}) ->
         tiIDs = topicsInferred.map (x) -> x._id
@@ -248,7 +251,9 @@ browseArticles =
         ], (err, dist) ->
           return console.error err if err?
           similarArticles = dist.map (x) ->
-            articleID: x.article.name
+            article:
+              _id: x.article._id
+              name: x.article.name
             ingestedCorpus: x.article.ingestedCorpus.name
             correlation: x.corr
           callback similarArticles

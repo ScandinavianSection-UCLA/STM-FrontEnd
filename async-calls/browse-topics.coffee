@@ -70,7 +70,9 @@ browseTopics =
       return console.error err if err?
       articles = saturationRecords.map (x) ->
         ingestedCorpus: x.topicsInferred.ingestedCorpus.name
-        articleID: x.article.name
+        article:
+          _id: x.article._id
+          name: x.article.name
         proportion: x.proportion
       callback articles
 

@@ -37,7 +37,7 @@ module.exports = React.createClass
     query = ".*"
     query += "#{escapeStringRegexp c}.*" for c in @state.filterQuery
     regexp = new RegExp query, "ig"
-    item for item in @state.articles when item.match(regexp)?
+    item for item in @state.articles when item.name.match(regexp)?
 
   handleArticleClicked: (article) ->
     @props.onLocationChange
@@ -51,7 +51,7 @@ module.exports = React.createClass
       key={i}
       href="#"
       onClick={@handleArticleClicked.bind @, article}>
-      {article}
+      {article.name}
     </a>
 
   renderArticlesUL: ->

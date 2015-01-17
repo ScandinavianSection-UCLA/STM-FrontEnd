@@ -10,7 +10,10 @@ module.exports = React.createClass
   propTypes:
     location: React.PropTypes.shape(
       ingestedCorpus: React.PropTypes.string.isRequired
-      entity: React.PropTypes.string.isRequired
+      entity: React.PropTypes.shape(
+        _id: React.PropTypes.string.isRequired
+        name: React.PropTypes.string.isRequired
+      ).isRequired
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
     onHighlightedTopicChange: React.PropTypes.func.isRequired
@@ -34,12 +37,11 @@ module.exports = React.createClass
   loadInferencers: (props) ->
     @setState loadingInferencers: true
     loc = props.location
-    browseArticles.getRelatedInferencers loc.ingestedCorpus, loc.entity,
-      (inferencers) =>
-        @setState
-          inferencers: inferencers
-          loadingInferencers: false
-          selectedInferencer: inferencers[0]
+    browseArticles.getRelatedInferencers loc.entity._id, (inferencers) =>
+      @setState
+        inferencers: inferencers
+        loadingInferencers: false
+        selectedInferencer: inferencers[0]
 
   handleInferencersLIClicked: (inferencer) ->
     @setState selectedInferencer: inferencer

@@ -4,6 +4,7 @@ React = require "react"
 
 navTabs =
   browse: "Browse"
+  graph: "Graph"
 
 module.exports = React.createClass
   displayName: "Tabs"

@@ -10,48 +10,60 @@ React = require "react"
 
 module.exports = React.createClass
   displayName: "Browse"
-  getInitialState: ->
-    location:
-      type: "topic"
+  propTypes:
+    location: React.PropTypes.shape(
+      type: React.PropTypes.string.isRequired
+    ).isRequired
+    onLocationChange: React.PropTypes.func.isRequired
+    graphSeeds: React.PropTypes.shape(
+      topics: React.PropTypes.arrayOf React.PropTypes.string
+      articles: React.PropTypes.arrayOf React.PropTypes.string
+    ).isRequired
+    onGraphSeedsChange: React.PropTypes.func.isRequired
 
   handleLocationChanged: (location) ->
-    @setState location: location
+    @props.onLocationChange location
+
+  handleGraphSeedsChanged: (graphSeeds) ->
+    @props.onGraphSeedsChange graphSeeds
 
   renderChild: ->
-    loc = @state.location
+    loc = @props.location
     if loc.type is "topic" and loc.ingestedCorpus? and loc.numTopics?
       if loc.entity?
         <ExploreTopic
-          location={@state.location}
+          location={loc}
           onLocationChange={@handleLocationChanged}
         />
       else
         <ExploreInferencer
-          location={@state.location}
+          location={loc}
           onLocationChange={@handleLocationChanged}
         />
     else if loc.type is "article" and loc.ingestedCorpus?
       if loc.entity?
         <ExploreArticle
-          location={@state.location}
+          location={loc}
           onLocationChange={@handleLocationChanged}
         />
       else
         <ExploreIngestedCorpus
-          location={@state.location}
+          location={loc}
           onLocationChange={@handleLocationChanged}
         />
     else
       <MakeSelection
-        location={@state.location}
+        location={loc}
         onLocationChange={@handleLocationChanged}
       />
 
   render: ->
     <div>
       <Breadcrumb
-        location={@state.location}
+        location={@props.location}
         onLocationChange={@handleLocationChanged}
+        graphSeeds={@props.graphSeeds}
+        onGraphSeedsChange={@handleGraphSeedsChanged}
       />
       {@renderChild()}
     </div>

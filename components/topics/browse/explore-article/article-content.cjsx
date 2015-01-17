@@ -8,7 +8,10 @@ module.exports = React.createClass
   propTypes:
     location: React.PropTypes.shape(
       ingestedCorpus: React.PropTypes.string.isRequired
-      entity: React.PropTypes.string.isRequired
+      entity: React.PropTypes.shape(
+        _id: React.PropTypes.string.isRequired
+        name: React.PropTypes.string.isRequired
+      ).isRequired
     ).isRequired
     highlightedTopic: React.PropTypes.shape
       words: React.PropTypes.arrayOf React.PropTypes.shape(
@@ -32,7 +35,7 @@ module.exports = React.createClass
   loadContent: (props) ->
     @setState loadingContent: true
     loc = props.location
-    browseArticles.getContent loc.ingestedCorpus, loc.entity, (content) =>
+    browseArticles.getContent loc.entity._id, (content) =>
       @setState
         content: content
         loadingContent: false
@@ -52,15 +55,21 @@ module.exports = React.createClass
           continue unless end is str.length - 1 or str[end + 1].match(/\s/)?
           marks.push { start, end }
         content = []
-        content.push str[0...(marks[0]?.start ? str.length)]
+        content.push(
+          <span key={0}>
+            {str[0...(marks[0]?.start ? str.length)]}
+          </span>
+        )
         for mark, i in marks
           content.push(
-            <mark className="bg-primary" style={padding: 0}>
+            <mark className="bg-primary" style={padding: 0} key={i * 2 + 1}>
               {str[marks[i].start..marks[i].end]}
             </mark>
           )
           content.push(
-            str[(marks[i].end + 1)...(marks[i + 1]?.start ? str.length)]
+            <span key={i * 2 + 2}>
+              {str[(marks[i].end + 1)...(marks[i + 1]?.start ? str.length)]}
+            </span>
           )
         content
       else

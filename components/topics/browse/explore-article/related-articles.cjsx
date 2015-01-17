@@ -15,7 +15,10 @@ module.exports = React.createClass
   propTypes:
     location: React.PropTypes.shape(
       ingestedCorpus: React.PropTypes.string.isRequired
-      entity: React.PropTypes.string.isRequired
+      entity: React.PropTypes.shape(
+        _id: React.PropTypes.string.isRequired
+        name: React.PropTypes.string.isRequired
+      ).isRequired
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
 
@@ -33,22 +36,21 @@ module.exports = React.createClass
 
   isSimilarArticlesCached: (props) ->
     loc = props.location
-    browseArticlesIsCached.getSimilarArticles loc.ingestedCorpus, loc.entity
+    browseArticlesIsCached.getSimilarArticles loc.entity._id
 
   loadSimilarArticles: (props) ->
     @setState loadingSimilarArticles: true
     loc = props.location
-    browseArticles.getSimilarArticles loc.ingestedCorpus, loc.entity,
-      (similarArticles) =>
-        @setState
-          similarArticles: similarArticles
-          loadingSimilarArticles: false
+    browseArticles.getSimilarArticles loc.entity._id, (similarArticles) =>
+      @setState
+        similarArticles: similarArticles
+        loadingSimilarArticles: false
 
   handleSimilarArticleClicked: (similarArticle) ->
     @props.onLocationChange
       type: "article"
       ingestedCorpus: similarArticle.ingestedCorpus
-      entity: similarArticle.articleID
+      entity: similarArticle.article
 
   renderSimilarArticleLI: (similarArticle, i) ->
     correlation = similarArticle.correlation * 100
@@ -72,7 +74,7 @@ module.exports = React.createClass
       href="#"
       onClick={@handleSimilarArticleClicked.bind @, similarArticle}>
       {pieChart}
-      <div>{similarArticle.articleID}</div>
+      <div>{similarArticle.article.name}</div>
       <div>
         <small className="text-muted">in </small>
         {similarArticle.ingestedCorpus}

@@ -10,14 +10,22 @@ module.exports = React.createClass
       ingestedCorpus: React.PropTypes.string
       numTopics: React.PropTypes.number
       entity: React.PropTypes.oneOfType [
-        React.PropTypes.string
         React.PropTypes.shape
+          _id: React.PropTypes.string.isRequired
+          name: React.PropTypes.string.isRequired
+        React.PropTypes.shape
+          _id: React.PropTypes.string.isRequired
           words: React.PropTypes.arrayOf React.PropTypes.shape(
             word: React.PropTypes.string.isRequired
           ).isRequired
       ]
     ).isRequired
     onLocationChange: React.PropTypes.func.isRequired
+    graphSeeds: React.PropTypes.shape(
+      topics: React.PropTypes.arrayOf React.PropTypes.string
+      articles: React.PropTypes.arrayOf React.PropTypes.string
+    ).isRequired
+    onGraphSeedsChange: React.PropTypes.func.isRequired
 
   handleTypeClicked: ->
     @props.onLocationChange
@@ -33,6 +41,35 @@ module.exports = React.createClass
       type: @props.location.type
       ingestedCorpus: @props.location.ingestedCorpus
       numTopics: @props.location.numTopics
+
+  handleSeedToGraphToggled: ->
+    arr =
+      switch @props.location.type
+        when "topic" then @props.graphSeeds.topics
+        when "article" then @props.graphSeeds.articles
+    if @props.location.entity._id in arr
+      arr.splice arr.indexOf(@props.location.entity._id), 1
+    else
+      arr.push @props.location.entity._id
+    @props.onGraphSeedsChange @props.graphSeeds
+
+  renderSeedToGraph: ->
+    return unless @props.location.entity?
+    isSeeded =
+      switch @props.location.type
+        when "topic"
+          @props.graphSeeds.topics.indexOf(@props.location.entity._id) >= 0
+        when "article"
+          @props.graphSeeds.articles.indexOf(@props.location.entity._id) >= 0
+    iClassName =
+      unless isSeeded then "fa fa-toggle-off"
+      else "fa fa-toggle-on"
+    <div className="pull-right" onClick={@handleSeedToGraphToggled}>
+      <span className="text-muted">Graph: </span>
+      <button className="btn btn-link" style={padding: 0}>
+        <i className={iClassName} style={lineHeight: "inherit"} />
+      </button>
+    </div>
 
   render: ->
     loc = @props.location
@@ -90,11 +127,12 @@ module.exports = React.createClass
                 .concat "…"
                 .join ", "
             when "article"
-              loc.entity
+              loc.entity.name
         <li className="active" style={whiteSpace: "nowrap"}>
           {entityText}
         </li>
     <ol className="breadcrumb">
+      {@renderSeedToGraph()}
       {homeLI}
       {typeLI}
       {icLI}
