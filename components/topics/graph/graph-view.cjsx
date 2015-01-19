@@ -129,7 +129,7 @@ module.exports = React.createClass
                 value: article
                 type: "article"
                 x: @props.containerWidth / 2 + (Math.random() - 0.5) * 100
-                y: containerHeight / 2 +  + (Math.random() - 0.5) * 100
+                y: containerHeight / 2 + (Math.random() - 0.5) * 100
               forceNodes.push forceArticle
             forceTuple = [forceTopic, forceArticle]
             forceLink =
@@ -153,7 +153,7 @@ module.exports = React.createClass
               value: article
               type: "article"
               x: @props.containerWidth / 2 + (Math.random() - 0.5) * 100
-              y: containerHeight / 2 +  + (Math.random() - 0.5) * 100
+              y: containerHeight / 2 + (Math.random() - 0.5) * 100
             forceNodes.push forceArticle
           topTopics = topics[0 ... @props.numNodesToExpandTo]
           for {topic, proportion}, i in topTopics
