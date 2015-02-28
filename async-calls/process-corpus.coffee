@@ -6,10 +6,10 @@ ingestIO = require "../io/ingest-io"
 md5 = require "MD5"
 
 processCorpus =
-  process: (name, corpus, dependsOnName, regexToken, callback) ->
+  process: (name, corpus, dependsOnName, regexToken, stopwords, callback) ->
     ingestedCorpusCalls.insert name, corpus, dependsOnName, (result) ->
       return callback false unless result
-      ingestCorpus name, regexToken, ->
+      ingestCorpus name, regexToken, stopwords, ->
         ingestedCorpusCalls.updateStatus name, "done", (result) ->
           ingestIO.emit md5(name), message: "done" if result
       callback true

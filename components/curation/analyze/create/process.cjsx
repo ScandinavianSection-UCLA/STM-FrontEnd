@@ -25,6 +25,13 @@ module.exports = React.createClass
       ]).isRequired
       token: React.PropTypes.string
     )
+    stopwords: React.PropTypes.shape(
+      type: React.PropTypes.oneOf([
+        "English"
+        "Custom"
+      ]).isRequired
+      file: React.PropTypes.instanceOf window?.File
+    )
     saveAs: React.PropTypes.string
     onSaveAsChange: React.PropTypes.func.isRequired
     onProcessStart: React.PropTypes.func.isRequired
@@ -48,7 +55,7 @@ module.exports = React.createClass
 
   validateSaveAs: ->
     @setState validatingSaveAs: true
-    nextTick => 
+    nextTick =>
       ingestedCorpusCalls.validate @state.saveAs, false, (result) =>
         return unless @state.validatingSaveAs and @isMounted()
         @setState validatingSaveAs: false
@@ -120,6 +127,18 @@ module.exports = React.createClass
       {accessory}
     </div>
 
+  parseStopwords: (callback) ->
+    if @props.stopwords?.type is "Custom" and @props.stopwords?.file?
+      fs = new FileReader
+      fs.onload = (e) ->
+        callback
+          type: "Custom"
+          text: e.target.result
+      fs.readAsText @props.stopwords.file
+    else
+      callback
+        type: @props.stopwords?.type ? "English"
+
   handleProcessClicked: ->
     @setState waitingForProcess: true
     regexToken =
@@ -127,11 +146,12 @@ module.exports = React.createClass
         when "Latin" then "\\p{L}[\\p{L}\\p{P}]*\\p{L}"
         when "Classical Chinese" then "[\\p{L}\\p{M}]"
         when "Custom" then @props.regexToken.token
-    processCorpusCalls.process @props.saveAs, @props.corpus,
-      @props.inference.dependsOn, regexToken, (result) =>
-        return unless @isMounted()
-        @props.onProcessStart() if result
-        @setState waitingForProcess: true
+    @parseStopwords (stopwords) =>
+      processCorpusCalls.process @props.saveAs, @props.corpus,
+        @props.inference.dependsOn, regexToken, stopwords, (result) =>
+          return unless @isMounted()
+          @props.onProcessStart() if result
+          @setState waitingForProcess: true if @isMounted()
 
   render: ->
     buttonClassName = "btn btn-primary col-sm-4 col-sm-offset-4"

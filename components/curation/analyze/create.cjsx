@@ -4,7 +4,7 @@ Inference = require "./create/inference"
 Process = require "./create/process"
 SelectCorpus = require "./create/select-corpus"
 React = require "react"
-RegexToken = require "./create/regex-token"
+Preprocessing = require "./create/preprocessing"
 
 module.exports = React.createClass
   displayName: "Create"
@@ -16,6 +16,7 @@ module.exports = React.createClass
     inference: null
     saveAs: null
     regexToken: null
+    stopwords: null
 
   handleCorpusChanged: (corpus) ->
     @setState
@@ -23,6 +24,7 @@ module.exports = React.createClass
       inference: null
       saveAs: null
       regexToken: null
+      stopwords: null
 
   handleInferenceChanged: (inference) ->
     @setState
@@ -31,6 +33,9 @@ module.exports = React.createClass
 
   handleTokenChanged: (regexToken) ->
     @setState regexToken: regexToken
+
+  handleStopwordsChanged: (stopwords) ->
+    @setState stopwords: stopwords
 
   handleSaveAsChanged: (saveAs) ->
     @setState saveAs: saveAs
@@ -48,9 +53,11 @@ module.exports = React.createClass
         />
     regexToken =
       if @state.inference?
-        <RegexToken
+        <Preprocessing
           regexToken={@state.regexToken}
           onTokenChange={@handleTokenChanged}
+          stopwords={@state.stopwords}
+          onStopwordsChange={@handleStopwordsChanged}
         />
     saveAs =
       if @state.inference?
@@ -58,6 +65,7 @@ module.exports = React.createClass
           corpus={@state.corpus}
           inference={@state.inference}
           regexToken={@state.regexToken}
+          stopwords={@state.stopwords}
           saveAs={@state.saveAs}
           onSaveAsChange={@handleSaveAsChanged}
           onProcessStart={@handleProcesStarted}
