@@ -89,7 +89,7 @@ module.exports = React.createClass
       href="#"
       onClick={@handleSimilarTopicClicked.bind @, similarTopic}>
       {pieChart}
-      <div>{sampleWords}</div>
+      <div>{similarTopic.topic.name ? sampleWords}</div>
       <div>
         <small className="text-muted">of </small>
         {similarTopic.ingestedCorpus} ({similarTopic.numTopics} topics)

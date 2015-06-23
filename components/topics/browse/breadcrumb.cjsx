@@ -1,5 +1,7 @@
 # @cjsx React.DOM
 
+asyncCaller = require "../../../async-caller"
+browseTopics = require("../../../async-calls/browse-topics").calls
 React = require "react"
 
 module.exports = React.createClass
@@ -15,6 +17,7 @@ module.exports = React.createClass
           name: React.PropTypes.string.isRequired
         React.PropTypes.shape
           _id: React.PropTypes.string.isRequired
+          name: React.PropTypes.string
           words: React.PropTypes.arrayOf React.PropTypes.shape(
             word: React.PropTypes.string.isRequired
           ).isRequired
@@ -27,11 +30,25 @@ module.exports = React.createClass
     ).isRequired
     onGraphSeedsChange: React.PropTypes.func.isRequired
 
+  getInitialState: ->
+    editingEntityText: @props.location.entity?.name
+    editingEntityState: "synced"
+
+  componentWillReceiveProps: (props) ->
+    if props.location.entity? and props.location.type is "topic"
+      @setState
+        editingEntityText: props.location.entity?.name
+        editingEntityState: "synced"
+    else
+      @setState
+        editingEntityText: undefined
+        editingEntityState: undefined
+
   handleTypeClicked: ->
     @props.onLocationChange
       type: @props.location.type
 
-  handleICCLicked: ->
+  handleICClicked: ->
     @props.onLocationChange
       type: @props.location.type
       ingestedCorpus: @props.location.ingestedCorpus
@@ -41,6 +58,30 @@ module.exports = React.createClass
       type: @props.location.type
       ingestedCorpus: @props.location.ingestedCorpus
       numTopics: @props.location.numTopics
+
+  handleEditEntityClicked: ->
+    @setState editingEntityState: "editing"
+
+  handleEditEntityTextChanged: (event) ->
+    value = if event.target.value isnt "" then event.target.value
+    @setState editingEntityText: value
+
+  handleEditEntityTextKeyDown: (event) ->
+    if event.keyCode is 13
+      @refs.editEntityInput.getDOMNode()?.blur()
+      event.preventDefault()
+
+  handleEditEntityTextBlured: ->
+    if @props.location.entity?.name is @state.editingEntityText
+      @setState editingEntityState: "synced"
+    else
+      @setState editingEntityState: "updating"
+      asyncCaller.resetAllCaches()
+      browseTopics.updateTopicName @props.location.entity._id,
+        @state.editingEntityText, (result) =>
+          loc = @props.location
+          loc.entity.name = @state.editingEntityText if result
+          @props.onLocationChange loc
 
   handleSeedToGraphToggled: ->
     arr =
@@ -97,7 +138,7 @@ module.exports = React.createClass
         loc.type is "topic" and loc.numTopics? or
         loc.type is "article" and loc.entity?
       )
-        <li onClick={@handleICCLicked} style={whiteSpace: "nowrap"}>
+        <li onClick={@handleICClicked} style={whiteSpace: "nowrap"}>
           <a href="#">{loc.ingestedCorpus}</a>
         </li>
       else
@@ -108,7 +149,7 @@ module.exports = React.createClass
       unless loc.numTopics?
         # no op
       else if loc.entity?
-         <li onClick={@handleNumClicked}>
+        <li onClick={@handleNumClicked}>
           <a href="#">{loc.numTopics} topics</a>
         </li>
       else
@@ -119,18 +160,57 @@ module.exports = React.createClass
       unless loc.entity?
         # no op
       else
-        entityText =
-          switch loc.type
-            when "topic"
+        switch loc.type
+          when "topic"
+            entityDefaultText =
               loc.entity.words[0...3]
                 .map (x) -> x.word
                 .concat "…"
                 .join ", "
-            when "article"
-              loc.entity.name
-        <li className="active" style={whiteSpace: "nowrap"}>
-          {entityText}
-        </li>
+            entityText =
+              if @state.editingEntityState is "updating"
+                @state.editingEntityText ? entityDefaultText
+              else
+                loc.entity.name ? entityDefaultText
+            entitySpan =
+              if @state.editingEntityState is "editing"
+                editEntityInputStyle =
+                  margin: -2
+                  padding: 2
+                  background: "none"
+                  border: "none"
+                  outline: "none"
+                <input
+                  ref="editEntityInput"
+                  type="text"
+                  style={editEntityInputStyle}
+                  defaultValue={loc.entity.name}
+                  placeholder={entityDefaultText}
+                  onBlur={@handleEditEntityTextBlured}
+                  onChange={@handleEditEntityTextChanged}
+                  onKeyDown={@handleEditEntityTextKeyDown} />
+              else
+                editEntityLink =
+                  if @state.editingEntityState is "synced"
+                    entityOnClick = @handleEditEntityClicked
+                    <a href="#">
+                      <i className="fa fa-pencil" />
+                    </a>
+                  else if @state.editingEntityState is "updating"
+                    <i
+                      className="fa fa-circle-o-notch fa-spin"
+                      style={opacity: 0.5}
+                    />
+                <span onClick={entityOnClick}>
+                  {entityText} {editEntityLink}
+                </span>
+            <li className="active" style={whiteSpace: "nowrap"}>
+              {entitySpan}
+            </li>
+          when "article"
+            <li className="active" style={whiteSpace: "nowrap"}>
+              {loc.entity.name}
+            </li>
     <ol className="breadcrumb">
       {@renderSeedToGraph()}
       {homeLI}
@@ -139,3 +219,10 @@ module.exports = React.createClass
       {numLI}
       {entityLI}
     </ol>
+
+  componentDidUpdate: ->
+    if @state.editingEntityState is "editing"
+      editEntityInput = @refs.editEntityInput.getDOMNode()
+      if document.activeElement isnt editEntityInput
+        editEntityInput.focus()
+        editEntityInput.select()

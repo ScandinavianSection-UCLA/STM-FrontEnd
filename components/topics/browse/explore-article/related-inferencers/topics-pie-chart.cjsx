@@ -113,7 +113,7 @@ module.exports = React.createClass
       <div
         style={cursor: "pointer"}
         onClick={@handleTopicClicked.bind @, @state.activeTopic}>
-        <div>{sampleWords}</div>
+        <div>{@state.activeTopic?.topic.name ? sampleWords}</div>
         <div>({percentage.toFixed 2}%)</div>
       </div>
     </div>

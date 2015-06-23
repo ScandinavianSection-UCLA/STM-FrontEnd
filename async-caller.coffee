@@ -1,12 +1,14 @@
 md5 = require "MD5"
 request = require "superagent"
 
+cacheVersion = 0
+
 makeRestInterface = (calls, mountPath, cache) ->
   restInterface = {}
   for name of calls then do (name) ->
     restInterface[name] = (args..., callback) ->
       args.push callback if typeof callback isnt "function"
-      hash = md5 "#{name}/#{JSON.stringify(args)}" if cache?
+      hash = md5 "#{name}/#{JSON.stringify(args)}/#{cacheVersion}" if cache?
       if cache?[hash]?
         callback? cache[hash]...
       else
@@ -25,7 +27,7 @@ makeCacheChecker = (calls, cache) ->
   cacheChecker = {}
   for name of calls then do (name) ->
     cacheChecker[name] = (args...) ->
-      hash = md5 "#{name}/#{JSON.stringify(args)}"
+      hash = md5 "#{name}/#{JSON.stringify(args)}/#{cacheVersion}"
       cache[hash]?
   cacheChecker
 
@@ -52,3 +54,6 @@ module.exports = ({calls, mountPath, shouldCache}) ->
   isCached:
     if shouldCache and typeof window isnt "undefined"
       makeCacheChecker calls, cache
+
+module.exports.resetAllCaches = ->
+  cacheVersion++

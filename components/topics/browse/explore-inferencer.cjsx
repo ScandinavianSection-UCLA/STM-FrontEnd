@@ -48,7 +48,7 @@ module.exports = React.createClass
       href="#"
       onClick={@handleTopicClicked.bind @, topic}>
       <span className="badge">{humanizedTotalTokens}</span>
-      {sampleWords}
+      {topic.name ? sampleWords}
     </a>
 
   renderTopicsUL: ->

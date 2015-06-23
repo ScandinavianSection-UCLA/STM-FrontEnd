@@ -9,7 +9,7 @@ graphNodes =
         async.waterfall [
           (callback) ->
             db.Topic
-              .findById topic, "words inferencer"
+              .findById topic, "name words inferencer"
               .populate "inferencer", "ingestedCorpus"
               .exec callback
           (topic, callback) ->
@@ -41,6 +41,7 @@ graphNodes =
       topic =
         _id: topic._id
         name:
+          topic.name ?
           topic.words[0...3]
             .map (x) -> x.word
             .concat "…"
@@ -93,6 +94,7 @@ graphNodes =
         topic:
           _id: x.topic._id
           name:
+            x.topic.name ?
             x.topic.words[0...3]
               .map (x) -> x.word
               .concat "…"

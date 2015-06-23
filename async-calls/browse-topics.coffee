@@ -44,7 +44,7 @@ browseTopics =
           callback
       (inferencer, callback) ->
         db.Topic
-          .find inferencer: inferencer._id, "totalTokens words phrases"
+          .find inferencer: inferencer._id, "name totalTokens words phrases"
           .sort "-totalTokens"
           .exec callback
     ], (err, topics) ->
@@ -286,6 +286,10 @@ browseTopics =
         x.ingestedCorpus for x in filteredTopicsInferred
       relatedICs.sort (a, b) -> a.name.localeCompare b.name
       callback relatedICs
+
+  updateTopicName: (topic, name, callback) ->
+    db.Topic.update {_id: topic}, {name: name}, (err, response) ->
+      callback !err?, response
 
 module.exports = asyncCaller
   mountPath: "/async-calls/browse-topics"

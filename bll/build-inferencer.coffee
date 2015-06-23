@@ -29,7 +29,6 @@ saveXMLTopicPhraseReport = (xmlTPR, inferencer, callback) ->
       topics = doc.topics.topic.map (topic) ->
         inferencer: inferencer
         id: topic.$.id
-        name: "Topic #{topic.$.id}"
         totalTokens: topic.$.totalTokens
         words: topic.word?.map (x) ->
           word: x._

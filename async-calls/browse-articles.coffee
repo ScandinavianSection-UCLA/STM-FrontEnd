@@ -110,7 +110,7 @@ browseArticles =
       (results, callback) ->
         db.Topic.populate results,
           path: "topics.topic"
-          select: "totalTokens words phrases"
+          select: "name totalTokens words phrases"
           callback
     ], (err, results) ->
       return console.error err if err?
