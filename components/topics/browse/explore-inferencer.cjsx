@@ -1,5 +1,6 @@
 # @cjsx React.DOM
 
+asyncCaller = require "../../../async-caller"
 browseTopics = require("../../../async-calls/browse-topics").calls
 humanFormat = require "human-format"
 React = require "react"
@@ -16,6 +17,7 @@ module.exports = React.createClass
   getInitialState: ->
     topics: null
     loadingTopics: false
+    editMode: false
 
   componentWillReceiveProps: (props) ->
     @loadTopics props
@@ -29,11 +31,22 @@ module.exports = React.createClass
           loadingTopics: false
 
   handleTopicClicked: (topic) ->
-    @props.onLocationChange
-      type: "topic"
-      ingestedCorpus: @props.location.ingestedCorpus
-      numTopics: @props.location.numTopics
-      entity: topic
+    if @state.editMode
+      browseTopics.updateTopicHidden topic._id, !topic.hidden, (result) =>
+        return unless result
+        asyncCaller.resetAllCaches()
+        topic.hidden = !topic.hidden
+        @setState
+          topics: @state.topics
+    else
+      @props.onLocationChange
+        type: "topic"
+        ingestedCorpus: @props.location.ingestedCorpus
+        numTopics: @props.location.numTopics
+        entity: topic
+
+  handleEditModeToggled: ->
+    @setState editMode: not @state.editMode
 
   renderTopicLI: (topic, i) ->
     sampleWords =
@@ -41,13 +54,27 @@ module.exports = React.createClass
         .map (x) -> x.word
         .concat "…"
         .join ", "
-    humanizedTotalTokens = humanFormat topic.totalTokens, unit: ""
+    if @state.editMode
+      if topic.hidden
+        iClassName = "fa fa-fw fa-cross pull-right"
+        liClassName = "list-group-item"
+      else
+        iClassName = "fa fa-fw fa-check pull-right"
+        liClassName = "list-group-item list-group-item-success"
+      editModeIcon =
+        <i className={iClassName} style={lineHeight: "inherit"} />
+    else
+      return if topic.hidden
+      liClassName = "list-group-item"
+      humanizedTotalTokens = humanFormat topic.totalTokens, unit: ""
+      badge = <span className="badge">{humanizedTotalTokens}</span>
     <a
-      className="list-group-item"
+      className={liClassName}
       key={i}
       href="#"
       onClick={@handleTopicClicked.bind @, topic}>
-      <span className="badge">{humanizedTotalTokens}</span>
+      {editModeIcon}
+      {badge}
       {topic.name ? sampleWords}
     </a>
 
@@ -71,10 +98,22 @@ module.exports = React.createClass
   render: ->
     ic = @props.location.ingestedCorpus
     numTopics = @props.location.numTopics
+    if @state.editMode
+      iClassName = "fa fa-fw fa-check"
+      btnClassName = "btn btn-success btn-sm pull-right"
+    else
+      iClassName = "fa fa-fw fa-pencil"
+      btnClassName = "btn btn-primary btn-sm pull-right"
     <div className="row">
       <div className="col-sm-6 col-sm-offset-3">
         <div className="panel panel-default">
           <div className="panel-heading">
+            <button
+              className={btnClassName}
+              style={marginTop: -3}
+              onClick={@handleEditModeToggled}>
+              <i className={iClassName} />
+            </button>
             <h3 className="panel-title">Topics in {ic} ({numTopics} topics)</h3>
           </div>
           {@renderTopicsUL()}

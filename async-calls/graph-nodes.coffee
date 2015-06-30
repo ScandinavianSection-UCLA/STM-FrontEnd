@@ -9,7 +9,7 @@ graphNodes =
         async.waterfall [
           (callback) ->
             db.Topic
-              .findById topic, "name words inferencer"
+              .findById topic, "name hidden words inferencer"
               .populate "inferencer", "ingestedCorpus"
               .exec callback
           (topic, callback) ->

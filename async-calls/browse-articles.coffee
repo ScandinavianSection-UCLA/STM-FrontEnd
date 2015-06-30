@@ -117,7 +117,9 @@ browseArticles =
       results = results.map (result) ->
         ingestedCorpus: result._id.inferencer.ingestedCorpus.name
         numTopics: result._id.inferencer.numTopics
-        topics: result.topics.sort (a, b) -> b.proportion - a.proportion
+        topics: result.topics
+          .filter (x) -> not x.hidden
+          .sort (a, b) -> b.proportion - a.proportion
       callback results
 
   getSimilarArticles: (article, callback) ->

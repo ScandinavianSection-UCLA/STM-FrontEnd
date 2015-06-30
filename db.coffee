@@ -42,6 +42,7 @@ exports.Topic = metaDB.model "Topic",
     inferencer: type: mongoose.Schema.ObjectId, ref: "Inferencer"
     id: Number
     name: String
+    hidden: Boolean
     totalTokens: Number
     words: [
       word: String

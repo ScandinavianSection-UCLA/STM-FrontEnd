@@ -44,7 +44,8 @@ browseTopics =
           callback
       (inferencer, callback) ->
         db.Topic
-          .find inferencer: inferencer._id, "name totalTokens words phrases"
+          .find inferencer: inferencer._id,
+            "name hidden totalTokens words phrases"
           .sort "-totalTokens"
           .exec callback
     ], (err, topics) ->
@@ -241,7 +242,20 @@ browseTopics =
         dist = dist.sort (a, b) -> b.corr - a.corr
         async.waterfall [
           (callback) ->
-            db.Topic.populate dist[1...11], "topic", callback
+            page = 0;
+            ret = [];
+            rec = ->
+              thisBatch = dist[(page * 10 + 1)...((page + 1) * 10 + 1)]
+              db.Topic.populate thisBatch, "topic", (err, thisBatch) ->
+                return callback err, thisBatch if err?
+                thisBatch = thisBatch.filter (x) -> not x.topic.hidden
+                ret = ret.concat thisBatch
+                if ret.length < 10
+                  page++
+                  rec()
+                else
+                  callback err, ret[1...11]
+            rec()
           (dist, callback) ->
             db.Inferencer.populate dist, "topic.inferencer", callback
           (dist, callback) ->
@@ -289,7 +303,11 @@ browseTopics =
 
   updateTopicName: (topic, name, callback) ->
     db.Topic.update {_id: topic}, {name: name}, (err, response) ->
-      callback !err?, response
+      callback !err?
+
+  updateTopicHidden: (topic, hidden, callback) ->
+    db.Topic.update {_id: topic}, {hidden: hidden}, (err, response) ->
+      callback !err?
 
 module.exports = asyncCaller
   mountPath: "/async-calls/browse-topics"
