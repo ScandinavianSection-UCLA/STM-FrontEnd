@@ -16,13 +16,21 @@ module.exports = React.createClass
     onCorpusChange: React.PropTypes.func.isRequired
 
   getInitialState: ->
-    corpusName: @props.corpus?.name ? ""
-    corpusType: @props.corpus?.type ? "corpus"
+    @getDefaultState @props
+
+  getDefaultState: (props) ->
+    corpusName: props.corpus?.name ? ""
+    corpusType: props.corpus?.type ? "corpus"
     corpusNameFocused: false
     validatingCorpus: false
     waitingForInsertCorpus: false
     existingCorpora: []
     existingSubcorpora: []
+
+  componentWillReceiveProps: (props) ->
+    if @props.corpus and not props.corpus
+      @setState @getDefaultState(props), =>
+        @componentDidMount()
 
   validateCorpus: ->
     @setState validatingCorpus: true

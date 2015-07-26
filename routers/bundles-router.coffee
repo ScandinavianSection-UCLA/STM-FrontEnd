@@ -18,6 +18,7 @@ getBundle = (bundle) ->
     aliases:
       "root-view": "../components/#{bundle}"
       "../db": "nop"
+      "fs-extra": "fs"
     configDir: __dirname
     appliesTo:
       includeExtensions: [".cjsx", ".coffee"]
